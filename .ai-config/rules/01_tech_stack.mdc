@@ -1,0 +1,24 @@
+# Tech Stack & Constraints
+
+## 核心技术栈
+-   **语言版本**: **Java 8 (1.8)**。
+    -   *注意*：严禁使用 Java 14+ 的语法（如 `record`, `var`, `switch expressions`, `text blocks`）。
+    -   *推荐*：积极使用 Java 8 特性（`Lambda`, `Stream API`, `Optional`, `Interface default methods`）。
+-   **框架核心**: Spring Boot 2.7.x (或项目指定版本)。
+-   **构建工具**: Maven 3.6+。
+-   **ORM 框架**: MyBatis / MyBatis-Plus (常见搭配) 或 Spring Data JPA。
+-   **工具库**:
+    -   **Lombok**: 必须使用 `@Data`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor` 简化代码。
+    -   **Hutool / Apache Commons**: 用于字符串、集合、日期的工具类操作。
+    -   **Jackson**: 默认 JSON 处理库。
+
+## 禁止使用的技术 (Negative Constraints)
+-    **禁止** 使用 `javax.annotation.PostConstruct` 等已废弃包（应使用 `jakarta` 或标准 Java 包，视 Spring Boot 版本而定，但在 JDK 8 环境下需注意兼容性）。
+-    **禁止** 使用 `System.out.println`，必须使用 `Logger`。
+-    **禁止** 使用 `SimpleDateFormat` 进行日期格式化（线程不安全），必须使用 `java.time` (ThreeTenBP) 或 `DateUtils`。
+-    **禁止** 在循环中执行数据库查询（N+1 问题）。
+-    **禁止** 使用原始类型集合（如 `List list`），必须指定泛型（`List<String>`）。
+
+## 集合与并发
+-   使用 `ArrayList` / `HashMap` 时，如果知道初始大小，**必须**指定初始容量。
+-   线程池必须使用 `ThreadPoolExecutor` 显式创建，**禁止** 使用 `Executors` 去创建（避免 OOM 风险）。

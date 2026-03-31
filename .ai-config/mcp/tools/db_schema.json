@@ -1,0 +1,163 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "primaryKey": true,
+          "autoIncrement": true
+        },
+        {
+          "name": "username",
+          "type": "VARCHAR(255)",
+          "unique": true,
+          "notNull": true
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR(255)",
+          "unique": true,
+          "notNull": true
+        },
+        {
+          "name": "password_hash",
+          "type": "VARCHAR(255)",
+          "notNull": true
+        },
+        {
+          "name": "role",
+          "type": "VARCHAR(50)",
+          "default": "user"
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "primaryKey": true,
+          "autoIncrement": true
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(255)",
+          "notNull": true
+        },
+        {
+          "name": "description",
+          "type": "TEXT"
+        },
+        {
+          "name": "price",
+          "type": "DECIMAL(10, 2)",
+          "notNull": true
+        },
+        {
+          "name": "stock",
+          "type": "INTEGER",
+          "default": 0
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "primaryKey": true,
+          "autoIncrement": true
+        },
+        {
+          "name": "user_id",
+          "type": "INTEGER",
+          "foreignKey": {
+            "reference": "users.id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "total_amount",
+          "type": "DECIMAL(10, 2)",
+          "notNull": true
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(50)",
+          "default": "pending"
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "name": "order_items",
+      "columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "primaryKey": true,
+          "autoIncrement": true
+        },
+        {
+          "name": "order_id",
+          "type": "INTEGER",
+          "foreignKey": {
+            "reference": "orders.id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER",
+          "foreignKey": {
+            "reference": "products.id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "notNull": true
+        },
+        {
+          "name": "price",
+          "type": "DECIMAL(10, 2)",
+          "notNull": true
+        }
+      ]
+    }
+  ]
+}

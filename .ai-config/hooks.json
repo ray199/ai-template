@@ -1,0 +1,35 @@
+{
+  "on_file_save": [
+    "trigger_skill:code_format",
+    "trigger_skill:code_lint"
+  ],
+  "on_commit": [
+    "trigger_skill:commit_lint",
+    "trigger_skill:code_review"
+  ],
+  "on_pr_create": [
+    "trigger_agent:architect",
+    "trigger_skill:code_review"
+  ],
+  "on_pr_merge": [
+    "trigger_skill:test_run"
+  ],
+  "on_deploy": [
+    "trigger_skill:security_scan",
+    "trigger_skill:performance_test"
+  ],
+  "on_issue_create": [
+    "trigger_agent:qa_engineer",
+    "trigger_skill:write_test"
+  ],
+  "on_schedule": {
+    "daily": [
+      "trigger_skill:security_scan",
+      "trigger_skill:dependency_check"
+    ],
+    "weekly": [
+      "trigger_agent:architect",
+      "trigger_skill:code_quality_report"
+    ]
+  }
+}
