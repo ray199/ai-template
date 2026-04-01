@@ -1,0 +1,41 @@
+# Profile：Node（Vue）
+
+适用范围：以 Node.js 为运行时、Vue 为前端框架的项目（常见组合：Vue 3 + Vite）。
+
+## 1. 版本与运行时
+- Node.js 18+（或项目指定 LTS 版本）
+- Vue：Vue 3（或项目指定版本）
+
+## 2. 工程结构建议（前端）
+```
+src/
+  assets/
+  components/
+  pages/            # 或 views/
+  router/
+  stores/           # Pinia（或项目既有方案）
+  services/         # API 封装
+  utils/
+  types/
+```
+
+## 3. 编码约束（强制）
+- 模块边界清晰：UI（components/pages）与数据访问（services）必须解耦
+- 请求层统一：禁止在组件内散落地直接拼 URL/写重复请求逻辑，必须经过统一封装
+- 输入输出必须校验：对用户输入、URL 参数、后端返回结构做必要校验与兜底
+
+## 4. TypeScript 使用（建议）
+- 推荐开启 TypeScript（以项目既有为准），并尽量启用严格模式
+- 禁止随意使用 `any`；必须给出合理类型或在边界层集中收敛
+
+## 5. 安全（强制）
+- 禁止在前端代码中写入任何密钥；前端只能持有短期 Token（如有）
+- XSS：禁止将不可信输入直接注入 DOM（例如 v-html），确需使用必须经过安全净化与审计
+
+## 6. 测试与质量门禁（建议）
+- 组件/业务逻辑必须可测试（以项目既有测试框架为准）
+- 建议引入格式化与 lint，并在提交/CI 作为门禁（以项目既有为准）
+
+## 7. 与通用规则的关系
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

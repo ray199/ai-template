@@ -1,0 +1,47 @@
+# Profile：C#（.NET）
+
+适用范围：以 C#/.NET 为主的后端服务、工具、Web API（ASP.NET Core）。
+
+## 1. 版本与运行时
+- 语言版本：C#（以项目指定为准，推荐开启 Nullable Reference Types）
+- 运行时：.NET 8 LTS（或项目指定版本）
+- 构建工具：dotnet SDK（与运行时版本匹配）
+
+## 2. 工程结构建议
+后端服务（建议）：
+```
+src/
+  <ProjectName>.Api/
+  <ProjectName>.Application/
+  <ProjectName>.Domain/
+  <ProjectName>.Infrastructure/
+tests/
+  <ProjectName>.Tests/
+```
+
+## 3. 语言与编码约束（强制）
+- 必须启用并遵循空引用约束（Nullable）：避免使用大量 `!` 消除警告
+- 异步优先：I/O 相关逻辑必须使用 `async/await`，禁止 `.Result` / `.Wait()`（死锁风险）
+- 资源释放：`IDisposable` 必须通过 `using` / `await using` 管理
+- 异常处理：禁止捕获后静默吞掉；必须保留堆栈并给出可定位信息
+
+## 4. 依赖注入与配置（强制）
+- 依赖注入：禁止 Service Locator（在业务代码中直接 `IServiceProvider.GetService`）
+- 配置：敏感配置只来自环境变量/安全存储；禁止硬编码密钥
+
+## 5. 日志（强制）
+- 必须使用结构化日志（ILogger），禁止 `Console.WriteLine` 作为业务日志
+- 日志中禁止输出密钥/口令/Token/身份证件等敏感信息
+
+## 6. 数据访问（建议）
+- 优先使用项目既有的数据访问技术（EF Core / Dapper / ADO.NET）
+- 必须参数化查询，禁止字符串拼接 SQL
+- 必须避免 N+1 查询，必要时做批量/Join/预加载
+
+## 7. 测试与质量门禁（建议）
+- 单元测试：优先 xUnit / NUnit（以项目既有为准）
+- 静态检查：建议开启 Analyzer 与格式化工具（例如 dotnet format / editorconfig），并纳入 CI
+
+## 8. 与通用规则的关系
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

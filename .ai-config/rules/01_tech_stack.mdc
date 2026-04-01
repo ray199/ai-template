@@ -1,24 +1,37 @@
-# Tech Stack & Constraints
+# Tech Stack Profiles & Global Constraints
 
-## 核心技术栈
--   **语言版本**: **Java 8 (1.8)**。
-    -   *注意*：严禁使用 Java 14+ 的语法（如 `record`, `var`, `switch expressions`, `text blocks`）。
-    -   *推荐*：积极使用 Java 8 特性（`Lambda`, `Stream API`, `Optional`, `Interface default methods`）。
--   **框架核心**: Spring Boot 2.7.x (或项目指定版本)。
--   **构建工具**: Maven 3.6+。
--   **ORM 框架**: MyBatis / MyBatis-Plus (常见搭配) 或 Spring Data JPA。
--   **工具库**:
-    -   **Lombok**: 必须使用 `@Data`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor` 简化代码。
-    -   **Hutool / Apache Commons**: 用于字符串、集合、日期的工具类操作。
-    -   **Jackson**: 默认 JSON 处理库。
+本模板支持多语言/多技术栈。为避免规则冲突，必须在项目启动或首次开发前选择一个（或按目录边界选择多个）Profile。
 
-## 禁止使用的技术 (Negative Constraints)
--    **禁止** 使用 `javax.annotation.PostConstruct` 等已废弃包（应使用 `jakarta` 或标准 Java 包，视 Spring Boot 版本而定，但在 JDK 8 环境下需注意兼容性）。
--    **禁止** 使用 `System.out.println`，必须使用 `Logger`。
--    **禁止** 使用 `SimpleDateFormat` 进行日期格式化（线程不安全），必须使用 `java.time` (ThreeTenBP) 或 `DateUtils`。
--    **禁止** 在循环中执行数据库查询（N+1 问题）。
--    **禁止** 使用原始类型集合（如 `List list`），必须指定泛型（`List<String>`）。
+## 1. Profile 选择（必选）
 
-## 集合与并发
--   使用 `ArrayList` / `HashMap` 时，如果知道初始大小，**必须**指定初始容量。
--   线程池必须使用 `ThreadPoolExecutor` 显式创建，**禁止** 使用 `Executors` 去创建（避免 OOM 风险）。
+### 1.1 单体项目（推荐）
+只选择一个 Profile，并遵循其全部约束：
+- Java（Spring）：[profiles/java_spring.mdc](profiles/java_spring.mdc)
+- C#（.NET）：[profiles/dotnet_csharp.mdc](profiles/dotnet_csharp.mdc)
+- Python：[profiles/python.mdc](profiles/python.mdc)
+- Node（Vue）：[profiles/node_vue.mdc](profiles/node_vue.mdc)
+- TypeScript：[profiles/typescript.mdc](profiles/typescript.mdc)
+
+### 1.2 单仓多项目（Monorepo）
+允许选择多个 Profile，但必须满足：
+1. 每个子项目/目录只绑定一个 Profile
+2. 必须在子项目根目录（或其规则入口）明确声明采用的 Profile
+3. 通用底线（本文件第2节）对全仓生效
+
+## 2. 全局约束（强制底线）
+
+### 2.1 依赖与可用性
+- 禁止“凭空假设”项目已存在某个库/工具链；引入新依赖必须说明理由与替代方案，并遵循最小依赖原则
+- 禁止引入明显重叠的库（同类功能多个实现），除非有充分理由并写清迁移策略
+
+### 2.2 版本与兼容性
+- 版本优先：优先使用项目已锁定/已采用的版本；如需升级，必须说明影响面（API变更、构建链、运行时）
+- 兼容优先：选择对团队与运行环境更稳定的方案，避免“炫技式选型”
+
+### 2.3 安全与密钥
+- 禁止在代码、配置、日志中写入或输出密钥/口令/Token 等敏感信息
+- 所有敏感配置必须来自环境变量或安全配置中心（由各 Profile 细化）
+
+### 2.4 可维护性
+- 复杂逻辑必须具备必要的代码注释与可测试性设计（注释与测试具体规范由各 Profile 补充）
+- 禁止复制粘贴式堆砌；重复逻辑必须抽取公共模块/函数

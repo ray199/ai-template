@@ -14,11 +14,12 @@
 .ai-config/
  ├── rules/                  # 【宪法层】不可逾越的开发规范
  │   ├── 00_system_role.mdc  # 全局人设：定义 AI 是资深架构师
- │   ├── 01_tech_stack.mdc   # 技术边界：指定框架版本、禁止使用的库
+ │   ├── 01_tech_stack.mdc   # Profile选择入口 + 全局强制底线
  │   ├── 02_code_style.mdc   # 代码美学：命名规范、目录结构、注释标准
  │   ├── 03_security.mdc     # 安全红线：SQL注入防护、鉴权逻辑
  │   ├── 04_git_workflow.mdc # 提交规范：Commit Message 格式
- │   └── 05_workflow.mdc     # 工作流程：开发流程规范与确认机制
+ │   ├── 05_workflow.mdc     # 工作流程：开发流程规范与确认机制
+ │   └── profiles/           # Profile规则：按语言/技术栈拆分（Java/C#/.NET/Python/Node(Vue)/TypeScript）
  │
  ├── skills/                 # 【能力层】可调用的具体技能库
  │   ├── write-plan/         # 技能：生成计划

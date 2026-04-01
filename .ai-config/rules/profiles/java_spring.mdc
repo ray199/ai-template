@@ -1,0 +1,56 @@
+# Profile：Java（Spring）
+
+适用范围：以 Java 为主的后端服务（Spring Boot / Spring Cloud 等）。
+
+## 1. 版本与运行时
+- 语言版本：Java 8（或项目指定版本）
+  - 注意：严禁使用 Java 14+ 的语法（如 `record`, `var`, `switch expressions`, `text blocks`）
+  - 推荐：积极使用 Java 8 特性（`Lambda`, `Stream API`, `Optional`, `Interface default methods`）
+- 框架核心：Spring Boot 2.7.x（或项目指定版本）
+- 构建工具：Maven 3.6+（或项目指定版本）
+
+## 2. 技术栈建议
+- ORM：MyBatis / MyBatis-Plus（常见搭配）或 Spring Data JPA（以项目既有为准）
+- 工具库：
+  - Lombok：必须使用 `@Data`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor` 简化代码
+  - Hutool / Apache Commons：用于字符串、集合、日期的工具类操作
+  - Jackson：默认 JSON 处理库
+- 日志：SLF4J + Logback（以 Spring Boot 默认体系为准）
+
+## 3. 负向约束（强制）
+- 禁止使用 `javax.annotation.PostConstruct` 等已废弃包（应使用 `jakarta` 或标准 Java 包，视 Spring Boot 版本而定，但在 JDK 8 环境下需注意兼容性）
+- 禁止使用 `System.out.println`，必须使用 Logger
+- 禁止使用 `SimpleDateFormat` 进行日期格式化（线程不安全），必须使用 `java.time`（ThreeTenBP）或 `DateUtils`
+- 禁止在循环中执行数据库查询（N+1），必须做批量查询/预加载/Join 等优化
+- 禁止使用原始类型集合（如 `List list`），必须指定泛型（如 `List<String>`）
+- 禁止吞异常；必须保留完整堆栈，并给出业务可读的错误信息
+
+## 4. 集合与并发（强制）
+- 使用 `ArrayList` / `HashMap` 时，如果知道初始大小，必须指定初始容量
+- 线程池必须使用 `ThreadPoolExecutor` 显式创建，禁止使用 `Executors` 去创建（避免 OOM 风险）
+
+## 5. 工程结构建议（后端）
+推荐按模块拆分，保持高内聚低耦合：
+```
+com.example.project
+├── common/
+├── config/
+├── framework/
+└── modules/
+    └── <module>/
+        ├── controller/
+        ├── service/
+        │   └── impl/
+        ├── mapper/
+        ├── entity/
+        ├── dto/
+        └── vo/
+```
+
+## 6. 测试与质量门禁（建议）
+- 单元测试：优先 JUnit 5（以项目既有为准）
+- 关键业务逻辑必须可单测；外部依赖（DB/HTTP/消息）必须可替换或可隔离
+
+## 7. 与通用规则的关系
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

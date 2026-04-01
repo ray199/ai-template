@@ -2,13 +2,13 @@
 
 ## SQL注入防护
 - **使用参数化查询**：避免直接拼接SQL语句
-- **ORM框架**：优先使用ORM框架（如Sequelize、TypeORM）
+- **查询构造**：使用框架/驱动提供的参数绑定能力或查询构造器，避免手写拼接
 - **输入验证**：对所有用户输入进行严格验证
 - **最小权限原则**：数据库用户只授予必要的权限
 
 ## 鉴权逻辑
 - **JWT使用**：正确实现JWT的生成、验证和刷新
-- **密码存储**：使用bcrypt等算法哈希存储密码
+- **密码存储**：使用业界认可的强哈希算法与合理成本参数（具体库与参数见各 Profile）
 - **会话管理**：合理设置会话过期时间
 - **权限控制**：实现基于角色的访问控制（RBAC）
 
@@ -40,3 +40,11 @@
 - **渗透测试**：定期进行渗透测试
 - **安全培训**：提高团队安全意识
 - **合规检查**：确保符合相关安全标准
+
+## Profile 安全落地（必读）
+不同语言/框架的安全实现细节（例如：认证中间件选型、密码哈希库、CSRF策略、ORM/驱动具体用法）以 Profile 文件为准：
+- Java（Spring）：[profiles/java_spring.mdc](profiles/java_spring.mdc)
+- C#（.NET）：[profiles/dotnet_csharp.mdc](profiles/dotnet_csharp.mdc)
+- Python：[profiles/python.mdc](profiles/python.mdc)
+- Node（Vue）：[profiles/node_vue.mdc](profiles/node_vue.mdc)
+- TypeScript：[profiles/typescript.mdc](profiles/typescript.mdc)
