@@ -1,0 +1,48 @@
+{
+  "on_requirement_intake": [
+    "trigger_agent:requirement_analyst",
+    "trigger_skill:intake-requirement"
+  ],
+  "on_requirement_approved": [
+    "trigger_agent:requirement_analyst",
+    "trigger_skill:evaluate-requirement"
+  ],
+  "on_file_save": [
+    "trigger_skill:code_format",
+    "trigger_skill:code_lint"
+  ],
+  "on_commit": [
+    "trigger_skill:commit_lint",
+    "trigger_skill:code_review"
+  ],
+  "on_pr_create": [
+    "trigger_agent:architect",
+    "trigger_skill:code_review"
+  ],
+  "on_pr_merge": [
+    "trigger_skill:test_run"
+  ],
+  "on_deploy": [
+    "trigger_skill:security_scan",
+    "trigger_skill:performance_test"
+  ],
+  "on_issue_create": [
+    "trigger_agent:qa_engineer",
+    "trigger_skill:write_test"
+  ],
+  "on_schedule": {
+    "daily": [
+      "trigger_skill:security_scan",
+      "trigger_skill:dependency_check"
+    ],
+    "weekly": [
+      "trigger_agent:architect",
+      "trigger_skill:code_quality_report"
+    ]
+  },
+  "on_evaluation_confirmed": [
+    "trigger_skill:project-docs-standards",
+    "trigger_skill:generate-prototype",
+    "trigger_skill:write-plan"
+  ]
+}

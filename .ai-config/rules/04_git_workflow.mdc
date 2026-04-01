@@ -1,0 +1,68 @@
+# Git工作流
+
+## Commit Message格式
+
+### 基本结构
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Type类型
+- **feat**：新功能
+- **fix**：修复bug
+- **docs**：文档更新
+- **style**：代码样式修改（不影响功能）
+- **refactor**：代码重构
+- **test**：测试相关
+- **chore**：构建过程或辅助工具的变动
+
+### Scope范围
+- **可选**：指定修改的模块或文件
+- **示例**：`feat(user): 添加用户注册功能`
+
+### Subject主题
+- **简短**：不超过50个字符
+- **清晰**：描述具体变更
+- **祈使句**：使用动词开头
+
+### Body正文
+- **详细**：描述变更的原因和影响
+- **换行**：每行不超过72个字符
+
+### Footer页脚
+- **关闭issue**：`Closes #123`
+- **重大变更**：`BREAKING CHANGE: 变更说明`
+
+## 分支管理策略
+
+### 主要分支
+- **main/master**：生产环境分支
+- **develop**：开发分支
+
+### 辅助分支
+- **feature/**：功能分支
+- **bugfix/**：bug修复分支
+- **hotfix/**：紧急修复分支
+- **release/**：发布分支
+
+### 分支流程
+1. 从`develop`分支创建`feature`分支
+2. 完成开发后，合并到`develop`分支
+3. 准备发布时，从`develop`创建`release`分支
+4. 发布后，合并`release`到`main`和`develop`
+5. 紧急修复从`main`创建`hotfix`分支，修复后合并回`main`和`develop`
+
+## 合并策略
+- **Pull Request**：使用PR进行代码审查
+- **Code Review**：至少一人审查
+- **CI/CD**：通过自动化测试
+- **Squash Merge**：将多个commit压缩为一个
+
+## 版本管理
+- **语义化版本**：MAJOR.MINOR.PATCH
+- **标签管理**：为发布版本创建标签
+- **发布说明**：生成详细的发布说明

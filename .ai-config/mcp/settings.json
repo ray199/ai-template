@@ -1,0 +1,46 @@
+{
+  "superpowers": {
+    "enabled": true,
+    "api_key": "${SUPERPOWERS_API_KEY}",
+    "endpoint": "https://api.superpowers.dev/v1"
+  },
+  "database": {
+    "type": "postgres",
+    "host": "${DB_HOST}",
+    "port": "${DB_PORT}",
+    "username": "${DB_USERNAME}",
+    "password": "${DB_PASSWORD}",
+    "database": "${DB_NAME}",
+    "ssl": false
+  },
+  "tools": {
+    "code_search": {
+      "enabled": true,
+      "timeout": 30000
+    },
+    "file_operations": {
+      "enabled": true,
+      "max_file_size": 1048576
+    },
+    "command_execution": {
+      "enabled": true,
+      "allowed_commands": [
+        "npm",
+        "yarn",
+        "pnpm",
+        "git",
+        "docker",
+        "docker-compose"
+      ]
+    }
+  },
+  "agent": {
+    "default_agent": "architect",
+    "max_tokens": 4096,
+    "temperature": 0.7
+  },
+  "skills": {
+    "auto_load": true,
+    "scan_directory": ".ai-config/skills"
+  }
+}
