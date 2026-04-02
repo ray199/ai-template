@@ -1,4 +1,12 @@
 {
+  "on_requirement_intake": [
+    "trigger_agent:requirement_analyst",
+    "trigger_skill:intake-requirement"
+  ],
+  "on_requirement_approved": [
+    "trigger_agent:requirement_analyst",
+    "trigger_skill:evaluate-requirement"
+  ],
   "on_file_save": [
     "trigger_skill:code_format",
     "trigger_skill:code_lint"
@@ -31,5 +39,10 @@
       "trigger_agent:architect",
       "trigger_skill:code_quality_report"
     ]
-  }
+  },
+  "on_evaluation_confirmed": [
+    "trigger_skill:project-docs-standards",
+    "trigger_skill:generate-prototype",
+    "trigger_skill:write-plan"
+  ]
 }
