@@ -1,14 +1,93 @@
-# Vue 3编码规范与Code Review检查表
+# Vue 编码规范与 Code Review 检查表（Vue 2 / Vue 3 自适应）
 
 ## 目标
 
-定义Vue 3 (Composition API)项目的编码规范和代码审查标准，确保前端代码的质量和可维护性。
+定义 Vue 项目的编码规范和代码审查标准。**版本由 Step 0 自动检测**，规范随版本自动适配，不硬编码 Vue 2 或 Vue 3。
 
 ---
 
-## Vue 3编码规范
+## Vue 2（Options API）编码规范
 
-### 1. 项目结构
+> 仅当 Step 0 检测到 `vue@^2.x` 时适用。
+
+### 1. 项目结构（Vue 2）
+
+```
+src/
+  assets/
+  components/        # 可复用组件（PascalCase）
+  views/             # 页面级组件
+  router/            # Vue Router 3（index.js）
+  store/             # Vuex（index.js + modules/）
+  api/               # 请求封装
+  utils/
+  mixins/            # 谨慎使用
+  filters/           # 注意：Vue 3 已废弃，维护期代码标注迁移计划
+```
+
+### 2. Options API 规范
+
+```javascript
+export default {
+  name: 'UserForm',         // 必须写 name，方便调试
+
+  props: {
+    userId: { type: Number, default: null },
+    mode: {
+      type: String,
+      default: 'create',
+      validator: (v) => ['create', 'edit'].includes(v)
+    }
+  },
+
+  data() {                  // data 必须是函数
+    return {
+      form: { username: '', email: '' },
+      isSubmitting: false
+    };
+  },
+
+  computed: { /* 衍生状态，禁止在 computed 中产生副作用 */ },
+  watch: { /* 监听外部变化 */ },
+
+  created() { /* 初始化数据 */ },
+  beforeDestroy() { /* 清理定时器、事件监听 */ },
+
+  methods: { /* 所有方法 */ }
+};
+```
+
+### 3. Vue 2 专项规范
+
+```
+响应式约束：
+- [ ] 新增对象属性使用 this.$set(obj, key, val)，禁止直接赋值
+- [ ] 数组变更使用变异方法（push/pop/splice 等）或 this.$set
+- [ ] 禁止通过索引直接修改数组元素（arr[0] = x）
+
+组件通信：
+- [ ] 禁止直接修改 Props，通过 $emit 通知父组件
+- [ ] 禁止新增 EventBus（new Vue()），使用 Vuex 或组件通信替代
+- [ ] Mixin 非必要不使用，优先组件化
+
+Vuex 规范：
+- [ ] state 必须是函数形式（() => ({})）
+- [ ] mutations 同步且命名 UPPER_SNAKE_CASE
+- [ ] actions 异步，不直接操作 state（通过 commit）
+- [ ] 必须开启 namespaced: true
+
+其他：
+- [ ] 过滤器（filter）不新增，现有维护时标注迁移计划
+- [ ] $nextTick 正确使用（DOM 更新后执行）
+```
+
+---
+
+## Vue 3（Composition API）编码规范
+
+> 仅当 Step 0 检测到 `vue@^3.x` 时适用。
+
+### 1. 项目结构（Vue 3）
 
 ```
 src/
@@ -350,7 +429,40 @@ $transition-duration: 0.3s;
 
 ---
 
-## Code Review检查表
+## Code Review 检查表
+
+> **前提**：必须先完成 Step 0 版本扫描，再按对应版本执行检查。
+
+### 版本适配检查（首先执行）
+
+```
+【版本识别确认】
+- [ ] 已通过 package.json 确认 Vue 版本（2.x / 3.x）
+- [ ] 已确认构建工具（Vue CLI / Vite / Webpack）
+- [ ] 已确认状态管理（Vuex / Pinia）
+- [ ] 已确认 TypeScript 是否引入
+
+【Vue 2 专项（vue@^2.x 时执行）】
+- [ ] 无直接对象属性新增（必须用 $set）
+- [ ] 无数组索引直接赋值
+- [ ] Vuex 模块已开启 namespaced
+- [ ] 无新增 EventBus / 全局过滤器
+- [ ] Mixin 使用有充分理由
+
+【Vue 3 专项（vue@^3.x 时执行）】
+- [ ] 新组件全部使用 <script setup>，无 Options API 混用
+- [ ] Composables 以 use 开头，返回值用 readonly 包装
+- [ ] Pinia store 使用 setup 风格定义
+- [ ] 已迁移旧 Vuex 逻辑（若从 Vue 2 升级）
+- [ ] 无 deprecated API 使用（$children / $listeners / filters 等）
+
+【通用（两个版本均执行）】
+- [ ] 列表渲染有 :key，且不使用 index 作为 key（动态列表）
+- [ ] 组件样式有 scoped，无全局污染
+- [ ] 颜色/间距使用 CSS 变量或 SCSS 变量，无硬编码 hex
+- [ ] v-html 未注入不可信内容
+- [ ] API 层统一封装，组件内无裸露 URL 拼接
+```
 
 ### 🔴 P0 - 阻断性问题
 

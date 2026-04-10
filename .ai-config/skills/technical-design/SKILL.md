@@ -152,7 +152,7 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 
 ### 新增/修改表
 
-#### 表：xxx_table
+**表：xxx_table**
 > 用途说明
 
 ```sql
@@ -191,7 +191,7 @@ UPDATE `existing_table` SET `new_field` = 'default_value' WHERE `new_field` = ''
 
 ### 接口详细说明
 
-#### POST /api/v1/xxx - 创建XXX
+**POST /api/v1/xxx — 创建XXX**
 
 **请求头**
 ```

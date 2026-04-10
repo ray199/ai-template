@@ -6,6 +6,97 @@
 
 ---
 
+## 设计 Token 预设（来自 ui-ux-pro-max 风格选择）
+
+生成 HTML 原型前，将用户选定的风格 Token 写入 `:root`，模板中所有颜色、字体、圆角均引用 CSS 变量，**不允许硬编码 hex 值**。
+
+### 内置风格预设
+
+#### 方案 A 默认 — Minimalism 极简专业（企业系统）
+```css
+:root {
+  --color-primary: #1890ff;
+  --color-primary-hover: #40a9ff;
+  --color-danger: #ff4d4f;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #262626;
+  --color-text-secondary: #8c8c8c;
+  --color-border: #d9d9d9;
+  --color-stripe: #fafafa;
+  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius: 4px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --shadow-modal: 0 4px 12px rgba(0,0,0,0.15);
+}
+```
+
+#### 方案 B — Dark Mode 深色科技
+```css
+:root {
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-danger: #f87171;
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --color-stripe: #1e293b;
+  --font-heading: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --radius: 8px;
+  --shadow: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-modal: 0 8px 24px rgba(0,0,0,0.5);
+}
+```
+
+#### 方案 C — Glassmorphism 玻璃拟态
+```css
+:root {
+  --color-primary: #7c3aed;
+  --color-primary-hover: #a78bfa;
+  --color-danger: #fb7185;
+  --color-bg: #667eea;   /* 配合 body background: linear-gradient */
+  --color-surface: rgba(255,255,255,0.15);
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255,255,255,0.7);
+  --color-border: rgba(255,255,255,0.2);
+  --color-stripe: rgba(255,255,255,0.08);
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(31,38,135,0.37);
+  --shadow-modal: 0 8px 32px rgba(31,38,135,0.5);
+  --backdrop: blur(8px);
+}
+```
+
+#### 方案 D（示例）— Clean Modern 清新现代（消费品 / B2C）
+```css
+:root {
+  --color-primary: #059669;
+  --color-primary-hover: #34d399;
+  --color-danger: #ef4444;
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-stripe: #f3f4f6;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Noto Sans SC', 'Inter', sans-serif;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-modal: 0 4px 16px rgba(0,0,0,0.12);
+}
+```
+
+> 用户选择"D 自定义"时，根据其描述从 `ui-ux-pro-max` 中匹配最接近的色板 + 字体配对，生成对应 `:root` 块。
+
+---
+
 ## HTML原型的质量等级
 
 ### 三个等级
@@ -35,41 +126,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[需求标题] - 原型</title>
+    <!-- [将用户选定的风格 :root Token 块粘贴到此处，替换默认值] -->
     <style>
+        /* ===== 设计 Token（由 ui-ux-pro-max 风格选择注入） ===== */
+        :root {
+          --color-primary: #1890ff;
+          --color-primary-hover: #40a9ff;
+          --color-danger: #ff4d4f;
+          --color-bg: #f5f5f5;
+          --color-surface: #ffffff;
+          --color-text: #262626;
+          --color-text-secondary: #8c8c8c;
+          --color-border: #d9d9d9;
+          --color-stripe: #fafafa;
+          --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          --radius: 4px;
+          --shadow: 0 2px 8px rgba(0,0,0,0.1);
+          --shadow-modal: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
+            font-family: var(--font-body);
+            background: var(--color-bg);
+            color: var(--color-text);
             padding: 20px;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             overflow: hidden;
         }
         
         .header {
-            background: #1890ff;
-            color: white;
+            background: var(--color-primary);
+            color: #fff;
             padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
-        .header h1 { font-size: 20px; }
+        .header h1 { font-size: 20px; font-family: var(--font-heading); }
         
         .breadcrumb {
             padding: 12px 20px;
-            background: #fafafa;
-            border-bottom: 1px solid #d9d9d9;
+            background: var(--color-stripe);
+            border-bottom: 1px solid var(--color-border);
             font-size: 12px;
-            color: #666;
+            color: var(--color-text-secondary);
         }
         
         .content {
@@ -83,16 +194,22 @@
         button {
             padding: 8px 16px;
             margin-right: 8px;
-            background: #1890ff;
-            color: white;
+            background: var(--color-primary);
+            color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--radius);
             cursor: pointer;
             font-size: 14px;
+            min-height: 44px;
         }
         
-        button:hover { background: #40a9ff; }
-        button.secondary { background: #fff; color: #1890ff; border: 1px solid #1890ff; }
+        button:hover { background: var(--color-primary-hover); }
+        button.secondary {
+            background: var(--color-surface);
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+        }
+        button.danger { background: var(--color-danger); }
         
         table {
             width: 100%;
@@ -101,19 +218,19 @@
         }
         
         table th {
-            background: #fafafa;
+            background: var(--color-stripe);
             padding: 12px;
             text-align: left;
-            border-bottom: 2px solid #d9d9d9;
+            border-bottom: 2px solid var(--color-border);
             font-weight: 600;
         }
         
         table td {
             padding: 12px;
-            border-bottom: 1px solid #d9d9d9;
+            border-bottom: 1px solid var(--color-border);
         }
         
-        table tr:hover { background: #f5f5f5; }
+        table tr:hover { background: var(--color-stripe); }
         
         .form-group {
             margin-bottom: 16px;
@@ -129,18 +246,17 @@
             width: 100%;
             max-width: 300px;
             padding: 8px 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 4px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
             font-size: 14px;
+            background: var(--color-surface);
+            color: var(--color-text);
         }
         
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.45);
             z-index: 1000;
             justify-content: center;
@@ -150,12 +266,12 @@
         .modal.show { display: flex; }
         
         .modal-content {
-            background: white;
-            border-radius: 4px;
+            background: var(--color-surface);
+            border-radius: var(--radius);
             padding: 20px;
             max-width: 600px;
             width: 90%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-modal);
         }
         
         .modal-header {
@@ -163,18 +279,18 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            border-bottom: 1px solid #d9d9d9;
+            border-bottom: 1px solid var(--color-border);
             padding-bottom: 10px;
         }
         
-        .modal-header h2 { font-size: 18px; }
+        .modal-header h2 { font-size: 18px; font-family: var(--font-heading); }
         
         .close-btn {
             background: none;
             border: none;
             font-size: 20px;
             cursor: pointer;
-            color: #999;
+            color: var(--color-text-secondary);
             padding: 0;
         }
         
@@ -184,20 +300,20 @@
             gap: 8px;
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid #d9d9d9;
+            border-top: 1px solid var(--color-border);
         }
         
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
-            border-radius: 4px;
+            border-radius: var(--radius);
             font-size: 12px;
             font-weight: 500;
         }
         
         .status-success { background: #f6ffed; color: #52c41a; }
         .status-pending { background: #fffbe6; color: #faad14; }
-        .status-error { background: #fff1f0; color: #ff4d4f; }
+        .status-error { background: #fff1f0; color: var(--color-danger); }
     </style>
 </head>
 <body>

@@ -402,7 +402,7 @@ END IF
 
 ### 新增/修改表
 
-#### 表：user_extend
+**表：user_extend**
 > 存储用户扩展信息（手机、地址等）
 
 \`\`\`sql
@@ -440,7 +440,7 @@ CREATE TABLE \`user_extend\` (
 
 ### 接口详细说明
 
-#### POST /api/v1/user - 创建用户
+**POST /api/v1/user — 创建用户**
 
 **请求头**
 \`\`\`
@@ -1074,6 +1074,7 @@ Content-Type: application/json
 - **安全规范**: `.ai-config/rules/03_security.mdc` - 防SQL注入、XSS、鉴权等
 - **Git工作流**: `.ai-config/rules/04_git_workflow.mdc` - Commit、分支、PR规范
 - **开发流程**: `.ai-config/rules/05_workflow.mdc` - 整体流程确认机制
+- **文档格式规范**: `.ai-config/rules/doc-format-standard.md` - 确保所有输出文档兼容 Word / 飞书转换
 
 ### 文档管理
 

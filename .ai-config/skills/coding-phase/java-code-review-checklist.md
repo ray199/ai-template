@@ -194,7 +194,62 @@ List<User> users = userMapper.selectAllWithDepartment();
 ✅ 考虑缓存（Redis）
 ```
 
-### 8. 并发控制规范
+### 8. 版本特性使用规范
+
+> **前提**：必须先完成 Step 0 版本扫描，再按对应版本执行以下检查。
+
+#### JDK 8 检查项
+```
+- [ ] 禁止使用 var / record / sealed class / text blocks / switch expressions
+- [ ] 日期使用 java.time，禁止 Date / Calendar / SimpleDateFormat
+- [ ] 积极使用 Lambda / Stream / Optional（有对应业务场景时）
+```
+
+#### JDK 11 额外检查项
+```
+- [ ] var 仅用于类型明确的局部变量，不影响可读性
+- [ ] 可使用 String 新方法（isBlank / strip / lines）
+```
+
+#### JDK 17 额外检查项
+```
+- [ ] 纯数据 DTO/VO 是否考虑使用 record（替代 @Data + 全参构造器）
+- [ ] instanceof pattern matching 是否替换了旧式类型判断 + 强转
+- [ ] switch expressions 是否替换了旧式 switch-case 赋值
+- [ ] text blocks 是否用于 SQL / JSON / HTML 多行字符串
+```
+
+#### JDK 21 额外检查项
+```
+- [ ] 新建线程池是否评估了 Virtual Threads（I/O 密集型场景）
+- [ ] switch pattern matching 语法是否正确
+```
+
+#### Spring Boot 版本检查
+```
+Spring Boot 2.x：
+- [ ] 包名使用 javax.*，不可混入 jakarta.*
+
+Spring Boot 3.x：
+- [ ] 包名全部迁移至 jakarta.*（javax.* 在 3.x 中不存在）
+- [ ] Spring Security 配置使用 Lambda DSL，不用旧式链式调用
+- [ ] 已移除的旧 API 未被继续使用（如 WebSecurityConfigurerAdapter 已废弃）
+```
+
+#### Spring AI 检查项（仅检测到 spring-ai 依赖时执行）
+```
+- [ ] AI 调用封装在 Service 层，Controller 层不直接调用模型
+- [ ] 使用 ChatClient / ChatModel 标准 API，无自行封装的重复抽象
+- [ ] Prompt 模板统一管理，无散落的字符串拼接
+- [ ] AI 调用有超时配置和降级处理
+- [ ] 流式响应使用 Flux<String>，未阻塞线程
+- [ ] API Key 来自环境变量，无硬编码
+- [ ] 传入 AI 的用户数据已脱敏
+```
+
+---
+
+### 9. 并发控制规范
 
 ```java
 【读多写少的场景 - 使用ReadWriteLock】

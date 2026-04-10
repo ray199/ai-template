@@ -17,6 +17,8 @@
 ```
 输入：已确认的技术设计文档（docs/design/REQ-XXXXXXXX-design.md）
        ↓
+[Step 0] 读取项目配置，确定版本上下文（Java 项目必须执行）
+         ↓
 [Step 1] 读取设计文档，拆解编码任务
          - DB 变更任务（优先执行）
          - Entity / DO 层
@@ -32,12 +34,124 @@
 [Step 3] 逐层生成代码（自底向上）
          Mapper → Entity → Service → Controller
          ↓
-[Step 4] 代码规范自检（对照 code_checklist.md）
+[Step 4] 代码规范自检（对照 code_checklist.md，基于 Step 0 确定的版本）
          ↓
 [Step 5] 生成单元测试骨架（Service 层）
          ↓
 [Step 6] 输出编码完成报告，等待开发者确认
 ```
+
+---
+
+## Step 0：项目版本上下文扫描（Java 项目）
+
+> 每次执行 `/code` 指令时，在生成任何代码之前**必须先完成此步骤**。
+> 目的：确保生成的代码语法、包名、API 与项目实际版本一致，避免语法/兼容性问题。
+
+### 自动扫描逻辑
+
+```
+1. 优先读取 pom.xml
+   ├─ <java.version> 或 <maven.compiler.source>  → JDK 版本
+   ├─ <parent> spring-boot-starter-parent version → Spring Boot 版本
+   ├─ 搜索 spring-ai 依赖                         → Spring AI 是否引入
+   └─ 搜索 spring-cloud 依赖                      → Spring Cloud 是否引入
+
+2. 若无 pom.xml，读取 build.gradle / build.gradle.kts
+   ├─ java { sourceCompatibility / targetCompatibility }
+   └─ plugins { id 'org.springframework.boot' version '...' }
+
+3. 若仍无法确定，读取
+   ├─ .java-version / .sdkmanrc / .tool-versions
+   └─ Dockerfile（FROM eclipse-temurin:xx）
+
+4. 若全部无法确定 → 输出询问，人工确认后继续
+```
+
+### 输出格式（必须在开始编码前展示）
+
+```
+────────────────────────────────────────────
+  项目版本上下文（自动检测）
+────────────────────────────────────────────
+  JDK 版本      : [8 / 11 / 17 / 21 / ❓未检测到]
+  Spring Boot   : [2.x / 3.x / ❓未检测到]
+  构建工具      : [Maven / Gradle]
+  Spring AI     : [✅ 已引入 / ❌ 未引入]
+  Spring Cloud  : [✅ 已引入 / ❌ 未引入]
+  其他关键依赖  : [MyBatis-Plus / JPA / Security / ...]
+
+  适用规范      : java_spring.mdc §[对应版本章节]
+  包名前缀      : [javax.* / jakarta.*（Spring Boot 3.x）]
+────────────────────────────────────────────
+```
+
+### 版本对代码生成的影响（Java）
+
+| 版本条件 | 代码生成调整 |
+|---|---|
+| JDK ≥ 17 | 纯数据 DTO/VO 优先生成 `record`，而非 Lombok `@Data` |
+| JDK ≥ 21 | 线程池考虑 Virtual Threads；`switch` 可用 pattern matching |
+| Spring Boot 3.x | 所有包名使用 `jakarta.*`，Security 用 Lambda DSL |
+| Spring AI 已引入 | AI 调用封装在 Service 层，使用 `ChatClient` 标准 API |
+| JDK 8 | 严格限制语法，禁止 `var`/`record`/`text blocks` 等 |
+
+---
+
+## Step 0 补充：前端项目版本扫描（Vue 项目）
+
+> 当项目含前端代码时，与 Java 扫描**并行执行**（或单独执行）。
+
+### 自动扫描逻辑
+
+```
+1. 读取 package.json
+   ├─ dependencies.vue          → Vue 版本（^2.x / ^3.x）
+   ├─ devDependencies.vite      → 构建工具 Vite（通常 Vue 3）
+   ├─ devDependencies.@vue/cli-service → Vue CLI（通常 Vue 2/3）
+   ├─ dependencies.vuex         → 状态管理 Vuex（Vue 2 概率高）
+   ├─ dependencies.pinia        → 状态管理 Pinia（Vue 3）
+   ├─ dependencies.vue-router   → 路由版本（^3.x / ^4.x）
+   └─ engines.node              → Node.js 版本要求
+
+2. 检查配置文件
+   ├─ vite.config.js / vite.config.ts  → Vite 项目
+   ├─ vue.config.js                    → Vue CLI 项目
+   └─ tsconfig.json 存在               → TypeScript 已引入
+
+3. 若无法确定 → 人工确认后继续
+```
+
+### 输出格式
+
+```
+────────────────────────────────────────────
+  前端版本上下文（自动检测）
+────────────────────────────────────────────
+  Vue 版本       : [2.x / 3.x / ❓未检测到]
+  Node.js 版本   : [16 / 18 / 20 / ❓]
+  构建工具       : [Vite / Vue CLI / Webpack]
+  状态管理       : [Vuex / Pinia / 无]
+  路由版本       : [Vue Router 3 / Vue Router 4 / 无]
+  UI 框架        : [Element UI / Element Plus / Ant Design Vue / 其他 / 无]
+  TypeScript     : [✅ 已引入 / ❌ 未引入]
+
+  适用规范       : node_vue.mdc §[对应版本章节]
+  代码风格       : [Options API / Composition API + <script setup>]
+────────────────────────────────────────────
+```
+
+### 版本对前端代码生成的影响
+
+| 版本条件 | 代码生成调整 |
+|---|---|
+| Vue 2 | Options API（data/methods/computed/watch），Vuex，Vue Router 3 |
+| Vue 3 | `<script setup>` + Composition API，Pinia，Vue Router 4 |
+| TypeScript 已引入 | Props/Emits 用泛型定义，API 返回值有类型，禁止 `any` |
+| TypeScript 未引入 | JSDoc 注释补充类型说明 |
+| Element UI（Vue 2）| 组件前缀 `el-`，使用 `$message` / `$confirm` |
+| Element Plus（Vue 3）| 组件前缀 `el-`，使用 `ElMessage` / `ElMessageBox`（按需导入）|
+| Vant（移动端） | 组件前缀 `van-`，注意 rem 适配方案 |
 
 ---
 
@@ -72,11 +186,14 @@
 - [ ] 无魔法值，常量统一定义在 `Constants` 或枚举类中
 - [ ] 方法长度不超过 80 行，超过须重构提取子方法
 
-### Java 8 规范
-- [ ] 集合操作优先使用 Stream API，避免繁琐的 for 循环
-- [ ] 可能为 null 的返回值使用 `Optional` 包装，或在 Javadoc 中标注可空
-- [ ] 日期处理使用 `java.time`（LocalDate / LocalDateTime），禁止使用 `Date` 或 `Calendar`
-- [ ] 初始化 `ArrayList` / `HashMap` 时指定初始容量
+### Java 版本特性规范（基于 Step 0 检测结果）
+- [ ] **JDK 8**：禁止使用 `var` / `record` / `text blocks` / `switch expressions`
+- [ ] **JDK 8+**：日期处理使用 `java.time`，禁止 `Date` / `Calendar` / `SimpleDateFormat`
+- [ ] **JDK 8+**：集合操作优先使用 Stream API；可能为 null 的值使用 `Optional`
+- [ ] **JDK 8+**：初始化 `ArrayList` / `HashMap` 时指定初始容量
+- [ ] **JDK 17+**：纯数据 DTO/VO 优先使用 `record`，而非 Lombok `@Data`
+- [ ] **JDK 21+**：I/O 密集型线程池评估是否启用 Virtual Threads
+- [ ] **Spring Boot 3.x**：包名全部为 `jakarta.*`，Security 使用 Lambda DSL
 
 ### MyBatis 规范
 - [ ] Mapper 接口方法名语义清晰（`selectByUserId` 不写 `query1`）

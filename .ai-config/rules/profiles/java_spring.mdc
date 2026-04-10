@@ -1,56 +1,233 @@
 # Profile：Java（Spring）
 
-适用范围：以 Java 为主的后端服务（Spring Boot / Spring Cloud 等）。
+适用范围：以 Java 为主的后端服务（Spring Boot / Spring Cloud / Spring AI 等）。
 
-## 1. 版本与运行时
-- 语言版本：Java 8（或项目指定版本）
-  - 注意：严禁使用 Java 14+ 的语法（如 `record`, `var`, `switch expressions`, `text blocks`）
-  - 推荐：积极使用 Java 8 特性（`Lambda`, `Stream API`, `Optional`, `Interface default methods`）
-- 框架核心：Spring Boot 2.7.x（或项目指定版本）
-- 构建工具：Maven 3.6+（或项目指定版本）
+> **重要**：本 Profile 不锁定任何版本号。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定，并按版本适配矩阵选择对应规则。
 
-## 2. 技术栈建议
-- ORM：MyBatis / MyBatis-Plus（常见搭配）或 Spring Data JPA（以项目既有为准）
-- 工具库：
-  - Lombok：必须使用 `@Data`, `@Builder`, `@Slf4j`, `@RequiredArgsConstructor` 简化代码
-  - Hutool / Apache Commons：用于字符串、集合、日期的工具类操作
-  - Jackson：默认 JSON 处理库
-- 日志：SLF4J + Logback（以 Spring Boot 默认体系为准）
+---
 
-## 3. 负向约束（强制）
-- 禁止使用 `javax.annotation.PostConstruct` 等已废弃包（应使用 `jakarta` 或标准 Java 包，视 Spring Boot 版本而定，但在 JDK 8 环境下需注意兼容性）
-- 禁止使用 `System.out.println`，必须使用 Logger
-- 禁止使用 `SimpleDateFormat` 进行日期格式化（线程不安全），必须使用 `java.time`（ThreeTenBP）或 `DateUtils`
-- 禁止在循环中执行数据库查询（N+1），必须做批量查询/预加载/Join 等优化
-- 禁止使用原始类型集合（如 `List list`），必须指定泛型（如 `List<String>`）
-- 禁止吞异常；必须保留完整堆栈，并给出业务可读的错误信息
+## 0. 版本检测（每次编码阶段开始前自动执行）
 
-## 4. 集合与并发（强制）
-- 使用 `ArrayList` / `HashMap` 时，如果知道初始大小，必须指定初始容量
-- 线程池必须使用 `ThreadPoolExecutor` 显式创建，禁止使用 `Executors` 去创建（避免 OOM 风险）
+### 检测来源（按优先级）
 
-## 5. 工程结构建议（后端）
-推荐按模块拆分，保持高内聚低耦合：
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `pom.xml` | `<java.version>`, `<maven.compiler.source>`, `<spring-boot.version>`, `<spring-ai.version>` |
+| 2 | `build.gradle` / `build.gradle.kts` | `java { sourceCompatibility }`, `springBoot { version }` |
+| 3 | `.java-version` / `.sdkmanrc` / `.tool-versions` | Java 版本声明 |
+| 4 | `Dockerfile` / CI 配置 | `FROM eclipse-temurin:xx`, `java-version: xx` |
+
+### 输出版本上下文（Context）
+
 ```
-com.example.project
-├── common/
-├── config/
-├── framework/
-└── modules/
-    └── <module>/
-        ├── controller/
-        ├── service/
-        │   └── impl/
-        ├── mapper/
-        ├── entity/
-        ├── dto/
-        └── vo/
+【项目版本上下文】
+JDK 版本：[8 / 11 / 17 / 21 / 未检测到→询问]
+Spring Boot 版本：[2.x / 3.x / 未检测到→询问]
+构建工具：[Maven / Gradle]
+Spring AI：[引入 / 未引入]（检测 spring-ai 依赖）
+Spring Cloud：[引入 / 未引入]
+其他关键依赖：[MyBatis-Plus / JPA / Security / 等]
 ```
 
-## 6. 测试与质量门禁（建议）
-- 单元测试：优先 JUnit 5（以项目既有为准）
-- 关键业务逻辑必须可单测；外部依赖（DB/HTTP/消息）必须可替换或可隔离
+若配置文件中无法确定版本，**必须人工确认后再继续**，禁止假设。
 
-## 7. 与通用规则的关系
+---
+
+## 1. JDK 版本适配矩阵
+
+### JDK 8
+
+**可用特性（推荐积极使用）**
+- Lambda、Stream API、Optional、Interface default methods、方法引用
+
+**禁止使用**
+- `var`（JDK 10+）
+- `record`（JDK 16+）
+- `sealed class`（JDK 17+）
+- `switch expressions`（JDK 14+）
+- `text blocks`（JDK 15+）
+- `instanceof` pattern matching（JDK 16+）
+
+**特殊要求**
+- 日期处理：禁止 `Date` / `Calendar`，使用 `java.time`（ThreeTenBP backport 或 JDK 8 自带）
+- 禁止使用 `SimpleDateFormat`（线程不安全）
+
+---
+
+### JDK 11（LTS）
+
+**JDK 8 全部规则继续适用，额外新增：**
+- 可使用 `var` 局部变量类型推断（仅限类型明确时，不可滥用）
+- 可使用 `String` 新方法：`isBlank()`、`strip()`、`lines()`、`repeat()`
+- 可使用 `Optional.isEmpty()`
+
+**禁止使用**
+- `record`、`sealed class`、`switch expressions`（仍不可用）
+
+---
+
+### JDK 17（LTS，推荐新项目）
+
+**JDK 11 全部规则继续适用，额外新增：**
+- 可使用 `record`（纯数据载体 DTO/VO 推荐用 record 替代 Lombok `@Data`）
+- 可使用 `sealed class` / `permits`
+- 可使用 `instanceof` pattern matching：`if (obj instanceof String s)`
+- 可使用 `switch expressions`（箭头语法）
+- 可使用 `text blocks`（多行字符串）
+
+**推荐实践（JDK 17）**
+```java
+// 用 record 定义纯 DTO
+public record UserCreateRequest(String username, String email) {}
+
+// instanceof pattern matching
+if (result instanceof ErrorResponse err) {
+    log.error("error: {}", err.code());
+}
+
+// text blocks（JSON/SQL 模板）
+String sql = """
+    SELECT id, name FROM user
+    WHERE status = 1
+    """;
+```
+
+---
+
+### JDK 21（LTS，最新推荐）
+
+**JDK 17 全部规则继续适用，额外新增：**
+- 可使用 Virtual Threads（Project Loom）：`Thread.ofVirtual().start(...)`
+- 可使用 `switch` pattern matching（`case String s when s.length() > 5`）
+- 可使用 Sequenced Collections（`SequencedCollection`、`getFirst()`、`getLast()`）
+
+**Spring Boot 3.2+ 配合 JDK 21**
+- `spring.threads.virtual.enabled=true` 启用虚拟线程
+- 虚拟线程下 `@Transactional` 仍可正常使用
+
+---
+
+## 2. Spring Boot 版本适配矩阵
+
+### Spring Boot 2.x（兼容 JDK 8 / 11 / 17）
+
+- 包名：`javax.*`（`javax.validation`、`javax.servlet` 等）
+- Spring Security 5.x：传统链式 `HttpSecurity` 配置
+- `spring.factories` SPI 机制
+- 最高支持 JDK 17（建议不超过此版本）
+
+### Spring Boot 3.x（最低 JDK 17）
+
+- 包名迁移至 `jakarta.*`（**迁移时必须全局替换，不可混用**）
+- Spring Security 6.x：Lambda DSL 配置为主
+  ```java
+  // ✅ Spring Boot 3.x 写法
+  http.authorizeHttpRequests(auth -> auth
+      .requestMatchers("/public/**").permitAll()
+      .anyRequest().authenticated());
+  ```
+- 移除 `spring.factories`，改用 `AutoConfiguration.imports`
+- 原生 GraalVM 支持（Native Image）
+
+---
+
+## 3. Spring AI（检测到依赖时启用此节规则）
+
+**触发条件**：`pom.xml` 中检测到 `spring-ai-*` 依赖，或 `build.gradle` 中引入 `spring-ai`。
+
+### 核心概念与命名
+
+| 概念 | 说明 |
+|---|---|
+| `ChatClient` | 统一 AI 对话接口（Spring AI 1.x 推荐） |
+| `ChatModel` | 底层模型抽象（OpenAI / Claude / Ollama 等） |
+| `EmbeddingModel` | 向量嵌入模型 |
+| `VectorStore` | 向量数据库接口（Chroma / Pinecone / PGVector 等） |
+| `Advisor` | 拦截器机制（RAG、记忆、日志等） |
+| `PromptTemplate` | 提示词模板管理 |
+
+### 编码规范
+
+```java
+// ✅ 推荐：使用 ChatClient（流式构建）
+@Service
+public class AiService {
+
+    private final ChatClient chatClient;
+
+    public AiService(ChatClient.Builder builder) {
+        this.chatClient = builder
+            .defaultSystem("你是一个专业的助手")
+            .build();
+    }
+
+    public String chat(String userMessage) {
+        return chatClient.prompt()
+            .user(userMessage)
+            .call()
+            .content();
+    }
+}
+
+// ✅ RAG 模式（带向量检索的对话）
+public String chatWithRag(String question) {
+    return chatClient.prompt()
+        .advisors(new QuestionAnswerAdvisor(vectorStore))
+        .user(question)
+        .call()
+        .content();
+}
+```
+
+### Spring AI 专项约束
+
+- 禁止在 Controller 层直接调用 AI 模型，必须封装在 Service 层
+- Prompt 模板必须统一管理，禁止在代码中散落字符串拼接
+- AI 调用必须有超时和降级处理（`timeout`、fallback）
+- 敏感信息（用户数据）进入 AI 前必须脱敏
+- 流式响应（`stream()`）使用 `Flux<String>` 返回，不可阻塞线程
+- API Key 只能来自环境变量或配置中心，禁止硬编码
+
+```yaml
+# application.yml 示例
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}   # ✅ 环境变量
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.7
+          timeout: 30s
+```
+
+---
+
+## 4. 通用约束（所有版本强制）
+
+### 4.1 代码质量
+
+- 禁止使用 `System.out.println`，必须使用 `@Slf4j` + `log.xxx`
+- 禁止在循环中执行数据库查询（N+1 问题）
+- 禁止使用原始类型集合（如 `List list`），必须指定泛型
+- 禁止吞异常（`catch (Exception e) {}`），必须保留堆栈并给出业务可读信息
+- 禁止使用 `Executors` 工厂方法创建线程池，必须用 `ThreadPoolExecutor` 显式创建
+
+### 4.2 依赖注入与安全
+
+- 字段注入（`@Autowired` on field）**禁止在生产代码使用**，必须用构造器注入
+- 敏感配置只来自环境变量或安全配置中心，禁止硬编码密钥
+
+### 4.3 技术栈建议（不限版本）
+
+- ORM：MyBatis / MyBatis-Plus 或 Spring Data JPA（以项目既有为准）
+- 工具库：Lombok（简化样板代码）、Hutool / Apache Commons
+- JSON：Jackson（Spring Boot 默认）
+- 日志：SLF4J + Logback
+
+---
+
+## 5. 与通用规则的关系
+
 - 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
 - 安全红线：遵循 [03_security.mdc](../03_security.mdc)

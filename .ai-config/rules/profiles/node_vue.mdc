@@ -1,41 +1,347 @@
-# Profile：Node（Vue）
+# Profile：Node.js + Vue
 
-适用范围：以 Node.js 为运行时、Vue 为前端框架的项目（常见组合：Vue 3 + Vite）。
+适用范围：以 Vue 为前端框架的项目（Vue 2 / Vue 3，配合 Node.js 运行时）。
 
-## 1. 版本与运行时
-- Node.js 18+（或项目指定 LTS 版本）
-- Vue：Vue 3（或项目指定版本）
+> **重要**：本 Profile 不锁定 Vue 或 Node.js 版本。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定，并按版本适配矩阵选择对应规则。
 
-## 2. 工程结构建议（前端）
+---
+
+## 0. 版本检测（每次编码阶段开始前自动执行）
+
+### 检测来源（按优先级）
+
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `package.json` | `dependencies.vue`（`^2.x` / `^3.x`），`engines.node` |
+| 2 | `package.json` | `devDependencies`：`@vue/cli-service`（→ Vue CLI）/ `vite`（→ Vite） |
+| 3 | `vite.config.js` / `vite.config.ts` | 存在 → 通常为 Vue 3 + Vite |
+| 4 | `vue.config.js` | 存在 → Vue CLI，需再看 vue 版本 |
+| 5 | `.nvmrc` / `.node-version` / `.tool-versions` | Node.js 版本 |
+| 6 | `package.json devDependencies` | `vuex`（→ Vue 2 概率高）/ `pinia`（→ Vue 3）|
+
+### 输出版本上下文（Context）
+
+```
+────────────────────────────────────────────
+  项目版本上下文（自动检测）
+────────────────────────────────────────────
+  Vue 版本       : [2.x / 3.x / ❓未检测到]
+  Node.js 版本   : [16 / 18 / 20 / ❓未检测到]
+  构建工具       : [Vite / Vue CLI / Webpack]
+  状态管理       : [Vuex / Pinia / 无]
+  路由           : [Vue Router 3 / Vue Router 4 / 无]
+  UI 框架        : [Element UI / Element Plus / Ant Design Vue / Vant / 无]
+  TypeScript     : [✅ 已引入 / ❌ 未引入]
+
+  适用规范       : node_vue.mdc §[对应版本章节]
+────────────────────────────────────────────
+```
+
+若 `package.json` 中无法确定 Vue 版本，**必须人工确认后再继续**，禁止假设。
+
+---
+
+## 1. Vue 2（Options API）
+
+### 1.1 工程结构
+
 ```
 src/
   assets/
-  components/
-  pages/            # 或 views/
-  router/
-  stores/           # Pinia（或项目既有方案）
-  services/         # API 封装
+  components/        # 可复用组件（PascalCase）
+  views/             # 页面级组件（路由对应）
+  router/            # Vue Router 3
+  store/             # Vuex store（index.js + modules/）
+  api/               # 请求封装
   utils/
-  types/
+  mixins/            # Mixin 复用逻辑（谨慎使用，优先组件化）
+  filters/           # 全局过滤器（Vue 3 已废弃）
 ```
 
-## 3. 编码约束（强制）
-- 模块边界清晰：UI（components/pages）与数据访问（services）必须解耦
-- 请求层统一：禁止在组件内散落地直接拼 URL/写重复请求逻辑，必须经过统一封装
-- 输入输出必须校验：对用户输入、URL 参数、后端返回结构做必要校验与兜底
+### 1.2 Options API 规范
 
-## 4. TypeScript 使用（建议）
-- 推荐开启 TypeScript（以项目既有为准），并尽量启用严格模式
-- 禁止随意使用 `any`；必须给出合理类型或在边界层集中收敛
+```vue
+<template>
+  <div class="user-form">
+    <form @submit.prevent="handleSubmit">
+      <input v-model="form.username" />
+      <button type="submit" :disabled="isSubmitting">提交</button>
+    </form>
+  </div>
+</template>
 
-## 5. 安全（强制）
-- 禁止在前端代码中写入任何密钥；前端只能持有短期 Token（如有）
-- XSS：禁止将不可信输入直接注入 DOM（例如 v-html），确需使用必须经过安全净化与审计
+<script>
+import { mapState, mapActions } from 'vuex';
 
-## 6. 测试与质量门禁（建议）
-- 组件/业务逻辑必须可测试（以项目既有测试框架为准）
-- 建议引入格式化与 lint，并在提交/CI 作为门禁（以项目既有为准）
+export default {
+  name: 'UserForm',
 
-## 7. 与通用规则的关系
+  // Props 必须带类型和默认值
+  props: {
+    userId: {
+      type: Number,
+      default: null
+    },
+    mode: {
+      type: String,
+      default: 'create',
+      validator: (val) => ['create', 'edit'].includes(val)
+    }
+  },
+
+  data() {
+    return {
+      form: { username: '', email: '' },
+      isSubmitting: false,
+      error: null
+    };
+  },
+
+  computed: {
+    ...mapState('user', ['currentUser']),
+    isFormValid() {
+      return this.form.username.length >= 3;
+    }
+  },
+
+  watch: {
+    userId(newId) {
+      if (newId) this.loadUser(newId);
+    }
+  },
+
+  created() {
+    if (this.mode === 'edit' && this.userId) {
+      this.loadUser(this.userId);
+    }
+  },
+
+  beforeDestroy() {
+    // 清理事件监听、定时器
+  },
+
+  methods: {
+    ...mapActions('user', ['fetchUser', 'createUser']),
+    async handleSubmit() {
+      this.isSubmitting = true;
+      try {
+        await this.createUser(this.form);
+        this.$emit('success');
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+    async loadUser(id) {
+      const user = await this.fetchUser(id);
+      this.form = { username: user.username, email: user.email };
+    }
+  }
+};
+</script>
+```
+
+### 1.3 Vue 2 专项约束（强制）
+
+- **响应式新增属性**：禁止直接 `this.obj.newKey = val`，必须用 `this.$set(obj, key, val)` 或 `Vue.set`
+- **数组变更**：禁止通过索引直接修改数组元素（`arr[0] = x`），必须用变异方法或 `$set`
+- **禁止修改 Props**：禁止在组件内直接赋值给 props，必须通过 `$emit` 通知父组件
+- **Mixin 限制**：Mixin 会导致来源不明，非必要不使用；业务复用优先用组件化
+- **过滤器（filter）**：Vue 3 已废弃，新代码中禁止引入，旧代码维护时注意迁移计划
+- **事件总线**：禁止新增 `new Vue()` 作为 EventBus，使用 Vuex 或组件通信替代
+
+### 1.4 Vuex 规范
+
+```javascript
+// store/modules/user.js
+export default {
+  namespaced: true,
+  state: () => ({           // state 必须是函数
+    users: [],
+    loading: false
+  }),
+  getters: {
+    activeUsers: (state) => state.users.filter(u => u.active)
+  },
+  mutations: {              // 同步，命名 UPPER_SNAKE_CASE
+    SET_USERS(state, users) { state.users = users; },
+    SET_LOADING(state, val) { state.loading = val; }
+  },
+  actions: {                // 异步，camelCase
+    async fetchUsers({ commit }) {
+      commit('SET_LOADING', true);
+      try {
+        const users = await userApi.getList();
+        commit('SET_USERS', users);
+      } finally {
+        commit('SET_LOADING', false);
+      }
+    }
+  }
+};
+```
+
+---
+
+## 2. Vue 3（Composition API）
+
+### 2.1 工程结构
+
+```
+src/
+  assets/
+  components/        # 可复用组件（PascalCase）
+  views/             # 页面级组件（路由对应）
+  router/            # Vue Router 4
+  stores/            # Pinia（复数）
+  api/               # 请求封装
+  utils/
+  hooks/             # Composables（use 前缀）
+  types/             # TypeScript 类型定义
+```
+
+### 2.2 Composition API 规范（`<script setup>`）
+
+```vue
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useUserStore } from '@/stores/user';
+import { useUser } from '@/hooks/useUser';
+
+// Props — 必须带类型
+const props = withDefaults(defineProps<{
+  userId?: number;
+  mode?: 'create' | 'edit';
+}>(), { mode: 'create' });
+
+// Emits — 必须声明
+const emit = defineEmits<{
+  success: [user: User];
+  close: [];
+}>();
+
+const { createUser, getUserById } = useUser();
+const userStore = useUserStore();
+
+const form = ref({ username: '', email: '' });
+const isSubmitting = ref(false);
+const error = ref<string | null>(null);
+
+const isFormValid = computed(() => form.value.username.length >= 3);
+
+const handleSubmit = async () => {
+  if (!isFormValid.value) return;
+  isSubmitting.value = true;
+  try {
+    const user = await createUser(form.value);
+    emit('success', user);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '操作失败';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+onMounted(() => {
+  if (props.mode === 'edit' && props.userId) loadUser(props.userId);
+});
+
+// watch 必须在 onUnmounted 中清理，或使用 watchEffect 自动清理
+const stopWatch = watch(() => props.userId, (id) => { if (id) loadUser(id); });
+onUnmounted(() => stopWatch());
+</script>
+```
+
+### 2.3 Vue 3 专项约束（强制）
+
+- **`<script setup>` 优先**：新组件必须使用 `<script setup>`，禁止混用 Options API
+- **禁止 `reactive` 滥用**：`reactive` 适用于复杂对象，一般用 `ref`；禁止对基本类型使用 `reactive`
+- **Props 只读**：禁止修改 props，通过 `emit` 通知父组件
+- **`v-html` 限制**：禁止将不可信内容赋给 `v-html`，必须经过安全净化
+- **Composable 命名**：以 `use` 开头，返回响应式数据使用 `readonly` 包装防止外部直接修改
+
+### 2.4 Pinia 规范
+
+```typescript
+// stores/user.ts
+import { defineStore } from 'pinia';
+
+export const useUserStore = defineStore('user', () => {
+  // State
+  const users = ref<User[]>([]);
+  const loading = ref(false);
+
+  // Getters（computed）
+  const activeUsers = computed(() => users.value.filter(u => u.active));
+
+  // Actions
+  async function fetchUsers() {
+    loading.value = true;
+    try {
+      users.value = await userApi.getList();
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  return { users: readonly(users), loading: readonly(loading), activeUsers, fetchUsers };
+});
+```
+
+---
+
+## 3. 通用约束（Vue 2 / Vue 3 均适用，强制）
+
+### 3.1 模块边界
+
+- UI（components/views）与数据访问（api/）必须解耦
+- 禁止在组件内散落直接拼 URL 或重复请求逻辑，必须经过统一的 api 层封装
+- 请求层统一处理 token 注入、错误拦截、loading 状态
+
+### 3.2 输入输出校验
+
+- 对用户输入、URL 参数、后端返回结构做必要校验与兜底
+- 禁止将后端返回的原始字段直接渲染到 DOM（防 XSS）
+
+### 3.3 安全（强制）
+
+- 禁止在前端代码中写入任何密钥；前端只能持有短期 Token
+- `v-html` / `innerHTML`：禁止注入不可信来源的内容
+
+### 3.4 TypeScript（有 TS 时强制）
+
+- 禁止在业务代码中扩散 `any`；必须在边界层集中收敛
+- Props、Emits、API 返回值必须有明确类型定义
+
+### 3.5 样式
+
+- 颜色、间距、字体必须使用 Design Token（CSS 变量或 SCSS 变量），禁止硬编码 hex
+- 组件样式必须加 `scoped`，禁止污染全局
+
+### 3.6 性能
+
+- 列表渲染必须加 `:key`，且 key 必须是唯一稳定值（禁止用 index 作为 key，除非列表不变）
+- 超过 50 条的长列表考虑虚拟滚动
+- 非首屏组件使用路由懒加载或动态 `import()`
+
+---
+
+## 4. Node.js 版本适配
+
+| 版本 | 说明 |
+|---|---|
+| Node 16 | 支持 ES2021，部分 ESM 特性需要 flag |
+| Node 18（LTS） | 全面支持 ESM、`fetch` 内置、`--watch` 模式 |
+| Node 20（LTS） | 稳定 Permission Model，`--experimental-vm-modules` 稳定 |
+| Node 22（LTS） | `require(esm)` 支持，Corepack 默认启用 |
+
+- 优先使用项目 `.nvmrc` / `package.json engines` 中锁定的版本
+- 版本不明时，询问后再继续
+
+---
+
+## 5. 与通用规则的关系
+
 - 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
 - 安全红线：遵循 [03_security.mdc](../03_security.mdc)
