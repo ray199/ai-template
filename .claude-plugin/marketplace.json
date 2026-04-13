@@ -1,0 +1,19 @@
+{
+  "name": "ai-template",
+  "owner": {
+    "name": "ray199"
+  },
+  "metadata": {
+    "description": "AI编程工作流规范插件集合"
+  },
+  "plugins": [
+    {
+      "name": "ai",
+      "source": {
+        "source": "github",
+        "repo": "ray199/ai-template"
+      },
+      "description": "AI编程工作流规范 - /ai:intake /ai:evaluate /ai:design /ai:code /ai:test /ai:review /ai:deliver"
+    }
+  ]
+}

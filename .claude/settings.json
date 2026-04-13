@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-template": {
+      "source": {
+        "source": "github",
+        "repo": "ray199/ai-template"
+      }
+    }
+  }
+}
