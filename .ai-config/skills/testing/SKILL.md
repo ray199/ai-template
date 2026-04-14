@@ -180,7 +180,7 @@ curl -X POST http://localhost:8080/api/v1/xxx \
 **上线前必须完成**
 - [ ] [P0/P1 问题修复列表]
 
-确认通过后请回复：`/test-confirm REQ-XXXXXXXX`
+测试部分完成。`/check` 命令将自动继续执行代码审查部分。
 ```
 
 ---

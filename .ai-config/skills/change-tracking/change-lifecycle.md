@@ -39,7 +39,7 @@ needs_confirm → user_choice
 面(Surface)的状态转移：
 needs_reeval → user_choice
                    ├─ 同意重评 → reevaluation → reeval_result
-                   │              (重新执行/evaluate)
+                   │              (重新执行/intake)
                    │              ├─ 确认新评估 → approved → completed
                    │              └─ 不同意 → rejected
                    │
@@ -200,7 +200,7 @@ FOR EACH 点变更 IN pending状态 DO
    ├─ 方案A: 重新完整评估（推荐）
    │   └─ status: needs_reeval → reevaluation
    │       ↓
-   │       触发 `/evaluate REQ-XXX` 命令
+   │       重新执行 `/intake`（更新后的需求文档）
    │       ↓
    │       系统执行完整的工作量评估
    │       ├─ 需求分析师: 业务维度

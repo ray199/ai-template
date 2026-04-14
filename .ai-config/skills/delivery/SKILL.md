@@ -18,22 +18,28 @@
        ↓
 [Step 1] 上线前检查清单（逐项确认）
          ↓
-[Step 2] 整理交付文档包
-         - 需求文档归档
-         - API 文档更新
-         - 数据库变更记录
+[Step 2] 输出交付报告（运维快查）
+         - 路径：docs/delivery/REQ-XXXXXXXX-delivery.md
+         - 内容：功能清单、影响范围、回滚方案、遗留问题
          ↓
-[Step 3] 需求状态流转：in-progress → done
+[Step 3] 整理需求归档包（永久存档）
+         - 路径：docs/requirements/done/REQ-XXXXXXXX/
+         - 内容：需求/设计/测试/审查文档 + delivery-note.md
          ↓
-[Step 4] 输出交付报告
+[Step 4] 需求状态流转：backlog → done
 ```
+
+> **两个输出物说明**  
+> `docs/delivery/` 是面向运维/发布团队的独立快查报告，无需翻阅需求目录。  
+> `docs/requirements/done/` 是完整的需求生命周期归档，面向未来回溯和项目管理。  
+> 两个输出物同时生成，目的不同，互不替代。
 
 ---
 
 ## 上线前检查清单
 
 ### 代码层面
-- [ ] PR 已经过架构师 `/review-confirm` 确认
+- [ ] PR 已通过 `/check` 审查（无 🔴 阻断性问题）
 - [ ] 所有 🔴 必须修复问题已关闭
 - [ ] 代码已合并到目标分支（`develop` / `release`）
 - [ ] 无冲突代码，合并后构建通过
@@ -115,7 +121,7 @@ docs/requirements/done/
 
 交付完成后，需求分析师执行状态更新：
 
-1. 将需求文档从 `docs/requirements/in-progress/` 移动到 `docs/requirements/done/REQ-XXXXXXXX/`
+1. 将需求文档从 `docs/requirements/backlog/` 移动到 `docs/requirements/done/REQ-XXXXXXXX/`
 2. 更新需求文档状态字段：`status: done`
 3. 填写 `done_at` 字段（实际上线时间）
 

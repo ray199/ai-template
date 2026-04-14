@@ -163,7 +163,7 @@ T4 - 完整PRD：
 
 #### Step 2：工作量联合评估
 
-**触发指令：** `/evaluate-workload REQ-XXXXXXXX`
+**触发方式：** 已合并至 `/intake`，自动执行（无需单独触发）
 
 **评估维度**
 
@@ -515,7 +515,7 @@ Content-Type: application/json
 - [ ] 是否有遗漏的错误处理场景
 - [ ] 邮件通知是否需要改为消息队列异步处理
 
-确认无异议后回复：`/design-confirm REQ-XXXXXXXX`
+确认无异议后，执行：`/code REQ-XXXXXXXX`
 ```
 
 **完成标准**
@@ -613,7 +613,7 @@ Content-Type: application/json
    - [ ] DB迁移脚本已在开发环境验证
    - [ ] 代码自检结果已通过
    
-   确认完毕请回复：`/code-confirm REQ-XXXXXXXX`
+   确认完毕后，执行：`/check REQ-XXXXXXXX`
    ```
 
 **编码过程中的自检清单**
@@ -639,9 +639,9 @@ Content-Type: application/json
 
 ---
 
-### 【阶段4】测试与验证
+### 【阶段3】测试+审查（合并）
 
-**触发指令：** `/test REQ-XXXXXXXX`
+**触发指令：** `/check REQ-XXXXXXXX`
 
 **目标**
 执行单元测试、集成测试和系统测试，生成测试报告和覆盖率报告。
@@ -650,7 +650,7 @@ Content-Type: application/json
 
 **输出物规范**
 
-1. **单元测试完成报告** (`docs/test/REQ-XXXXXXXX-unit-test.md`)
+1. **测试报告** (`docs/test/REQ-XXXXXXXX-test.md`)
    ```markdown
    # 单元测试报告
    
@@ -700,7 +700,7 @@ Content-Type: application/json
    - [ ] 无阻断性问题
    - [ ] 建议：缓存失效场景建议补充集成测试
    
-   确认无误请回复：`/test-confirm REQ-XXXXXXXX`
+   确认无误后，执行：`/check REQ-XXXXXXXX`
    ```
 
 2. **集成测试报告** （如有）
@@ -739,7 +739,7 @@ Content-Type: application/json
    
    - [ ] 无阻断性问题，可上线
    
-   确认无误请回复：`/test-confirm REQ-XXXXXXXX`
+   确认无误后，执行：`/check REQ-XXXXXXXX`
    ```
 
 **完成标准**
@@ -752,9 +752,9 @@ Content-Type: application/json
 
 ---
 
-### 【阶段5】代码审查
+### 【阶段3续】代码审查（/check 第二部分）
 
-**触发指令：** `/review REQ-XXXXXXXX`
+**触发指令：** `/check REQ-XXXXXXXX`（与测试验证合并执行）
 
 **目标**
 由人类开发者对代码进行专业审查，确保代码质量、架构合理性和可维护性。
@@ -884,7 +884,7 @@ Content-Type: application/json
 - **预期修复时间**: 1-2小时
 - **下一步**: 修复后重新请求审查
 
-修复完成请回复：`/review-fix REQ-XXXXXXXX`，修复后可重新触发 `/review` 进行复审
+修复完成后重新执行：`/check REQ-XXXXXXXX`
 ```
 
 **完成标准**
@@ -895,7 +895,7 @@ Content-Type: application/json
 
 ---
 
-### 【阶段6】交付
+### 【阶段4】交付
 
 **触发指令：** `/deliver REQ-XXXXXXXX`
 
@@ -1046,23 +1046,17 @@ Content-Type: application/json
 
 ## 关键规范和工具
 
-### 工作流程确认指令汇总
+### 命令速查
 
-| 阶段 | 指令 | 含义 |
-|---|---|---|
-| 阶段0 | `/intake` | 开始需求接入 |
-| 阶段0 | `/intake-confirm REQ-XXX` | 确认需求完整 |
-| 阶段1 | `/evaluate REQ-XXX` | 开始需求评估 |
-| 阶段1 | `/evaluate-confirm REQ-XXX` | 确认评估结果和输出物 |
-| 阶段2 | `/design REQ-XXX` | 开始技术设计 |
-| 阶段2 | `/design-confirm REQ-XXX` | 确认设计方案 |
-| 阶段3 | `/code REQ-XXX` | 开始编码实现 |
-| 阶段3 | `/code-confirm REQ-XXX` | 确认代码完整 |
-| 阶段4 | `/test REQ-XXX` | 开始测试执行 |
-| 阶段4 | `/test-confirm REQ-XXX` | 确认测试通过 |
-| 阶段5 | `/review REQ-XXX` | 开始代码审查 |
-| 阶段5 | `/review-fix REQ-XXX` | 提交修复后重新审查 |
-| 阶段6 | `/deliver REQ-XXX` | 开始交付准备 |
+| 命令 | 阶段 | 主要工作 | 下一步 |
+|---|---|---|---|
+| `/init` | 项目准备 | 检测语言，创建 `.ai-config/` + `docs/` 目录结构 | `/intake` |
+| `/intake` | 需求接入 | 结构化 + 工作量评估 + 伪需求扫描 | AI 告知 |
+| `/design REQ-xxx` | 技术设计（M/L/XL） | 架构 + DB + 接口设计 | `/code` |
+| `/code REQ-xxx` | 编码实现 | 生成源码 + DB脚本 + 测试骨架 | `/check` |
+| `/check REQ-xxx` | 测试+审查 | 测试用例 + 5维度代码审查 | AI 告知 |
+| `/deliver REQ-xxx` | 交付上线 | 上线前检查 + 文档归档 | 完成 |
+| `/prototype REQ-xxx` | 原型（可选） | 需求可视化，辅助沟通 | — |
 
 ### 规范文件索引
 
@@ -1079,9 +1073,8 @@ Content-Type: application/json
 ### 文档管理
 
 **需求文档**：`docs/requirements/`
-- `backlog/` - 待评估的新需求
-- `approved/` - 已评估的需求和评估报告
-- `done/` - 已交付的需求（归档）
+- `backlog/` - 待开发的需求（`/intake` 写入）
+- `done/REQ-xxx/` - 已交付的需求（`/deliver` 归档）
 
 **设计文档**：`docs/design/`
 - `REQ-XXX-design.md` - 技术设计文档
@@ -1101,72 +1094,47 @@ Content-Type: application/json
 
 ## 示例工作流
 
-假设你有一个需求"为用户管理系统添加用户权限管理功能"，完整流程如下：
+假设需求"为用户管理系统添加用户权限管理功能"（L等级）：
 
-### 第1天：需求阶段
+### 第1天：需求接入
 ```
-1. 提供原始需求
-   /intake
-   [粘贴需求描述]
-   
-2. 确认需求完整
-   /intake-confirm REQ-20240315-001
-   
-3. 评估需求价值和复杂度
-   /evaluate REQ-20240315-001
-   
-4. 根据推荐，生成Spec和原型
-   /spec REQ-20240315-001
-   /prototype REQ-20240315-001
-   
-5. 确认评估结果
-   /evaluate-confirm REQ-20240315-001
+/intake
+[粘贴需求描述]
+→ AI 输出结构化文档 + 工作量评估（L级）+ 伪需求扫描结论
+→ AI 告知：请执行 /design REQ-20240315-001
 ```
 
-### 第2-3天：设计阶段
+### 第2-3天：技术设计
 ```
-1. 启动技术设计
-   /design REQ-20240315-001
-   
-2. 与团队讨论设计方案
-   [Code Review设计]
-   
-3. 确认设计无误
-   /design-confirm REQ-20240315-001
+/design REQ-20240315-001
+→ 输出架构分析 + DB设计 + 接口清单
+→ 团队评审设计文档
+→ AI 告知：请执行 /code REQ-20240315-001
 ```
 
-### 第4-5天：开发阶段
+### 第4-5天：编码实现
 ```
-1. 启动编码实现
-   /code REQ-20240315-001
-   
-2. 验证代码质量
-   /code-confirm REQ-20240315-001
-```
-
-### 第6天：测试阶段
-```
-1. 执行测试
-   /test REQ-20240315-001
-   
-2. 确认测试通过
-   /test-confirm REQ-20240315-001
+/code REQ-20240315-001
+→ 读取设计文档，生成 Entity/Mapper/Service/Controller/VO
+→ 生成 DB 迁移脚本 + 单元测试骨架
+→ AI 告知：请执行 /check REQ-20240315-001
 ```
 
-### 第7天：审查和交付
+### 第6天：测试+审查
 ```
-1. 人工Code Review
-   /review REQ-20240315-001
-   
-2. 修复问题（如有）
-   [修复代码]
-   /review-fix REQ-20240315-001
-   
-3. 准备交付
-   /deliver REQ-20240315-001
-   
-4. 上线部署
-   [执行部署脚本]
+/check REQ-20240315-001
+→ 生成测试用例集 + 接口测试脚本
+→ 5维度代码审查（质量/架构/安全/可维护性/业务完整性）
+→ 若有🔴问题：修复后重跑 /check
+→ 无🔴问题：AI 告知 /deliver REQ-20240315-001
+```
+
+### 第7天：交付
+```
+/deliver REQ-20240315-001
+→ 上线前检查清单
+→ 归档至 docs/requirements/done/REQ-20240315-001/
+→ 交付完成 ✅
 ```
 
 ---

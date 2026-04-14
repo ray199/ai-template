@@ -15,17 +15,21 @@
 ## 处理流程
 
 ```
-输入：已确认的技术设计文档（docs/design/REQ-XXXXXXXX-design.md）
+输入（根据工作量等级不同）：
+  S 等级  → docs/requirements/backlog/REQ-XXXXXXXX.md（需求文档，跳过设计阶段）
+  M/L/XL → docs/design/REQ-XXXXXXXX-design.md（技术设计文档）
        ↓
-[Step 0] 读取项目配置，确定版本上下文（Java 项目必须执行）
+[Step 0] 检测项目主语言（pom.xml / package.json 等），确定版本上下文
          ↓
-[Step 1] 读取设计文档，拆解编码任务
+[Step 1] 读取输入文档，拆解编码任务
+         S 等级：直接读取需求文档（backlog/）；无设计文档，从需求直接推断代码结构
+         M/L/XL：读取技术设计文档（design/），按设计文档拆解任务
          - DB 变更任务（优先执行）
-         - Entity / DO 层
-         - Mapper / Repository 层
+         - Entity / DO / Model 层
+         - Mapper / Repository / DAO 层
          - Service 层（含接口 + 实现）
-         - Controller 层
-         - VO / DTO / 请求响应对象
+         - Controller / Router / View 层
+         - VO / DTO / Schema / 请求响应对象
          ↓
 [Step 2] 执行 DB 变更
          - 生成 DDL 脚本（resources/db/migration/）
@@ -152,6 +156,111 @@
 | Element UI（Vue 2）| 组件前缀 `el-`，使用 `$message` / `$confirm` |
 | Element Plus（Vue 3）| 组件前缀 `el-`，使用 `ElMessage` / `ElMessageBox`（按需导入）|
 | Vant（移动端） | 组件前缀 `van-`，注意 rem 适配方案 |
+
+---
+
+## Step 0 补充：Python 项目版本扫描
+
+> 检测到 Python 项目时执行（`requirements.txt` / `pyproject.toml` 存在）。
+
+### 自动扫描逻辑
+
+```
+1. 读取 pyproject.toml → [tool.poetry] python / [project] requires-python
+2. 读取 .python-version → pyenv 声明版本
+3. 读取 setup.cfg / setup.py → python_requires
+4. 读取 Pipfile → [requires] python_version
+5. 读取 Dockerfile → FROM python:x.x
+6. 若全部无法确定 → 询问用户确认
+
+同时检测 Web 框架依赖：
+  requirements.txt / pyproject.toml 中检索：
+  - django / djangorestframework → Django + DRF
+  - fastapi → FastAPI
+  - flask → Flask
+  - sqlalchemy → SQLAlchemy ORM
+  - alembic → Alembic 迁移
+```
+
+### 输出格式
+
+```
+────────────────────────────────────────────
+  Python 版本上下文（自动检测）
+────────────────────────────────────────────
+  Python 版本    : [3.8 / 3.10 / 3.11 / 3.12 / ❓未检测到]
+  包管理工具     : [pip / Poetry / Pipenv / PDM]
+  Web 框架       : [Django / FastAPI / Flask / 无]
+  ORM            : [Django ORM / SQLAlchemy / 无]
+  数据库迁移     : [Alembic / Django Migrations / 无]
+  类型检查       : [mypy / pyright / 无]
+
+  适用规范       : python.mdc §[对应版本章节]
+────────────────────────────────────────────
+```
+
+### 版本对代码生成的影响（Python）
+
+| 版本条件 | 代码生成调整 |
+|---|---|
+| Python ≤ 3.8 | 类型提示用 `from typing import Optional, List, Dict`，禁止 `X \| Y` 语法 |
+| Python ≥ 3.10 | 可用 `match/case`，类型提示可用内置 `list[int]`、`X \| Y` |
+| Python ≥ 3.11 | 可用 `TaskGroup`、`Self`，推荐用于新的异步并发场景 |
+| FastAPI 项目 | 路由使用 `@app.get/post`，参数校验使用 Pydantic Model |
+| Django 项目 | 视图用 ViewSet，序列化器显式声明 `fields`，禁止 `__all__` |
+| SQLAlchemy 2.x | 使用 `Mapped[T]` + `mapped_column` 声明式风格 |
+
+---
+
+## Step 0 补充：C#/.NET 项目版本扫描
+
+> 检测到 .NET 项目时执行（`*.csproj` / `*.sln` 存在）。
+
+### 自动扫描逻辑
+
+```
+1. 读取 *.csproj → <TargetFramework>（net6.0 / net7.0 / net8.0）
+                 → <LangVersion>（10 / 11 / 12）
+                 → <Nullable>（enable / disable）
+2. 读取 global.json → "sdk": { "version": "..." }
+3. 读取 Directory.Build.props → <TargetFramework>
+4. 读取 Dockerfile → FROM mcr.microsoft.com/dotnet/aspnet:x.x
+5. 若全部无法确定 → 询问用户确认
+
+同时检测框架类型：
+  .csproj / NuGet 依赖中检索：
+  - Microsoft.AspNetCore.Mvc → Controller-based Web API
+  - app.MapGet（Program.cs 中） → Minimal API
+  - Microsoft.EntityFrameworkCore → EF Core
+  - Dapper → Dapper ORM
+```
+
+### 输出格式
+
+```
+────────────────────────────────────────────
+  .NET 版本上下文（自动检测）
+────────────────────────────────────────────
+  .NET 版本       : [6 / 7 / 8 / ❓未检测到]
+  C# 版本         : [10 / 11 / 12 / ❓]
+  API 风格        : [Controller-based / Minimal API / 混合]
+  ORM             : [EF Core / Dapper / ADO.NET / 无]
+  NRT（空引用）   : [✅ 已启用 / ❌ 未启用]
+
+  适用规范        : dotnet_csharp.mdc §[对应版本章节]
+────────────────────────────────────────────
+```
+
+### 版本对代码生成的影响（C#/.NET）
+
+| 版本条件 | 代码生成调整 |
+|---|---|
+| .NET 6 / C# 10 | 文件级命名空间、`record struct`，禁止 `required` 修饰符 |
+| .NET 7 / C# 11 | 可用 `required` 修饰符、原始字符串（`"""`）、List patterns |
+| .NET 8 / C# 12 | 可用主构造函数、Collection expressions、`IExceptionHandler` |
+| NRT 已启用 | 引用类型必须标注 `?`，禁止用 `!` 消除警告 |
+| EF Core 项目 | 继承 BaseEntity，使用全局查询过滤器过滤软删除 |
+| Minimal API | 路由在独立 `MapXxxEndpoints` 扩展方法中注册，禁止全写在 Program.cs |
 
 ---
 
@@ -327,5 +436,5 @@ CREATE TABLE IF NOT EXISTS `xxx_table` (
 - [ ] 单元测试骨架已填充测试数据（或标注 TODO）
 - [ ] DB 迁移脚本已在开发环境验证执行
 
-确认后请回复：`/code-confirm REQ-XXXXXXXX`
+确认后，执行：`/check REQ-XXXXXXXX`
 ```

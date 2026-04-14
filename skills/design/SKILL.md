@@ -14,7 +14,7 @@ argument-hint: [REQ-XXXXXXXX]
 
 ```
 [Step 1] 加载上下文
-         - 读取需求文档（docs/requirements/approved/ 或 backlog/）
+         - 读取需求文档（docs/requirements/backlog/REQ-XXXXXXXX.md）
          - 扫描现有代码库结构（src/main/java/）
          - 读取已有数据库表结构（docs/db/ 或 MCP 工具）
          - 读取已有接口文档（docs/api/）

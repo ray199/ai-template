@@ -42,3 +42,16 @@
 - [ ] 并发处理：处理并发请求，避免竞态条件
 - [ ] 日志记录：关键操作有日志记录
 - [ ] 配置管理：环境配置合理，敏感配置分离
+
+## 语言特定详细清单
+
+根据项目检测语言，加载对应的详细清单：
+
+| 语言 | 详细清单文件 |
+|---|---|
+| Java | `coding-phase/java-code-review-checklist.md` |
+| Vue / Node | `coding-phase/vue-code-review-checklist.md` |
+| Python | `coding-phase/python-code-review-checklist.md` |
+| C# / .NET | `coding-phase/dotnet-code-review-checklist.md` |
+
+> 语言特定清单包含版本矩阵检查和框架特定规范，与本通用清单配合使用。

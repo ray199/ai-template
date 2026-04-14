@@ -1,37 +1,322 @@
 # Profile：Python
 
-适用范围：以 Python 为主的后端服务、脚本、数据处理任务等。
+适用范围：以 Python 为主的后端服务、脚本、数据处理、Web API 等。
 
-## 1. 版本与运行时
-- Python 3.11+（或项目指定版本）
+> **重要**：本 Profile 不锁定任何版本号。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定，并按版本适配矩阵选择对应规则。
 
-## 2. 工程结构建议
+---
+
+## 0. 版本检测（每次编码阶段开始前自动执行）
+
+### 检测来源（按优先级）
+
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `pyproject.toml` | `[tool.poetry] python`, `[project] requires-python` |
+| 2 | `.python-version` | 版本号（pyenv 标准） |
+| 3 | `setup.py` / `setup.cfg` | `python_requires` |
+| 4 | `Pipfile` | `[requires] python_version` |
+| 5 | `Dockerfile` | `FROM python:x.x` |
+| 6 | `requirements.txt` 中的注释 / CI 配置 | `python-version: x.x` |
+
+### 框架检测（从依赖文件推断）
+
+| 依赖关键词 | 框架 |
+|---|---|
+| `django` / `Django` | Django（含 Django REST Framework） |
+| `fastapi` | FastAPI + ASGI |
+| `flask` | Flask |
+| `tornado` / `aiohttp` | 异步 Web 框架 |
+| `sqlalchemy` | SQLAlchemy ORM |
+| `alembic` | 数据库迁移（Alembic） |
+| `pytest` | 测试框架 pytest |
+| `celery` | 异步任务队列 |
+
+### 输出版本上下文（Context）
+
 ```
-src/
-  <package_name>/
-    __init__.py
+────────────────────────────────────────────
+  Python 版本上下文（自动检测）
+────────────────────────────────────────────
+  Python 版本    : [3.8 / 3.10 / 3.11 / 3.12 / ❓未检测到]
+  包管理工具     : [pip+requirements.txt / Poetry / Pipenv / PDM]
+  Web 框架       : [Django / FastAPI / Flask / 无]
+  ORM            : [Django ORM / SQLAlchemy / Tortoise ORM / 无]
+  数据库迁移     : [Alembic / Django Migrations / 无]
+  测试框架       : [pytest / unittest / ❓]
+
+  适用规范       : python.mdc §[对应版本章节]
+  类型检查       : [已引入 mypy/pyright / 未引入]
+────────────────────────────────────────────
+```
+
+若配置文件中无法确定版本，**必须人工确认后再继续**，禁止假设。
+
+---
+
+## 1. Python 版本适配矩阵
+
+### Python 3.8（EOL 2024-10，仍有大量项目使用）
+
+**可用特性：**
+- f-strings、`walrus operator`（`:=`）、`typing.TypedDict`
+- `functools.cached_property`
+
+**禁止使用：**
+- `match` / `case`（3.10+）
+- `X | Y` 联合类型语法（3.10+，须用 `Union[X, Y]`）
+- `TypeAlias`（3.10+）
+- `Self` 类型（3.11+）
+- `tomllib`（3.11+）
+- `ExceptionGroup` / `TaskGroup`（3.11+）
+
+**类型提示写法（3.8）：**
+```python
+# ✅ 3.8 兼容写法
+from typing import Optional, List, Dict, Union, Tuple
+def get_user(user_id: int) -> Optional[Dict[str, str]]:
     ...
-tests/
-  ...
+
+# ❌ 禁止（3.10+ 语法）
+def get_user(user_id: int) -> dict[str, str] | None:
+    ...
 ```
 
-## 3. 代码风格与可维护性（强制）
-- 必须遵循 PEP 8 基本风格与命名约定
-- 必须使用类型提示（在关键边界：对外 API、核心业务逻辑、复杂数据结构）
-- 禁止滥用动态特性（`eval`/`exec`/随意 monkey patch），除非有充分理由并隔离影响面
+---
 
-## 4. 依赖与环境（强制）
-- 依赖必须可复现：必须存在明确的依赖锁定策略（以项目既有为准）
-- 敏感配置只能来自环境变量或安全存储，禁止硬编码
+### Python 3.10（LTS 特性稳定版）
 
-## 5. 安全（强制）
-- 输入校验：所有外部输入必须校验（HTTP 入参、文件、消息队列、CLI 参数等）
-- 序列化：禁止反序列化不可信数据（例如不可信 pickle）
+**3.8 全部规则继续适用，额外新增：**
+- 可使用 `match` / `case`（结构化模式匹配）
+- 可使用 `X | Y` 联合类型语法（替代 `Union[X, Y]`）
+- 可使用 `TypeAlias`
+- 内置类型可直接用于泛型注解：`list[int]`、`dict[str, int]`（替代 `List[int]`）
 
-## 6. 测试与质量门禁（建议）
-- 单元测试：优先 pytest（以项目既有为准）
-- 静态检查：建议引入格式化与 lint（以项目既有为准），并纳入 CI
+**推荐实践：**
+```python
+# ✅ 用 match/case 替代复杂的 if/elif 链
+match command:
+    case "quit":
+        quit_game()
+    case "go" if direction:
+        go(direction)
+    case _:
+        raise ValueError(f"Unknown command: {command}")
 
-## 7. 与通用规则的关系
+# ✅ 用 X | Y 代替 Union
+def process(value: int | str | None) -> str:
+    ...
+```
+
+---
+
+### Python 3.11（推荐新项目）
+
+**3.10 全部规则继续适用，额外新增：**
+- `Self` 类型（`from typing import Self`）
+- `tomllib` 标准库（可直接读取 TOML 配置文件）
+- `ExceptionGroup` 和 `except*`（批量异常处理）
+- `TaskGroup`（asyncio 结构化并发）
+- 错误信息显著改善（更精确的 traceback 位置提示）
+- 性能提升约 25%（无需改代码）
+
+**推荐实践：**
+```python
+# ✅ 结构化并发（替代手动 gather）
+async def fetch_all(urls: list[str]) -> list[str]:
+    async with asyncio.TaskGroup() as tg:
+        tasks = [tg.create_task(fetch(url)) for url in urls]
+    return [t.result() for t in tasks]
+```
+
+---
+
+### Python 3.12（LTS，最新推荐）
+
+**3.11 全部规则继续适用，额外新增：**
+- `type` 语句（类型别名新语法）
+- 泛型语法简化（`class Box[T]:`）
+- `@override` 装饰器（明确标注方法覆盖意图）
+- f-string 内允许嵌套引号
+
+**推荐实践：**
+```python
+# ✅ 新类型别名语法
+type Vector = list[float]
+
+# ✅ 泛型类
+class Stack[T]:
+    def push(self, item: T) -> None: ...
+    def pop(self) -> T: ...
+```
+
+---
+
+## 2. Web 框架适配规范
+
+### FastAPI（推荐新 API 项目）
+
+```python
+# ✅ 统一响应结构
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+class UserResponse(BaseModel):
+    code: int = 200
+    msg: str = "success"
+    data: dict | None = None
+
+# ✅ 路由分模块，禁止全写在 main.py
+app = FastAPI()
+app.include_router(user_router, prefix="/api/v1/user", tags=["user"])
+
+# ✅ 依赖注入获取 DB Session
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    ...
+```
+
+**错误处理规范：**
+- 业务异常使用 `HTTPException(status_code=xxx, detail={"code": "USER_001", "msg": "..."})`
+- 全局异常处理器用 `@app.exception_handler`
+- 禁止直接 `raise Exception("...")`
+
+### Django / DRF（推荐老项目/管理后台）
+
+```python
+# ✅ 视图层使用 Class-Based View 或 ViewSet
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# ✅ 序列化器必须定义 Meta.fields（禁止 __all__）
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "created_at"]
+
+# ✅ 统一分页
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
+```
+
+### Flask（适合轻量服务/内部工具）
+
+```python
+# ✅ 使用 Blueprint 分模块
+from flask import Blueprint, jsonify, request
+
+user_bp = Blueprint("user", __name__, url_prefix="/api/v1/user")
+
+@user_bp.route("/<int:user_id>", methods=["GET"])
+def get_user(user_id: int):
+    ...
+    return jsonify({"code": 200, "msg": "success", "data": user})
+```
+
+---
+
+## 3. ORM 与数据库规范
+
+### SQLAlchemy（通用）
+
+```python
+# ✅ 声明式模型（2.0 风格）
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from datetime import datetime
+
+class Base(DeclarativeBase):
+    pass
+
+class User(Base):
+    __tablename__ = "user"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    is_deleted: Mapped[int] = mapped_column(default=0)  # 软删除
+
+# ✅ 禁止 ORM 之外的字符串拼接 SQL
+# ❌ db.execute(f"SELECT * FROM user WHERE id = {user_id}")
+# ✅ db.execute(select(User).where(User.id == user_id))
+```
+
+### 数据库迁移
+
+- **Alembic**（SQLAlchemy 项目）：所有表变更通过 `alembic revision --autogenerate` 生成
+- **Django Migrations**：所有表变更通过 `manage.py makemigrations` 生成
+- 禁止直接在生产库 `CREATE TABLE` / `ALTER TABLE`
+
+---
+
+## 4. 通用编码规范
+
+### 必须遵守
+- 遵循 PEP 8（命名：函数/变量 `snake_case`，类 `PascalCase`，常量 `UPPER_SNAKE_CASE`）
+- 必须使用类型提示（对外 API 参数/返回值、核心业务函数必须标注）
+- 禁止裸 `except:`（至少写 `except Exception as e: logger.error(...)`）
+- 禁止在生产代码中使用 `print()`，使用 `logging` 或框架内置 logger
+- 禁止硬编码密钥/密码/Token，必须通过环境变量或配置中心读取
+- 禁止 `eval()` / `exec()`（除非有明确隔离并注释说明）
+
+### 日志规范
+```python
+import logging
+logger = logging.getLogger(__name__)
+
+# ✅ 结构化日志（便于 ELK/Loki 解析）
+logger.info("user_created", extra={"user_id": user.id, "username": user.username})
+# ❌ 不要字符串拼接
+logger.info(f"Created user {user.id}")
+```
+
+### 异步规范
+- I/O 密集型操作必须使用 `async/await`（数据库查询、HTTP 请求、文件 I/O）
+- 禁止在 `async` 函数中调用阻塞 I/O（如 `requests.get()`，用 `httpx.AsyncClient`）
+- 禁止 `asyncio.run()` 嵌套调用
+
+---
+
+## 5. 测试规范
+
+```python
+# ✅ pytest + pytest-asyncio（FastAPI 推荐）
+import pytest
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_create_user_success(client: AsyncClient):
+    response = await client.post("/api/v1/user", json={"username": "test", "email": "test@example.com"})
+    assert response.status_code == 200
+    assert response.json()["code"] == 200
+
+@pytest.mark.asyncio
+async def test_create_user_duplicate(client: AsyncClient):
+    # given: user already exists
+    await client.post("/api/v1/user", json={"username": "test", "email": "test@example.com"})
+    # when: create again
+    response = await client.post("/api/v1/user", json={"username": "test", "email": "test2@example.com"})
+    # then
+    assert response.status_code == 400
+```
+
+---
+
+## 6. 与通用规则的关系
+
 - 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
 - 安全红线：遵循 [03_security.mdc](../03_security.mdc)

@@ -88,12 +88,9 @@
 
 | 状态 | 含义 | 存放目录 |
 |---|---|---|
-| `draft` | 已接收，结构化中或待澄清 | `backlog/` |
-| `reviewing` | 澄清完成，等待优先级确认 | `backlog/` |
-| `approved` | 已确认，排入开发计划 | `approved/` |
-| `in-progress` | 开发中 | `in-progress/` |
-| `done` | 已交付验收 | `done/` |
-| `rejected` | 不做，需记录原因 | `backlog/rejected/` |
+| `backlog` | 待开发（含结构化中、已确认） | `backlog/` |
+| `done` | 已交付验收 | `done/REQ-xxx/` |
+| `rejected` | 不做，需记录原因 | `backlog/` (status字段标注) |
 
 ---
 
@@ -143,7 +140,7 @@
 - ✅ 设计文档（已检索 `docs/design/` 的最新文档）
 
 **第二阶段（评估时补充扫描）**
-1. 读取需求文档（`docs/requirements/approved/`）
+1. 读取需求文档（`docs/requirements/backlog/`）
 2. 细化扫描代码库，优先查找与需求关键词相关的模块/文件实现细节
 3. 根据 Step 0A 发现的相似历史需求，深入对比实现差异
 

@@ -1,47 +1,312 @@
 # Profile：C#（.NET）
 
-适用范围：以 C#/.NET 为主的后端服务、工具、Web API（ASP.NET Core）。
+适用范围：以 C#/.NET 为主的后端服务、Web API（ASP.NET Core）、工具库。
 
-## 1. 版本与运行时
-- 语言版本：C#（以项目指定为准，推荐开启 Nullable Reference Types）
-- 运行时：.NET 8 LTS（或项目指定版本）
-- 构建工具：dotnet SDK（与运行时版本匹配）
+> **重要**：本 Profile 不锁定任何版本号。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定，并按版本适配矩阵选择对应规则。
 
-## 2. 工程结构建议
-后端服务（建议）：
+---
+
+## 0. 版本检测（每次编码阶段开始前自动执行）
+
+### 检测来源（按优先级）
+
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `*.csproj` | `<TargetFramework>` / `<LangVersion>` |
+| 2 | `global.json` | `"sdk": { "version": "..." }` |
+| 3 | `Directory.Build.props` | `<TargetFramework>` |
+| 4 | `Dockerfile` | `FROM mcr.microsoft.com/dotnet/aspnet:x.x` |
+| 5 | CI 配置文件 | `dotnet-version: x.x` |
+
+### 框架检测（从项目依赖推断）
+
+| 依赖关键词 | 框架类型 |
+|---|---|
+| `Microsoft.AspNetCore.Mvc` | Controller-based Web API |
+| Minimal API（`app.MapGet`）| Minimal API（.NET 6+） |
+| `Microsoft.EntityFrameworkCore` | EF Core ORM |
+| `Dapper` | Dapper（轻量 ORM） |
+| `MassTransit` / `NServiceBus` | 消息总线 |
+| `Hangfire` / `Quartz` | 定时任务 |
+
+### 输出版本上下文（Context）
+
 ```
-src/
-  <ProjectName>.Api/
-  <ProjectName>.Application/
-  <ProjectName>.Domain/
-  <ProjectName>.Infrastructure/
-tests/
-  <ProjectName>.Tests/
+────────────────────────────────────────────
+  .NET 版本上下文（自动检测）
+────────────────────────────────────────────
+  .NET 版本       : [6 / 7 / 8 / ❓未检测到]
+  C# 版本         : [10 / 11 / 12 / ❓]
+  API 风格        : [Controller-based / Minimal API / 混合]
+  ORM             : [EF Core / Dapper / ADO.NET / 无]
+  认证方案        : [JWT Bearer / Cookie / Identity / 无]
+  NRT（空引用）   : [✅ 已启用 / ❌ 未启用]
+
+  适用规范        : dotnet_csharp.mdc §[对应版本章节]
+────────────────────────────────────────────
 ```
 
-## 3. 语言与编码约束（强制）
-- 必须启用并遵循空引用约束（Nullable）：避免使用大量 `!` 消除警告
-- 异步优先：I/O 相关逻辑必须使用 `async/await`，禁止 `.Result` / `.Wait()`（死锁风险）
-- 资源释放：`IDisposable` 必须通过 `using` / `await using` 管理
-- 异常处理：禁止捕获后静默吞掉；必须保留堆栈并给出可定位信息
+若配置文件中无法确定版本，**必须人工确认后再继续**，禁止假设。
 
-## 4. 依赖注入与配置（强制）
-- 依赖注入：禁止 Service Locator（在业务代码中直接 `IServiceProvider.GetService`）
-- 配置：敏感配置只来自环境变量/安全存储；禁止硬编码密钥
+---
 
-## 5. 日志（强制）
-- 必须使用结构化日志（ILogger），禁止 `Console.WriteLine` 作为业务日志
-- 日志中禁止输出密钥/口令/Token/身份证件等敏感信息
+## 1. .NET 版本适配矩阵
 
-## 6. 数据访问（建议）
-- 优先使用项目既有的数据访问技术（EF Core / Dapper / ADO.NET）
-- 必须参数化查询，禁止字符串拼接 SQL
-- 必须避免 N+1 查询，必要时做批量/Join/预加载
+### .NET 6（LTS，支持至 2024-11）
 
-## 7. 测试与质量门禁（建议）
-- 单元测试：优先 xUnit / NUnit（以项目既有为准）
-- 静态检查：建议开启 Analyzer 与格式化工具（例如 dotnet format / editorconfig），并纳入 CI
+**C# 10 可用特性：**
+- `global using`（减少重复 using）
+- `record struct`
+- 文件级命名空间：`namespace MyApp.Controllers;`（替代花括号）
+- `required` 修饰符前身：`init` 属性访问器
 
-## 8. 与通用规则的关系
+**Minimal API（.NET 6 引入）：**
+```csharp
+// ✅ 轻量服务可用 Minimal API
+var app = builder.Build();
+app.MapGet("/users/{id}", async (int id, IUserService svc) =>
+    await svc.GetByIdAsync(id) is { } user
+        ? Results.Ok(user)
+        : Results.NotFound());
+```
+
+**禁止使用：**
+- `required` 修饰符（C# 11 / .NET 7+）
+- `IExceptionHandler`（.NET 8+）
+
+---
+
+### .NET 7（STS，支持至 2024-05，过渡版）
+
+**.NET 6 全部规则继续适用，额外新增：**
+- C# 11：`required` 修饰符（强制初始化）
+- C# 11：原始字符串字面量（`"""`）
+- C# 11：List patterns（`[1, 2, ..]`）
+- Rate limiting 中间件内置支持
+- `IEndpointFilter`（Minimal API 过滤器）
+
+**推荐实践：**
+```csharp
+// ✅ required 修饰符代替构造函数参数校验
+public class UserCreateRequest
+{
+    public required string Username { get; init; }
+    public required string Email { get; init; }
+}
+
+// ✅ 原始字符串（SQL / JSON 模板）
+string sql = """
+    SELECT id, username, email
+    FROM users
+    WHERE is_deleted = 0
+    """;
+```
+
+---
+
+### .NET 8（LTS，推荐新项目，支持至 2026-11）
+
+**.NET 7 全部规则继续适用，额外新增：**
+- C# 12：Primary Constructors（主构造函数）
+- C# 12：Collection expressions（`[1, 2, 3]`）
+- `IExceptionHandler`（全局异常处理标准接口）
+- Keyed DI Services（`[FromKeyedServices("key")]`）
+- 原生 AOT 支持成熟（Minimal API）
+
+**推荐实践：**
+```csharp
+// ✅ 主构造函数（简化依赖注入注入写法）
+public class UserService(IUserRepository repo, ILogger<UserService> logger) : IUserService
+{
+    public async Task<UserDto?> GetByIdAsync(int id)
+    {
+        logger.LogInformation("Getting user {UserId}", id);
+        return await repo.FindByIdAsync(id);
+    }
+}
+
+// ✅ IExceptionHandler（替代 app.UseExceptionHandler lambda）
+public class GlobalExceptionHandler : IExceptionHandler
+{
+    public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
+    {
+        ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await ctx.Response.WriteAsJsonAsync(new { code = 500, msg = ex.Message }, ct);
+        return true;
+    }
+}
+// 注册：builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+```
+
+---
+
+## 2. API 风格规范
+
+### Controller-based（经典风格，推荐中大型项目）
+
+```csharp
+[ApiController]
+[Route("api/v1/[controller]")]
+public class UsersController : ControllerBase
+{
+    private readonly IUserService _svc;
+    public UsersController(IUserService svc) => _svc = svc;
+
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<ApiResponse<UserDto>>(200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var user = await _svc.GetByIdAsync(id);
+        return user is null ? NotFound() : Ok(ApiResponse.Success(user));
+    }
+}
+
+// ✅ 统一响应体
+public record ApiResponse<T>(int Code, string Msg, T? Data)
+{
+    public static ApiResponse<T> Success(T data) => new(200, "success", data);
+    public static ApiResponse<T> Fail(string msg) => new(400, msg, default);
+}
+```
+
+### Minimal API（推荐轻量服务 / .NET 6+）
+
+```csharp
+// ✅ 分模块注册（避免 Program.cs 膨胀）
+public static class UserEndpoints
+{
+    public static void MapUserEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/v1/users").WithTags("Users");
+        group.MapGet("/{id:int}", GetById);
+        group.MapPost("/", Create);
+    }
+
+    private static async Task<IResult> GetById(int id, IUserService svc)
+        => await svc.GetByIdAsync(id) is { } user
+            ? Results.Ok(ApiResponse.Success(user))
+            : Results.NotFound();
+}
+```
+
+---
+
+## 3. 数据访问规范
+
+### EF Core
+
+```csharp
+// ✅ 所有实体继承 BaseEntity，包含软删除
+public abstract class BaseEntity
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsDeleted { get; set; } = false;
+}
+
+// ✅ 全局查询过滤器自动过滤软删除
+protected override void OnModelCreating(ModelBuilder mb)
+{
+    mb.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
+}
+
+// ✅ 异步方法，禁止同步查询
+var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+// ❌ 禁止
+var user = context.Users.FirstOrDefault(u => u.Id == id);  // 阻塞
+```
+
+**迁移规范：**
+- 所有表变更通过 `dotnet ef migrations add <Name>` 生成
+- 禁止手写 DDL（除非 EF Core 无法生成的特殊索引）
+- 迁移命名规范：`{YYYYMMDD}_{描述}`，如 `20240315_AddUserTable`
+
+---
+
+## 4. 通用编码规范
+
+### 必须遵守
+
+- **Nullable Reference Types**：新项目必须启用（`<Nullable>enable</Nullable>`），老项目按项目约定
+- **异步优先**：所有 I/O 操作必须 `async/await`，禁止 `.Result` / `.Wait()`
+- **资源释放**：`IDisposable` / `IAsyncDisposable` 必须通过 `using` 管理
+- **禁止吞异常**：`catch` 块必须记录日志或重新抛出
+- **禁止 Service Locator**：禁止在业务代码中直接调用 `IServiceProvider.GetService()`
+- **禁止硬编码密钥/密码**：通过 `IConfiguration` / `IOptions<T>` / Azure Key Vault 读取
+
+### 日志规范
+
+```csharp
+// ✅ 结构化日志（Source Generator 方式，.NET 6+推荐）
+public static partial class Log
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "User {UserId} created")]
+    public static partial void UserCreated(ILogger logger, int userId);
+}
+
+// ✅ 通用场景直接使用
+logger.LogInformation("User {UserId} login from {IP}", userId, ip);
+
+// ❌ 禁止字符串插值方式（性能差，破坏结构化）
+logger.LogInformation($"User {userId} login");
+```
+
+### 依赖注入生命周期
+
+| 类型 | 适用场景 |
+|---|---|
+| `Singleton` | 无状态全局服务（配置读取、缓存客户端） |
+| `Scoped` | 请求级别（DbContext、业务 Service） |
+| `Transient` | 轻量无状态工具类 |
+
+> ⚠️ 禁止在 `Singleton` 中注入 `Scoped` 服务（导致 Captive Dependency）
+
+---
+
+## 5. 测试规范
+
+```csharp
+// ✅ xUnit + Moq + FluentAssertions（推荐组合）
+public class UserServiceTests
+{
+    private readonly Mock<IUserRepository> _repoMock = new();
+    private readonly UserService _sut;
+
+    public UserServiceTests()
+    {
+        _sut = new UserService(_repoMock.Object, NullLogger<UserService>.Instance);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_UserExists_ReturnsUser()
+    {
+        // Arrange
+        var expected = new User { Id = 1, Username = "test" };
+        _repoMock.Setup(r => r.FindByIdAsync(1)).ReturnsAsync(expected);
+
+        // Act
+        var result = await _sut.GetByIdAsync(1);
+
+        // Assert
+        result.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_UserNotFound_ReturnsNull()
+    {
+        _repoMock.Setup(r => r.FindByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
+        var result = await _sut.GetByIdAsync(999);
+        result.Should().BeNull();
+    }
+}
+```
+
+---
+
+## 6. 与通用规则的关系
+
 - 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
 - 安全红线：遵循 [03_security.mdc](../03_security.mdc)

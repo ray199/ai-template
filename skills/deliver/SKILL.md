@@ -15,15 +15,22 @@ argument-hint: [REQ-XXXXXXXX]
 ```
 [Step 1] 上线前检查清单（逐项确认）
          ↓
-[Step 2] 整理交付文档包
-         - 需求文档归档至 docs/requirements/done/REQ-XXXXXXXX/
-         - API 文档更新说明
-         - 数据库变更记录
+[Step 2] 输出交付报告（运维快查）
+         路径：docs/delivery/REQ-XXXXXXXX-delivery.md
+         内容：功能清单、影响范围、回滚方案、遗留问题
          ↓
-[Step 3] 需求状态流转：in-progress → done
+[Step 3] 整理需求归档包（永久存档）
+         路径：docs/requirements/done/REQ-XXXXXXXX/
+         内容：requirement.md / design.md / test-report.md
+               review-report.md / delivery-note.md
          ↓
-[Step 4] 输出交付报告
+[Step 4] 需求状态流转：backlog → done
 ```
+
+> **两个输出物说明**  
+> `docs/delivery/` 面向运维/发布团队，独立快查，无需翻阅需求目录。  
+> `docs/requirements/done/` 是完整的需求生命周期归档，面向项目回溯和管理。  
+> 两者同时生成，目的不同，互不替代。
 
 ## 上线前检查清单
 
@@ -110,4 +117,4 @@ docs/requirements/done/REQ-XXXXXXXX/
 **本次需求已完成交付。** ✅
 ```
 
-完成后，将需求文档从 `backlog/` 或 `in-progress/` 移动至 `done/REQ-XXXXXXXX/`，并更新 `status: done`。
+完成后，将需求文档从 `backlog/` 移动至 `done/REQ-XXXXXXXX/`，并更新 `status: done`。

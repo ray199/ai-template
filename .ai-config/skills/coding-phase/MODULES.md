@@ -253,7 +253,7 @@ Pre-Coding检查 (新/旧项目路径)
 ```
 需求接入完成 (REQ-XXXXX.md生成)
    ↓
-触发工作量评估 (/evaluate-workload REQ-XXXXX)
+工作量评估已内置于 /intake（Step 2自动执行）
    ├─ 读取REQ文档的: 目标、功能点、验收标准
    ├─ 参考TECH-STACK.md中的技术约束
    └─ 输出工作量等级 (S/M/L/XL)

@@ -13,9 +13,15 @@ argument-hint: [REQ-XXXXXXXX]
 ## 处理流程
 
 ```
+输入来源（根据工作量等级）：
+  S 等级  → docs/requirements/backlog/REQ-XXXXXXXX.md（需求文档，跳过设计）
+  M/L/XL → docs/design/REQ-XXXXXXXX-design.md（技术设计文档）
+         ↓
 [Step 0] 版本上下文扫描（必须在编码前完成）
          ↓
-[Step 1] 读取设计文档，拆解编码任务
+[Step 1] 读取输入文档，拆解编码任务
+         S 等级：直接读需求文档，从需求推断代码结构（无设计文档）
+         M/L/XL：读技术设计文档，按设计文档拆解任务
          ↓
 [Step 2] 执行 DB 变更（优先）
          - 生成 DDL 脚本至 resources/db/migration/
@@ -32,31 +38,38 @@ argument-hint: [REQ-XXXXXXXX]
 
 ## Step 0：版本上下文扫描
 
-**扫描逻辑（Java）：** 读取 `pom.xml` → `<java.version>`、Spring Boot 版本、Spring AI/Cloud 依赖
-**扫描逻辑（前端）：** 读取 `package.json` → Vue 版本、构建工具、UI 框架、TypeScript
+根据检测到的项目语言执行对应扫描：
 
-**输出示例：**
+**Java 项目：** 读取 `pom.xml` / `build.gradle` → JDK 版本、Spring Boot 版本、Spring AI/Cloud 依赖
+
+**Vue/Node 项目：** 读取 `package.json` → Vue 版本、构建工具、UI 框架、TypeScript
+
+**Python 项目：** 读取 `pyproject.toml` / `requirements.txt` / `.python-version` → Python 版本、Web 框架（Django/FastAPI/Flask）、ORM
+
+**C#/.NET 项目：** 读取 `*.csproj` / `global.json` → .NET 版本、C# 版本、API 风格（Controller/Minimal API）、ORM
+
+**输出示例（按语言选一）：**
 ```
 ────────────────────────────────────────────
   项目版本上下文（自动检测）
 ────────────────────────────────────────────
-  JDK 版本    : 8 / 11 / 17 / 21
-  Spring Boot : 2.x / 3.x
-  构建工具    : Maven / Gradle
-  Spring AI   : ✅已引入 / ❌未引入
-  Vue 版本    : 2.x / 3.x
-  UI 框架     : Element UI / Element Plus
+  [Java]   JDK: 8/11/17/21  Spring Boot: 2.x/3.x  MyBatis/JPA
+  [Vue]    Vue: 2.x/3.x     构建: Vite/CLI         UI: Element Plus
+  [Python] Python: 3.8~3.12  框架: FastAPI/Django   ORM: SQLAlchemy
+  [C#]     .NET: 6/7/8       C#: 10/11/12          EF Core/Dapper
 ────────────────────────────────────────────
 ```
 
-**版本对代码生成的影响：**
-| 条件 | 调整 |
+**版本对代码生成的影响（核心）：**
+| 语言/条件 | 代码调整 |
 |---|---|
-| JDK ≥ 17 | DTO/VO 优先使用 `record`，而非 `@Data` |
-| Spring Boot 3.x | 包名全部改为 `jakarta.*`，Security 用 Lambda DSL |
-| JDK 8 | 严格限制语法，禁止 `var`/`record`/`text blocks` |
-| Vue 2 | Options API，Vuex，Vue Router 3 |
+| Java JDK ≥ 17 | DTO/VO 优先 `record`，而非 `@Data` |
+| Java Spring Boot 3.x | 包名改为 `jakarta.*`，Security 用 Lambda DSL |
 | Vue 3 | `<script setup>` + Composition API，Pinia |
+| Python ≤ 3.8 | 类型提示用 `Optional[X]`，禁止 `X \| Y` 语法 |
+| Python ≥ 3.10 | 可用 `match/case`，内置泛型 `list[int]` |
+| C# .NET 8 / C# 12 | 可用主构造函数，`IExceptionHandler` |
+| C# NRT 已启用 | 引用类型必须标注 `?`，禁止 `!` 消除警告 |
 
 ## 代码规范自检清单
 
@@ -142,7 +155,7 @@ class XxxServiceImplTest {
 - [ ] 业务逻辑实现符合设计文档预期
 - [ ] DB 迁移脚本已在开发环境验证执行
 
-确认后请回复：`/ai:test REQ-XXXXXXXX`
+确认后请回复：`/ai:check REQ-XXXXXXXX`
 ```
 
-完成后告知用户下一步：`/ai:test REQ-XXXXXXXX`
+完成后告知用户下一步：`/ai:check REQ-XXXXXXXX`

@@ -18,7 +18,7 @@
 输入：approved 的需求文档 + 已确认的输出物清单（Spec / 原型 / 迭代计划）
        ↓
 [Step 1] 加载上下文
-         - 读取需求文档（docs/requirements/approved/REQ-XXXXXXXX.md）
+         - 读取需求文档（docs/requirements/backlog/REQ-XXXXXXXX.md）
          - 扫描现有代码库结构（src/main/java/）
          - 读取已有数据库表结构（docs/db/ 或 MCP 工具）
          - 读取已有接口文档（docs/api/）
@@ -258,7 +258,7 @@ Content-Type: application/json
 - [ ] 接口版本号是否与现有规划一致
 - [ ] [其他需要确认的决策点]
 
-确认通过后请回复：`/design-confirm REQ-XXXXXXXX`
+确认无误后，执行：`/code REQ-XXXXXXXX`
 ```
 
 ---
