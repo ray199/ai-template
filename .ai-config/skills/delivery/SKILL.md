@@ -44,21 +44,28 @@
 - [ ] 代码已合并到目标分支（`develop` / `release`）
 - [ ] 无冲突代码，合并后构建通过
 
-### 数据库层面
+### 后端层面
 - [ ] DDL 迁移脚本已在**测试环境**执行并验证
 - [ ] 迁移脚本幂等性已确认（重复执行不报错）
 - [ ] 回滚脚本已准备并测试可用
 - [ ] 如有存量数据填充，已在测试环境验证数据正确性
-
-### 配置层面
-- [ ] 新增配置项已在所有环境（dev / test / prod）同步更新
+- [ ] 新增后端配置项已在所有环境（dev / test / prod）同步更新
 - [ ] 无硬编码环境配置（IP、密码等）遗留在代码中
-- [ ] Feature Flag（如有）已确认默认状态
+
+### 前端层面（若含前端）
+- [ ] `npm run build` 构建成功，无报错
+- [ ] `dist/` 产物体积合理，无意外体积膨胀（建议与上一版本对比）
+- [ ] 前端环境变量已在各环境配置（`VITE_API_BASE_URL` / `VUE_APP_API_URL` 等）
+- [ ] 静态资源已部署到 CDN / Nginx（dist 目录上传并验证可访问）
+- [ ] 主流浏览器兼容性验证（Chrome / Edge / Firefox）
+- [ ] 生产环境 Nginx 反代配置已更新（若有新路由或接口前缀）
+- [ ] 前端回滚方案已确认：重新部署上一版本 dist 即可
 
 ### 测试层面
 - [ ] 测试报告显示验收结论为 ✅ 通过
-- [ ] 所有 P0/P1 问题已关闭
+- [ ] 所有 P0/P1 问题已关闭（前端+后端）
 - [ ] 回归测试通过（已有功能未受影响）
+- [ ] 前后端联调验证通过（字段名、分页、错误码）
 
 ### 文档层面
 - [ ] API 文档已更新（Swagger / 接口文档站）
@@ -73,11 +80,11 @@
 ```
 docs/requirements/done/
   REQ-XXXXXXXX/
-    ├── requirement.md         # 需求文档（最终版）
-    ├── design.md              # 技术设计文档（最终版）
-    ├── test-report.md         # 测试报告
-    ├── review-report.md       # 代码审查报告
-    └── delivery-note.md       # 交付说明（本文件）
+    ├── REQ-XXXXXXXX.md           # 需求文档（从 backlog/ 移入）
+    ├── REQ-XXXXXXXX-design.md    # 技术设计文档（从 docs/design/ 复制）
+    ├── REQ-XXXXXXXX-test.md      # 测试报告（从 docs/test/ 复制）
+    ├── REQ-XXXXXXXX-review.md    # 代码审查报告（从 docs/review/ 复制）
+    └── REQ-XXXXXXXX-delivery.md  # 交付说明（从 docs/delivery/ 复制）
 ```
 
 ### 交付说明（delivery-note.md）格式
@@ -142,7 +149,8 @@ docs/requirements/done/
 ## 上线前检查结论
 
 - ✅ 代码层面：全部通过
-- ✅ 数据库层面：迁移脚本已验证
+- ✅ 后端层面：迁移脚本已验证，配置已同步
+- ✅ 前端层面：构建成功，dist已部署（若含前端）
 - ✅ 测试层面：测试通过（P0/P1 问题清零）
 - ⚠️ 文档层面：API 文档已更新，用户手册下一版本补充
 
@@ -157,6 +165,7 @@ docs/requirements/done/
 | 测试报告 | ✅ 已归档 | 同上 |
 | 代码审查报告 | ✅ 已归档 | 同上 |
 | DDL 迁移脚本 | ✅ 已执行 | resources/db/migration/ |
+| 前端产物 | ✅ 已部署 | CDN / Nginx（若含前端） |
 | API 文档 | ✅ 已更新 | [文档站链接] |
 
 ---

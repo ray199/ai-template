@@ -19,26 +19,34 @@
        ↓
 [Step 1] 加载上下文
          - 读取需求文档（docs/requirements/backlog/REQ-XXXXXXXX.md）
-         - 扫描现有代码库结构（src/main/java/）
+         - 扫描现有代码库结构（backend: src/main/java/；frontend: src/ 或 frontend/src/）
          - 读取已有数据库表结构（docs/db/ 或 MCP 工具）
          - 读取已有接口文档（docs/api/）
+         - 检测是否为前后端分离项目（存在 package.json + pom.xml / *.csproj / requirements.txt）
          ↓
 [Step 2] 架构影响分析
          - 判断本次需求是新功能 / 改造已有功能 / 纯新模块
-         - 识别受影响的模块和下游依赖
+         - 识别受影响的前端页面模块和后端服务模块
          - 确定是否需要引入新技术组件（缓存、消息队列等）
          ↓
-[Step 3] 数据库设计
+[Step 3] 数据库设计（后端）
          - 新增/修改表设计（含字段、类型、索引、约束）
          - 数据迁移脚本策略（新表 / 加字段 / 数据填充）
          ↓
-[Step 4] 接口设计
+[Step 4] 接口设计（前后端契约）
          - 定义 RESTful 接口（URL、Method、请求/响应结构）
          - 标注鉴权方式和权限要求
          - 定义统一错误码
+         - 这是前后端联调的契约，前端设计需与此对齐
+         ↓
+[Step 4.5] 前端 UI 设计（若项目含前端，必须执行）
+         - 页面清单：列出本次新增或改造的页面及其路由
+         - 组件拆分：为每个页面设计组件树（页面级 view + 可复用 component）
+         - 状态管理：标注哪些数据需要放 Pinia/Vuex Store，哪些是本地状态
+         - API 调用层：明确每个页面/组件调用哪些后端接口（对应 Step 4）
          ↓
 [Step 5] 关键实现路径
-         - 描述核心业务流程的实现思路（伪代码 / 时序说明）
+         - 描述核心业务流程的前后端协作时序（用户操作 → 前端请求 → 后端处理 → 响应渲染）
          - 标注技术风险点和解决方案
          ↓
 [Step 6] 输出设计文档，等待团队确认
@@ -50,7 +58,8 @@
 
 | 扫描目标 | 目的 | 工具 |
 |---|---|---|
-| `src/main/java/` 目录结构 | 了解现有模块划分 | 代码搜索 |
+| `src/main/java/` 目录结构 | 了解现有后端模块划分 | 代码搜索 |
+| `src/` 或 `frontend/src/`（views/、components/） | 了解现有前端页面和组件 | 代码搜索 |
 | `docs/db/` 或 MCP schema 工具 | 避免重复建表，了解已有字段 | Read / MCP |
 | `docs/api/` | 接口命名和版本保持一致 | Read |
 | `docs/requirements/done/` | 排查与历史功能的依赖 | Read |
@@ -226,10 +235,52 @@ Content-Type: application/json
 
 ---
 
-## 四、关键实现路径
+## 四、前端 UI 设计（若项目含前端）
+
+> 纯后端项目跳过此节。前后端分离项目必须填写。
+
+### 页面清单
+
+| 页面名称 | 路由路径 | 对应 view 文件 | 变更类型 |
+|---|---|---|---|
+| XXX列表页 | /xxx/list | views/xxx/XxxList.vue | 新增 |
+| XXX详情页 | /xxx/:id | views/xxx/XxxDetail.vue | 新增 |
+| XXX编辑弹窗 | — | components/xxx/XxxEditDialog.vue | 新增 |
+
+### 组件拆分（以主要页面为例）
+
+```
+XxxList.vue（页面级 view）
+  ├── XxxSearchBar.vue（搜索栏，可复用）
+  ├── XxxTable.vue（数据表格）
+  │   └── XxxStatusTag.vue（状态标签，可复用）
+  └── XxxEditDialog.vue（新增/编辑弹窗，可复用）
+```
+
+### 状态管理
+
+| 数据 | 存储位置 | 理由 |
+|---|---|---|
+| 当前用户信息 | Pinia/Vuex Store | 跨页面共享，需持久化 |
+| 列表查询参数 | 本地 ref | 仅当前页面使用，无需共享 |
+| 字典/枚举数据 | Pinia/Vuex Store | 全局多处使用，避免重复请求 |
+
+### API 调用层规划
+
+| 前端操作 | 调用接口 | API 文件位置 |
+|---|---|---|
+| 加载XXX列表 | GET /api/v1/xxx/list | api/xxx.js → getXxxList() |
+| 提交创建表单 | POST /api/v1/xxx | api/xxx.js → createXxx() |
+| 保存编辑 | PUT /api/v1/xxx/:id | api/xxx.js → updateXxx() |
+| 删除条目 | DELETE /api/v1/xxx/:id | api/xxx.js → deleteXxx() |
+
+---
+
+## 五、关键实现路径
 
 ### 核心流程：[主流程名称]
 
+**后端实现**
 ```
 1. Controller 接收请求，@Valid 校验参数
 2. Service.method() 开启事务
@@ -240,22 +291,33 @@ Content-Type: application/json
 3. 返回结果
 ```
 
+**前端实现**（若含前端）
+```
+1. 用户点击提交按钮 → 触发 handleSubmit()
+2. 前端表单校验（ElForm.validate()）
+3. 调用 api/xxx.js → createXxx(formData)
+4. 成功：ElMessage.success('创建成功')，刷新列表，关闭弹窗
+5. 失败：ElMessage.error(e.message)，保留表单状态
+```
+
 ### 并发场景处理
-[说明是否有并发风险，如有，给出加锁或幂等设计方案]
+[说明是否有并发风险，如有，给出后端加锁或前端防重复提交方案]
 
 ### 技术风险点
 | 风险 | 概率 | 影响 | 应对方案 |
 |---|---|---|---|
 | 缓存击穿 | 中 | 高 | 加分布式锁，防止缓存同时失效 |
+| 前端竞态条件 | 低 | 中 | 请求loading状态防重复，接口取消旧请求 |
 
 ---
 
-## 五、待评审确认项
+## 七、待评审确认项
 
 > ⚠️ 以下事项需要团队评审后确认
 
 - [ ] 数据库方案是否符合 DBA 规范（建议 `/dba-review` 触发 DBA 代理复核）
 - [ ] 接口版本号是否与现有规划一致
+- [ ] 前端页面清单是否覆盖了所有验收场景（若含前端）
 - [ ] [其他需要确认的决策点]
 
 确认无误后，执行：`/code REQ-XXXXXXXX`

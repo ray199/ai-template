@@ -7,8 +7,9 @@
 
 ## 触发指令
 
-- `/code` - 启动编码实现（需提供 need_id）
+- `/code` - 启动编码实现（需提供 need_id），前后端同时生成
 - `/code --backend` - 仅执行后端编码
+- `/code --frontend` - 仅执行前端编码（Vue 页面/组件/API层）
 - `/code --db` - 仅执行数据库变更（DDL + 迁移脚本）
 - `/code --check` - 对已生成代码执行规范自检（不生成新代码）
 
@@ -19,30 +20,45 @@
   S 等级  → docs/requirements/backlog/REQ-XXXXXXXX.md（需求文档，跳过设计阶段）
   M/L/XL → docs/design/REQ-XXXXXXXX-design.md（技术设计文档）
        ↓
-[Step 0] 检测项目主语言（pom.xml / package.json 等），确定版本上下文
+[Step 0] 检测项目技术栈（pom.xml / package.json 等），确定前后端版本上下文
          ↓
 [Step 1] 读取输入文档，拆解编码任务
          S 等级：直接读取需求文档（backlog/）；无设计文档，从需求直接推断代码结构
          M/L/XL：读取技术设计文档（design/），按设计文档拆解任务
-         - DB 变更任务（优先执行）
-         - Entity / DO / Model 层
-         - Mapper / Repository / DAO 层
-         - Service 层（含接口 + 实现）
-         - Controller / Router / View 层
-         - VO / DTO / Schema / 请求响应对象
+         后端任务：
+           - DB 变更任务（优先执行）
+           - Entity / DO / Model 层
+           - Mapper / Repository / DAO 层
+           - Service 层（含接口 + 实现）
+           - Controller / Router 层
+           - VO / DTO / Schema / 请求响应对象
+         前端任务（若含前端）：
+           - API 调用层（src/api/）
+           - 页面组件（src/views/）
+           - 业务组件（src/components/）
+           - 路由配置（src/router/）
+           - Store 模块（src/stores/ 或 src/store/）
          ↓
-[Step 2] 执行 DB 变更
+[Step 2] 执行 DB 变更（后端）
          - 生成 DDL 脚本（resources/db/migration/）
          - 触发 dba 代理复核（如表结构较复杂）
          ↓
-[Step 3] 逐层生成代码（自底向上）
+[Step 3] 逐层生成后端代码（自底向上）
          Mapper → Entity → Service → Controller
          ↓
-[Step 4] 代码规范自检（对照 code_checklist.md，基于 Step 0 确定的版本）
+[Step 3.5] 生成前端代码（若含前端，按设计文档中前端UI设计节执行）
+         API层 → Store → 页面view → 业务组件
+         详见下方"前端代码生成规范"
          ↓
-[Step 5] 生成单元测试骨架（Service 层）
+[Step 4] 代码规范自检
+         - 后端：对照后端规范清单
+         - 前端：对照 vue-code-review-checklist.md
          ↓
-[Step 6] 输出编码完成报告，等待开发者确认
+[Step 5] 生成测试骨架
+         - 后端：Service 层 JUnit 测试骨架
+         - 前端（若含前端）：Hook 单元测试骨架（Vitest）
+         ↓
+[Step 6] 输出编码完成报告（前后端分别列清单），等待开发者确认
 ```
 
 ---
@@ -264,6 +280,194 @@
 
 ---
 
+## 前端代码生成规范（Vue 项目）
+
+> 当项目含前端时，Step 3.5 按以下规范生成。版本（Vue 2 / Vue 3）由 Step 0 决定。
+
+### 生成文件清单（前后端分离项目）
+
+| 文件 | 说明 |
+|---|---|
+| `src/api/xxx.js` | API 调用层，封装所有后端接口调用（axios） |
+| `src/views/xxx/XxxList.vue` | 列表页（页面级组件，含搜索/表格/分页） |
+| `src/views/xxx/XxxDetail.vue` | 详情页（若需求包含详情查看） |
+| `src/components/xxx/XxxEditDialog.vue` | 新增/编辑弹窗（可复用业务组件） |
+| `src/stores/xxxStore.js` | Pinia Store（Vue 3，仅需要全局状态时生成） |
+| `src/store/modules/xxx.js` | Vuex 模块（Vue 2，仅需要全局状态时生成） |
+| `src/router/modules/xxx.js` | 路由配置（新增路由时生成） |
+
+### API 层生成规范
+
+```javascript
+// src/api/xxx.js
+import request from '@/utils/request'
+
+/**
+ * 获取XXX列表
+ * @param {Object} params - 查询参数
+ */
+export function getXxxList(params) {
+  return request({
+    url: '/api/v1/xxx/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 创建XXX
+ * @param {Object} data - 创建数据
+ */
+export function createXxx(data) {
+  return request({
+    url: '/api/v1/xxx',
+    method: 'post',
+    data
+  })
+}
+
+export function updateXxx(id, data) {
+  return request({ url: `/api/v1/xxx/${id}`, method: 'put', data })
+}
+
+export function deleteXxx(id) {
+  return request({ url: `/api/v1/xxx/${id}`, method: 'delete' })
+}
+```
+
+### 页面组件生成规范
+
+**Vue 3（Composition API + `<script setup>`）：**
+
+```vue
+<template>
+  <div class="xxx-list">
+    <!-- 搜索栏 -->
+    <el-form :model="searchForm" inline>
+      <el-form-item label="名称">
+        <el-input v-model="searchForm.name" placeholder="请输入" clearable />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <!-- 操作栏 -->
+    <div class="action-bar">
+      <el-button type="primary" @click="handleCreate">新增</el-button>
+    </div>
+
+    <!-- 数据表格 -->
+    <el-table :data="tableData" v-loading="loading" border>
+      <el-table-column prop="name" label="名称" />
+      <el-table-column label="操作" width="150">
+        <template #default="{ row }">
+          <el-button link @click="handleEdit(row)">编辑</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 分页 -->
+    <el-pagination
+      v-model:current-page="pagination.page"
+      v-model:page-size="pagination.size"
+      :total="pagination.total"
+      @change="fetchList"
+    />
+
+    <!-- 编辑弹窗 -->
+    <XxxEditDialog v-model="dialogVisible" :row="currentRow" @success="fetchList" />
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getXxxList, deleteXxx } from '@/api/xxx'
+import XxxEditDialog from '@/components/xxx/XxxEditDialog.vue'
+
+const loading = ref(false)
+const tableData = ref([])
+const dialogVisible = ref(false)
+const currentRow = ref(null)
+const searchForm = ref({ name: '' })
+const pagination = ref({ page: 1, size: 20, total: 0 })
+
+const fetchList = async () => {
+  loading.value = true
+  try {
+    const { data } = await getXxxList({ ...searchForm.value, ...pagination.value })
+    tableData.value = data.records
+    pagination.value.total = data.total
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => { pagination.value.page = 1; fetchList() }
+const handleReset = () => { searchForm.value = { name: '' }; handleSearch() }
+
+const handleCreate = () => { currentRow.value = null; dialogVisible.value = true }
+const handleEdit = (row) => { currentRow.value = row; dialogVisible.value = true }
+
+const handleDelete = async (row) => {
+  await ElMessageBox.confirm(`确认删除「${row.name}」？`, '提示', { type: 'warning' })
+  await deleteXxx(row.id)
+  ElMessage.success('删除成功')
+  fetchList()
+}
+
+onMounted(fetchList)
+</script>
+```
+
+**Vue 2（Options API）生成规则：**
+- `data()` 函数返回响应式数据
+- `methods` 中定义所有方法
+- `created()` 生命周期初始化数据
+- 使用 `this.$message` / `this.$confirm`（Element UI）
+- 使用 `this.$store.dispatch` 操作 Vuex
+
+### 前端测试骨架生成规范（Step 5）
+
+```javascript
+// src/hooks/__tests__/useXxx.test.js
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { useXxx } from '@/hooks/useXxx'
+import * as xxxApi from '@/api/xxx'
+
+describe('useXxx Hook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should fetch list on init', async () => {
+    vi.spyOn(xxxApi, 'getXxxList').mockResolvedValue({
+      data: { records: [{ id: 1, name: 'test' }], total: 1 }
+    })
+
+    const { list, fetchList } = useXxx()
+    await fetchList()
+
+    expect(list.value).toHaveLength(1)
+    expect(list.value[0].name).toBe('test')
+  })
+
+  it('should handle api error gracefully', async () => {
+    vi.spyOn(xxxApi, 'getXxxList').mockRejectedValue(new Error('Network Error'))
+
+    const { fetchList, error } = useXxx()
+    await fetchList()
+
+    expect(error.value).toBeTruthy()
+  })
+})
+```
+
+---
+
 ## 编码任务拆解规则
 
 每项编码任务使用以下格式记录，确保可追踪：
@@ -404,11 +608,11 @@ CREATE TABLE IF NOT EXISTS `xxx_table` (
 
 - **need_id**：REQ-XXXXXXXX
 - **完成时间**：YYYY-MM-DD
-- **执行代理**：backend_dev
+- **执行代理**：backend_dev + frontend_dev
 
 ---
 
-## 生成文件清单
+## 后端生成文件清单
 
 | 文件路径 | 类型 | 说明 |
 |---|---|---|
@@ -420,19 +624,37 @@ CREATE TABLE IF NOT EXISTS `xxx_table` (
 | src/main/resources/db/migration/Vxxx__.sql | DDL | 数据库迁移脚本 |
 | src/test/.../XxxServiceImplTest.java | 测试 | Service 单元测试骨架 |
 
+## 前端生成文件清单（若含前端）
+
+| 文件路径 | 类型 | 说明 |
+|---|---|---|
+| src/api/xxx.js | API层 | 后端接口调用封装 |
+| src/views/xxx/XxxList.vue | 页面 | 列表页（含搜索/表格/分页） |
+| src/components/xxx/XxxEditDialog.vue | 组件 | 新增/编辑弹窗 |
+| src/router/modules/xxx.js | 路由 | 路由配置 |
+| src/hooks/__tests__/useXxx.test.js | 测试 | Hook 单元测试骨架 |
+
 ---
 
 ## 规范自检结果
 
+### 后端
 - ✅ 通用规范：全部通过
-- ✅ Java 8 规范：全部通过
+- ✅ Java 版本规范：全部通过
 - ⚠️ 事务规范：[如有问题，说明问题和处理方式]
+
+### 前端（若含前端）
+- ✅ Vue 版本规范：全部通过
+- ✅ API 层封装：全部通过
+- ⚠️ [如有问题，说明]
 
 ---
 
 ## 待开发者确认
 
-- [ ] 业务逻辑实现符合设计文档预期
+- [ ] 后端业务逻辑实现符合设计文档预期
+- [ ] 前端页面功能符合原型/设计文档预期（若含前端）
+- [ ] 前后端接口联调已验证（字段名、类型、分页格式）
 - [ ] 单元测试骨架已填充测试数据（或标注 TODO）
 - [ ] DB 迁移脚本已在开发环境验证执行
 

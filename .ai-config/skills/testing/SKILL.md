@@ -17,18 +17,26 @@
 ```
 输入：已确认的需求文档 + 技术设计文档 + 编码完成报告
        ↓
+[Step 0] 检测项目是否含前端（package.json 存在）→ 决定是否执行前端测试部分
+         ↓
 [Step 1] 读取需求验收标准（acceptance 字段）
          作为测试用例的直接来源
          ↓
-[Step 2] 生成测试用例集
+[Step 2] 生成后端测试用例集
          - 正常路径（Happy Path）
          - 边界值和异常场景
          - 权限和安全场景
          - 回归场景（已有功能）
          ↓
+[Step 2.5] 生成前端测试（若含前端）
+         - Hook/Composable 单元测试骨架（Vitest）
+         - 组件交互测试要点（Vue Test Utils）
+         - 前后端联调验证要点（接口字段、分页格式、错误码处理）
+         - 人工 UI 验收清单（页面功能逐项）
+         ↓
 [Step 3] 执行测试（或标注人工测试点）
-         - AI 可执行：接口测试（curl / Postman 用例生成）
-         - 需人工执行：UI 交互、端到端流程
+         - AI 可生成：接口测试脚本（curl / Postman）、前端单元测试骨架
+         - 需人工执行：UI 页面交互验收、端到端业务流程
          ↓
 [Step 4] 记录问题，按级别分类
          - P0 阻断：需立即修复，不修复不验收
@@ -64,6 +72,64 @@
 | 并发场景 | 关键操作（扣减、抢占）并发提交 | P1（如涉及） |
 | 数据不存在 | 传入不存在的 ID | P0 |
 | 软删除数据 | 对已删除数据执行操作 | P1 |
+
+---
+
+## 前端测试规范（Vue 项目）
+
+> 当项目含前端时，Step 2.5 生成以下内容。
+
+### Hook/Composable 单元测试骨架
+
+```javascript
+// src/hooks/__tests__/useXxx.test.js
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { useXxx } from '@/hooks/useXxx'
+import * as xxxApi from '@/api/xxx'
+
+describe('useXxx', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('TC-前端-001：成功获取列表数据', async () => {
+    vi.spyOn(xxxApi, 'getXxxList').mockResolvedValue({
+      data: { records: [{ id: 1, name: '测试' }], total: 1 }
+    })
+    const { list, fetchList } = useXxx()
+    await fetchList()
+    expect(list.value).toHaveLength(1)
+  })
+
+  it('TC-前端-002：接口异常时 error 有值', async () => {
+    vi.spyOn(xxxApi, 'getXxxList').mockRejectedValue(new Error('网络错误'))
+    const { fetchList, error } = useXxx()
+    await fetchList()
+    expect(error.value).toBeTruthy()
+  })
+})
+```
+
+### 组件交互测试要点（人工验收清单）
+
+| 验收项 | 验收方式 | 预期结果 |
+|---|---|---|
+| 列表页正常加载 | 打开页面 | 表格有数据，分页显示正确 |
+| 搜索功能 | 输入关键词点查询 | 表格过滤正确，分页重置为第1页 |
+| 新增弹窗 | 点击"新增"按钮 | 弹窗打开，表单为空 |
+| 表单校验 | 空表单点提交 | 提示必填字段错误，按钮不可点 |
+| 提交成功 | 填写完整后提交 | 弹窗关闭，列表刷新，成功提示 |
+| 编辑回填 | 点击"编辑"按钮 | 弹窗打开，原有数据已回填 |
+| 删除确认 | 点击"删除"按钮 | 弹出确认弹窗，确认后行消失 |
+| 分页跳转 | 点击分页 | 表格刷新为对应页数据 |
+| 无权限访问 | 无权限用户访问 | 跳转403或提示无权限 |
+
+### 前后端联调验证要点
+
+- [ ] **字段名一致**：前端 `camelCase` 与后端 `snake_case` 转换正确（如 `userName` ↔ `user_name`）
+- [ ] **分页格式**：`records / total / current / size` 字段名与后端一致
+- [ ] **错误码处理**：业务错误码（如 `USER_001`）前端展示正确错误提示
+- [ ] **Token 过期**：401 时前端自动跳登录页
+- [ ] **Loading 状态**：接口调用期间按钮禁用 / 表格 loading 显示
+- [ ] **空数据展示**：列表为空时显示空状态，不报错
 
 ---
 
@@ -142,7 +208,7 @@ curl -X POST http://localhost:8080/api/v1/xxx \
 
 ---
 
-## 测试覆盖情况
+## 后端测试覆盖情况
 
 | 场景类型 | 用例数 | 通过 | 失败 | 跳过 |
 |---|---|---|---|---|
@@ -152,6 +218,15 @@ curl -X POST http://localhost:8080/api/v1/xxx \
 | 权限场景 | X | X | X | X |
 | 回归场景 | X | X | X | X |
 | **合计** | **X** | **X** | **X** | **X** |
+
+## 前端测试覆盖情况（若含前端）
+
+| 测试类型 | 情况 |
+|---|---|
+| Hook 单元测试 | [X] 个用例，通过 [X] 个 |
+| 组件交互人工验收 | [X] 项，通过 [X] 项 |
+| 前后端联调验证 | [X] 项，通过 [X] 项 |
+| UI 兼容性 | Chrome / Edge / Firefox 已验证 |
 
 ---
 
