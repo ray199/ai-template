@@ -182,7 +182,7 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 > `/code` 阶段将根据此节生成项目骨架文件，**已有项目删除本节**。
 
 **基础信息**
-- 根包名：`com.example.myapp`（后续所有 Java 类放在此包下）
+- 根包名：`com.pangeo.{项目名}`（磐吉奥集团统一规范，如 `com.pangeo.oa`、`com.pangeo.erp`）
 - 后端框架版本：Spring Boot x.x + JDK xx
 - 前端框架版本：Vue x + Vite x（若含前端）
 
