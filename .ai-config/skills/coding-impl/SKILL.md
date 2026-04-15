@@ -21,11 +21,23 @@
   M/L/XL → docs/design/REQ-XXXXXXXX-design.md（技术设计文档）
        ↓
 [Step 0] 检测项目技术栈（pom.xml / package.json 等），确定前后端版本上下文
+         同时判断项目类型：
+         ├─ 【全新项目】pom.xml 和 src/ 均不存在
+         │   → 读取设计文档中"项目骨架规划"节，在 Step 1 先生成骨架文件
+         └─ 【已有项目】存在现有代码
+             → 直接进入 Step 1 生成业务代码
          ↓
 [Step 1] 读取输入文档，拆解编码任务
          S 等级：直接读取需求文档（backlog/）；无设计文档，从需求直接推断代码结构
          M/L/XL：读取技术设计文档（design/），按设计文档拆解任务
-         后端任务：
+         **全新项目额外任务（优先于业务代码执行）**：
+           - 骨架文件（来自设计文档"项目骨架规划"节）：
+             后端：pom.xml、Application.java、application.yml、config/、exception/、common/
+             前端：package.json、vite.config.js、index.html、src/main.js、src/App.vue、
+                   src/router/index.js、src/api/request.js、.env.development、.env.production
+           - 骨架生成完成后，提示用户验证可启动（mvn spring-boot:run / npm run dev），
+             再继续生成业务代码
+         后端业务任务：
            - DB 变更任务（优先执行）
            - Entity / DO / Model 层
            - Mapper / Repository / DAO 层

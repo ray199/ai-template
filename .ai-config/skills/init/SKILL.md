@@ -71,21 +71,11 @@ docs/
   delivery/               ← @deliver 输出位置
 ```
 
-## Step 4：全新项目骨架生成 / 老项目特殊处理
-
-**4A. 全新项目骨架生成（Step 1E 标记为全新项目时执行）**
-
-根据用户确认的技术栈生成最小可运行骨架：
-
-- **Java Spring Boot 后端**：生成 `pom.xml`（含 web/mybatis-plus/数据库驱动/lombok/validation/flyway）、`Application.java`、`application.yml`（占位符）、基础包结构（entity/mapper/service/controller/vo/config/exception/common）、`db/migration/` 目录
-- **Vue 3 前端（若含）**：生成 `package.json`（含 vue/vite/element-plus/axios/pinia/vue-router）、`vite.config.js`（含 API 代理）、`src/main.js`、`src/App.vue`、`src/router/`、`src/api/request.js`（axios 封装）、`.env.development` / `.env.production`
-- **Spring AI（若选择）**：在 `pom.xml` 追加 `spring-ai-openai-spring-boot-starter`，在 `application.yml` 追加 AI 配置占位符
-
-骨架生成后提示用户：补充 `application.yml` 数据库配置 → 验证可启动 → 再执行 `@intake`
-
-**4B. 老项目特殊处理（有代码但无 docs/ 目录）**
+## Step 4：老项目特殊处理（有代码但无 docs/ 目录）
 
 有代码但无 `docs/` → 创建目录结构，提示"直接 `@intake` 开始"，不阻断流程
+
+> `@init` **不生成任何源代码**。全新项目的项目骨架（pom.xml、src/、package.json 等）由 `@code` 阶段根据 `@design` 输出的骨架规划生成。
 
 ## Step 5：输出初始化报告
 

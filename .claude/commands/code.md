@@ -23,6 +23,7 @@ argument-hint: [REQ-XXXXXXXX | --frontend | --backend | --db]
 
 **执行步骤：**
 1. 【Step 0】版本上下文扫描 - 检测项目技术栈（pom.xml / package.json 等），确定前后端版本
+   - 若 pom.xml 和 src/ 均不存在 → **全新项目**：先读取设计文档中"项目骨架规划"节，生成骨架文件（pom.xml、Application.java、application.yml、基础包结构 + 前端骨架），验证可启动后再继续生成业务代码
 2. 读取输入文档（需求文档或设计文档，取决于等级）
 3. 生成后端代码：
    - DB迁移脚本：src/main/resources/db/migration/

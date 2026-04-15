@@ -76,7 +76,9 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 5. 项目根包名？（如：com.example.myapp）
 ```
 
-用户确认后在 Step 4 执行骨架生成。
+用户确认后，将技术栈信息写入 `01_tech_stack.mdc`，供后续 `/design` 读取。
+
+> ⚠️ `/init` **不生成任何源代码**。项目骨架（pom.xml、src/ 目录、package.json 等）在 `/code` 阶段根据 `/design` 的骨架规划生成。
 
 ---
 
@@ -147,81 +149,9 @@ docs/
 
 ---
 
-## Step 4：全新项目骨架生成 / 老项目特殊处理
+## Step 4：老项目特殊处理（有代码但无文档）
 
-### 4A. 全新项目骨架生成（无任何源代码时执行）
-
-根据 Step 1E 确认的技术栈生成最小可运行骨架：
-
-**后端骨架（Java Spring Boot 示例）**
-
-| 生成文件 | 说明 |
-|---|---|
-| `pom.xml` | Spring Boot 父 POM + 基础依赖（web、mybatis-plus、数据库驱动、lombok、validation、flyway） |
-| `src/main/java/{basePackage}/Application.java` | Spring Boot 启动类（含 `@MapperScan`） |
-| `src/main/resources/application.yml` | 数据库连接、端口、日志配置（全部使用占位符） |
-| `src/main/java/{basePackage}/config/MybatisPlusConfig.java` | MyBatis-Plus 配置（分页插件） |
-| `src/main/java/{basePackage}/exception/BusinessException.java` | 业务异常基类 |
-| `src/main/java/{basePackage}/exception/GlobalExceptionHandler.java` | 全局异常处理（统一返回格式） |
-| `src/main/java/{basePackage}/common/Result.java` | 统一响应体 |
-| `src/main/java/{basePackage}/entity/` | 实体类目录（空，供 `/code` 填充） |
-| `src/main/java/{basePackage}/mapper/` | Mapper 接口目录（空） |
-| `src/main/java/{basePackage}/service/` + `impl/` | Service 目录（空） |
-| `src/main/java/{basePackage}/controller/` | Controller 目录（空） |
-| `src/main/java/{basePackage}/vo/` | VO 目录（空） |
-| `src/main/resources/db/migration/` | Flyway 迁移脚本目录（空，供 `/code` 填充） |
-| `src/test/java/{basePackage}/` | 测试目录（空） |
-
-若用户确认含 **Spring AI**，额外追加：
-
-```xml
-<!-- pom.xml 中追加 -->
-<dependency>
-  <groupId>org.springframework.ai</groupId>
-  <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-</dependency>
-```
-
-```yaml
-# application.yml 中追加
-spring:
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:请配置}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      chat:
-        options:
-          model: gpt-4o
-```
-
-**前端骨架（Vue 3 + Vite 示例，若含前端）**
-
-| 生成文件 | 说明 |
-|---|---|
-| `package.json` | vue、vite、element-plus、axios、pinia、vue-router 基础依赖 |
-| `vite.config.js` | 含 API 代理（`/api` → 后端端口） |
-| `index.html` | Vite 入口 HTML |
-| `src/main.js` | Vue 应用入口（挂载 Element Plus、Pinia、Router） |
-| `src/App.vue` | 根组件（含 `<router-view />`） |
-| `src/router/index.js` | 路由配置骨架（空路由表） |
-| `src/stores/index.js` | Pinia 入口（空） |
-| `src/api/request.js` | Axios 实例封装（含拦截器、Token 注入、统一错误处理） |
-| `src/api/` | API 调用层目录（空，供 `/code` 填充） |
-| `src/views/` | 页面目录（空） |
-| `src/components/` | 通用组件目录（空） |
-| `.env.development` | `VITE_API_BASE_URL=http://localhost:8080` |
-| `.env.production` | `VITE_API_BASE_URL=请配置生产地址` |
-
-> 骨架文件仅提供**可运行的最小结构**，所有业务代码在 `/code` 阶段生成。
-> 生成后，提示用户验证骨架可启动：
-> - 后端：补充 `application.yml` 数据库连接信息 → `mvn spring-boot:run`
-> - 前端：`npm install && npm run dev`
-> 验证通过后再执行 `/intake`。
-
----
-
-### 4B. 老项目特殊处理（有代码但无 docs/ 目录）
-
+若检测到已有代码但无 `docs/` 目录：
 1. 扫描根目录一级结构，列出已有模块
 2. 输出提示：
    ```
@@ -229,6 +159,8 @@ spring:
    无需补历史文档，直接 /intake 开始接入新需求即可
    ```
 3. 不阻断流程
+
+> 全新项目无需任何特殊处理：`/init` 只负责创建 AI 工作流目录，项目源代码骨架（pom.xml、src/、package.json 等）由 `/code` 阶段根据 `/design` 输出的骨架规划自动生成。
 
 ---
 
@@ -253,18 +185,9 @@ spring:
 - ✅ docs/review/
 - ✅ docs/delivery/
 
-### 项目骨架（全新项目专属）
-[若为全新项目，列出所有生成的骨架文件]
-- ✅ pom.xml（基础依赖已配置）
-- ✅ src/ 目录结构已创建
-- ✅ 前端骨架（package.json、vite.config.js、src/ 结构）
-- ✅ Spring AI 配置占位符已添加（若选择）
-
-### 必须手动完成后再执行 /intake
+### 需要手动完成的配置
 - [ ] 补充 01_tech_stack.mdc 中的具体版本号
-- [ ] （全新项目）补充 application.yml 中的数据库连接信息
-- [ ] （全新项目）验证后端可启动：mvn spring-boot:run
-- [ ] （全新项目）验证前端可启动：npm install && npm run dev
+- [ ] 确认前后端目录结构是否正确识别（全新项目确认技术栈填写无误）
 
 ---
 

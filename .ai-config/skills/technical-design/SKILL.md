@@ -40,6 +40,7 @@
          - 判断本次需求是：全新项目 / 新增模块 / 改造已有功能 / 跨模块联动
          - 识别受影响的前端页面模块和后端服务模块
          - 全新项目：定义基础模块划分（如 user/auth/business）
+         - 全新项目：**必须输出"项目骨架规划"节**（见输出格式），供 /code 阶段直接生成骨架文件
          - 确定是否需要引入新技术组件（缓存、消息队列等）
          ↓
 [Step 3] 数据库设计（后端）
@@ -175,6 +176,69 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 |---|---|---|
 | Redis 缓存 | ✅ 引入 | 高频查询接口，需缓存用户基础信息 |
 | MQ | ❌ 不引入 | 本期为同步流程，无异步需求 |
+
+### 项目骨架规划（全新项目必填，已有项目跳过）
+
+> `/code` 阶段将根据此节生成项目骨架文件，**已有项目删除本节**。
+
+**基础信息**
+- 根包名：`com.example.myapp`（后续所有 Java 类放在此包下）
+- 后端框架版本：Spring Boot x.x + JDK xx
+- 前端框架版本：Vue x + Vite x（若含前端）
+
+**后端依赖清单（pom.xml）**
+| 依赖 | 说明 |
+|---|---|
+| spring-boot-starter-web | Web MVC |
+| mybatis-plus-boot-starter | ORM |
+| mysql-connector-j | 数据库驱动 |
+| lombok | 简化代码 |
+| spring-boot-starter-validation | 参数校验 |
+| flyway-core | DB 版本管理 |
+| [spring-ai-openai-spring-boot-starter] | 若含 Spring AI |
+| [spring-boot-starter-data-redis] | 若含 Redis |
+
+**后端基础目录结构**
+```
+src/main/java/{basePackage}/
+  ├── Application.java          # 启动类（@MapperScan）
+  ├── config/                   # 配置类（MybatisPlusConfig 等）
+  ├── exception/                # GlobalExceptionHandler、BusinessException
+  ├── common/                   # Result 统一响应体、常量
+  ├── entity/                   # 实体类（/code 填充）
+  ├── mapper/                   # Mapper 接口（/code 填充）
+  ├── service/ + impl/          # Service（/code 填充）
+  ├── controller/               # Controller（/code 填充）
+  └── vo/                       # VO/DTO（/code 填充）
+src/main/resources/
+  ├── application.yml           # 数据库、端口、日志配置（含 AI Key 占位符）
+  └── db/migration/             # Flyway 脚本（/code 填充）
+```
+
+**前端依赖清单（package.json，若含前端）**
+| 依赖 | 说明 |
+|---|---|
+| vue | Vue 3 |
+| vite | 构建工具 |
+| element-plus | UI 组件库 |
+| axios | HTTP 客户端 |
+| pinia | 状态管理 |
+| vue-router | 路由 |
+
+**前端基础目录结构**
+```
+src/
+  ├── main.js                   # 应用入口（挂载 Element Plus/Pinia/Router）
+  ├── App.vue                   # 根组件
+  ├── router/index.js           # 路由配置骨架
+  ├── stores/                   # Pinia Store
+  ├── api/request.js            # Axios 实例（拦截器、Token 注入）
+  ├── api/                      # API 调用层（/code 填充）
+  ├── views/                    # 页面组件（/code 填充）
+  └── components/               # 通用组件（/code 填充）
+.env.development                # VITE_API_BASE_URL=http://localhost:8080
+.env.production                 # VITE_API_BASE_URL=请配置
+```
 
 ---
 
