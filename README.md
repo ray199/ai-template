@@ -53,43 +53,6 @@ cd my-project
 /init      /intake    /design    /code    /check    /deliver
 ```
 
-### 方式二：Marketplace 插件（已有项目 / 团队统一分发）
-
-在 Claude Code 中执行一次安装：
-
-```
-/plugin marketplace add ray199/ai-template
-/plugin install ai@ai-template
-```
-
-命令带 `/ai:` 前缀，**跨项目通用**：
-
-```
-/ai:init    /ai:intake    /ai:design    /ai:code    /ai:check    /ai:deliver
-```
-
-规范有更新时，所有人执行：
-
-```
-/plugin marketplace update
-```
-
----
-
-### 两种方式命令对照
-
-两套命令**功能完全一致**，仅前缀不同（Claude Code 强制要求插件命令带插件名前缀）：
-
-| 功能 | Clone 方式 | Marketplace 方式 |
-|---|---|---|
-| 项目初始化 | `/init` | `/ai:init` |
-| 需求接入 | `/intake` | `/ai:intake` |
-| 技术设计 | `/design REQ-xxx` | `/ai:design REQ-xxx` |
-| 编码实现 | `/code REQ-xxx` | `/ai:code REQ-xxx` |
-| 测试+审查 | `/check REQ-xxx` | `/ai:check REQ-xxx` |
-| 交付上线 | `/deliver REQ-xxx` | `/ai:deliver REQ-xxx` |
-
-> **如何选择**：团队统一推广选 Marketplace（规范自动更新，不改项目结构）；新项目自己搭选 Clone（深度集成，可定制 `.ai-config/`）。**同一个团队只选一种**，避免混用两套命令。
 
 ---
 
@@ -97,40 +60,25 @@ cd my-project
 
 ```
 .
-├── .ai-config/              # 项目级配置（clone 模板时使用）
+├── .ai-config/              # AI 规范配置
 │   ├── rules/               # 技术栈、代码规范、安全、Git 工作流等约束
 │   ├── agents/              # 角色代理（架构师、后端开发、QA等）
-│   └── skills/              # 各阶段详细技能（含项目上下文，深度集成）
-│
-├── skills/                  # 自包含技能（Marketplace 插件来源）
-│   ├── init/SKILL.md        # 项目初始化  → /ai:init
-│   ├── intake/SKILL.md      # 需求接入    → /ai:intake
-│   ├── design/SKILL.md      # 技术设计    → /ai:design
-│   ├── code/SKILL.md        # 编码实现    → /ai:code
-│   ├── check/SKILL.md       # 测试+审查   → /ai:check
-│   └── deliver/SKILL.md     # 交付上线    → /ai:deliver
-│
-├── .claude-plugin/          # Marketplace 插件声明
-│   ├── plugin.json          # 插件名 "ai"，指向 skills/
-│   └── marketplace.json     # 发布源 ray199/ai-template
+│   └── skills/              # 各阶段详细执行技能
 │
 ├── .claude/
-│   ├── commands/            # 项目级斜杠命令（无前缀，clone 模板时内置）
-│   └── settings.json        # 预置 extraKnownMarketplaces
+│   └── commands/            # 项目级斜杠命令（/init /intake /design /code /check /deliver）
 │
-├── docs/                    # 所有阶段输出文档
-│   ├── requirements/        # 需求文档（backlog / approved / done）
-│   ├── design/              # 技术设计文档
+├── docs/                    # 所有阶段输出文档（由命令自动生成）
+│   ├── requirements/        # 需求文档（backlog / done）
+│   ├── design/              # 技术设计文档 + 编码完成报告
 │   ├── test/                # 测试报告
 │   ├── review/              # 审查报告
-│   └── delivery/            # 交付文档
+│   ├── delivery/            # 交付文档
+│   └── prototype/           # 原型文件（/intake 自动生成）
 │
-├── WORKFLOW-GUIDE.md        # 工作流完整指南（各场景输出物示例）
-├── CLAUDE.md                # 详细规范（各阶段完整说明）
-└── EXAMPLE.md               # 实际使用示例
+├── WORKFLOW-GUIDE.md        # 工作流快速参考（各命令输入输出说明）
+└── claude.md                # 完整规范（各阶段详细说明）
 ```
-
-> `skills/`（自包含，无外部依赖）与 `.ai-config/skills/`（深度集成项目上下文）内容对应，前者用于插件分发，后者在 clone 模板的项目中使用。
 
 ---
 
@@ -139,8 +87,7 @@ cd my-project
 | 文档 | 用途 |
 |---|---|
 | [WORKFLOW-GUIDE.md](./WORKFLOW-GUIDE.md) | 4阶段完整流程 + 各命令输入输出说明，首次使用必读 |
-| [CLAUDE.md](./CLAUDE.md) | 各阶段详细规范说明（4万字完整版） |
-| [EXAMPLE.md](./EXAMPLE.md) | 完整使用示例 |
+| [claude.md](./claude.md) | 各阶段详细规范说明（完整版） |
 
 ---
 
@@ -148,6 +95,7 @@ cd my-project
 
 | 版本 | 日期 | 更新 |
 |---|---|---|
-| v3.0 | 2026-04-14 | Phase 6：Marketplace 插件化，7个自包含技能 |
-| v2.0 | 2026-04-06 | Phase 5：规范增强，工作流完整文档 |
-| v1.0 | 2026-03-20 | 初始版本，Phase 1-4 |
+| v4.0 | 2026-04-15 | Phase 8-10：前后端全链路覆盖、跨阶段校验、新项目骨架、首次上线清单 |
+| v3.0 | 2026-04-14 | Phase 6-7：Trae 兼容入口、多语言规范、文档格式标准化 |
+| v2.0 | 2026-04-06 | Phase 4-5：工作流完整文档、规范增强、原型自动生成 |
+| v1.0 | 2026-03-20 | Phase 1-3：需求接入、变更跟踪、项目自动扫描 |

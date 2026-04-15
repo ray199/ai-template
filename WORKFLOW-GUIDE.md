@@ -113,19 +113,25 @@ Step 4   输出物推荐（扫描通过后）
 **执行步骤**：
 ```
 Step 1  加载上下文
-        读取需求文档、扫描现有代码结构（src/main/java/）
-        读取已有DB表结构（docs/db/ 或 MCP）
-        读取已有接口文档（docs/api/）
+        读取需求文档、原型文件（docs/prototype/REQ-xxx*，若存在）
+        全新项目：读 01_tech_stack.mdc（src/ 不存在时跳过代码扫描）
+        已有项目：扫描 src/main/java/、src/、docs/db/、docs/api/
 Step 2  架构影响分析
-        识别受影响模块和下游依赖
+        全新项目：定义初始模块划分 + 输出"项目骨架规划"节（依赖清单/目录结构）
+        已有项目：识别受影响模块和下游依赖
         确定是否引入新技术组件（Redis / MQ 等）
 Step 3  数据库设计
         新增/修改表的DDL
         数据迁移脚本策略 + 回滚方案
 Step 4  接口设计
         RESTful接口清单（URL / Method / 权限 / 请求响应 / 错误码）
+Step 4.5 前端UI设计（若项目含前端）
+        页面清单（路由 / 对应 view 文件）
+        组件拆分（页面级 view + 可复用 component）
+        状态管理规划（Pinia/Vuex Store vs 本地 ref）
+        API调用层规划（每个页面调用哪些接口）
 Step 5  关键实现路径
-        核心流程伪代码 / 时序说明
+        核心流程前后端协作时序
         技术风险点及应对方案
 Step 6  输出设计文档，列出待评审确认项
 ```
@@ -143,26 +149,35 @@ Step 6  输出设计文档，列出待评审确认项
 
 **执行步骤**：
 ```
-Step 0  版本上下文扫描（Java/Vue项目必须执行）
-        检测 JDK 版本、Spring Boot 版本、Vue 版本等
-        确定代码风格（JDK17+ 优先 record，Spring Boot 3.x 用 jakarta.*）
+Step 0  版本上下文扫描 + 项目类型检测
+        检测 JDK / Spring Boot / Vue 版本
+        全新项目（pom.xml 和 src/ 均不存在）→ 先读设计文档"项目骨架规划"节，
+        生成骨架文件（pom.xml / Application.java / application.yml / package.json 等），
+        提示验证可启动后继续
 Step 1  读取设计文档，拆解编码任务
 Step 2  执行DB变更（优先）
         生成迁移脚本：src/main/resources/db/migration/Vyyyymmdd_nn__desc.sql
-Step 3  逐层生成代码（自底向上）
+Step 3  逐层生成后端代码（自底向上）
         Mapper → Entity → Service（接口+实现）→ Controller → VO/DTO
-Step 4  代码规范自检
-        命名 / 日志 / 事务 / 异常处理 / 安全校验
-Step 5  生成单元测试骨架（Service层）
-        src/test/java/.../XxxServiceImplTest.java
+Step 3.5 生成前端代码（若含前端）
+        API调用层：src/api/xxx.js
+        页面组件：src/views/xxx/（列表页 / 详情页）
+        业务组件：src/components/xxx/（弹窗 / 表单）
+        路由更新：src/router/index.js
+        Store模块：src/stores/（仅需全局状态时）
+Step 4  代码规范自检（后端 + 前端）
+Step 5  生成测试骨架
+        后端：src/test/java/.../XxxServiceImplTest.java
+        前端：Hook 单元测试骨架（Vitest）
 Step 6  输出编码完成报告
 ```
 
 **输出**：
-- 源代码（Entity / Mapper / Service / Controller / VO）
+- 后端代码（Entity / Mapper / Service / Controller / VO）
+- 前端代码（views / components / api / router，若含前端）
 - `src/main/resources/db/migration/Vyyyymmdd_nn__desc.sql`（DB迁移脚本）
-- `src/test/java/.../XxxServiceImplTest.java`（单元测试骨架）
-- `docs/design/REQ-XXXXXXXX-code-report.md`（编码完成报告）
+- 测试骨架（后端 JUnit + 前端 Vitest）
+- `docs/design/REQ-XXXXXXXX-code-report.md`（前后端文件清单 + 规范自检结果）
 
 ---
 
@@ -191,13 +206,14 @@ Step 5  输出测试报告 → docs/test/REQ-XXXXXXXX-test.md
 
 **第二部分：代码审查**
 ```
-Step 6  读取代码文件 + 技术设计文档
+Step 6  读取 code-report 中的文件清单，逐一读取所有源代码文件（前端+后端）
 Step 7  5维度审查
         ① 代码质量     命名/逻辑/规范/日志
-        ② 架构合理性   模块划分/依赖关系
+        ② 架构合理性   模块划分/依赖关系；前端：组件拆分是否合理
         ③ 安全性       SQL注入/XSS/权限/敏感数据
         ④ 可维护性     注释/错误处理/测试覆盖
-        ⑤ 业务完整性   覆盖所有验收标准
+        ⑤ 业务完整性   覆盖所有验收标准；前端页面是否与原型对齐
+        前端额外对照 vue-code-review-checklist.md
 Step 8  标注：🔴 阻断性 / 🟡 警告性 / ✅ 赞扬点
 Step 9  输出审查报告 → docs/review/REQ-XXXXXXXX-review.md
 ```
@@ -240,11 +256,12 @@ Step 4  输出交付报告
 **输出**（两个，目的不同）：
 - `docs/delivery/REQ-XXXXXXXX-delivery.md` — 运维快查报告（功能清单、回滚方案、遗留问题）
 - `docs/requirements/done/REQ-XXXXXXXX/` — 需求生命周期归档，含：
-  - `requirement.md`（需求文档最终版）
-  - `design.md`（技术设计文档最终版）
-  - `test-report.md`（测试报告）
-  - `review-report.md`（代码审查报告）
-  - `delivery-note.md`（交付说明）
+  - `REQ-XXXXXXXX.md`（需求文档）
+  - `REQ-XXXXXXXX-design.md`（技术设计文档）
+  - `REQ-XXXXXXXX-code-report.md`（编码完成报告）
+  - `REQ-XXXXXXXX-test.md`（测试报告）
+  - `REQ-XXXXXXXX-review.md`（代码审查报告）
+  - `REQ-XXXXXXXX-delivery.md`（交付说明）
 
 ---
 
@@ -266,17 +283,27 @@ Step 4  输出交付报告
 ```
 docs/
 ├── requirements/
-│   ├── backlog/        ← /intake 输出（待开发）
+│   ├── backlog/
+│   │   └── REQ-xxx.md              ← /intake 输出（待开发）
 │   └── done/
-│       └── REQ-xxx/   ← /deliver 归档（含所有文档）
+│       └── REQ-xxx/                ← /deliver 归档（完整生命周期）
+│           ├── REQ-xxx.md
+│           ├── REQ-xxx-design.md
+│           ├── REQ-xxx-code-report.md
+│           ├── REQ-xxx-test.md
+│           ├── REQ-xxx-review.md
+│           └── REQ-xxx-delivery.md
 ├── design/
-│   ├── REQ-xxx-design.md       ← /design 输出
-│   └── REQ-xxx-code-report.md  ← /code 输出
+│   ├── REQ-xxx-design.md           ← /design 输出
+│   └── REQ-xxx-code-report.md      ← /code 输出
 ├── test/
-│   ├── REQ-xxx-unit-test.md
-│   └── REQ-xxx-integration-test.md
-└── review/
-    └── REQ-xxx-review.md
+│   └── REQ-xxx-test.md             ← /check 输出
+├── review/
+│   └── REQ-xxx-review.md           ← /check 输出
+├── delivery/
+│   └── REQ-xxx-delivery.md         ← /deliver 输出
+└── prototype/
+    └── REQ-xxx.html                ← /intake 自动生成（若需要）
 ```
 
 ---
