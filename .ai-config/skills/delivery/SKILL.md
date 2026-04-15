@@ -14,7 +14,11 @@
 ## 处理流程
 
 ```
-输入：审查通过的 PR + 测试报告 + 技术设计文档
+输入校验（缺少任一必须文件或验收未通过则终止）：
+  - docs/test/REQ-XXXXXXXX-test.md        必须存在（来自 /check）
+  - docs/review/REQ-XXXXXXXX-review.md   必须存在（来自 /check）
+  - 测试报告中验收结论字段：必须为 ✅ 通过，否则终止，提示先修复 P0/P1 问题
+  - 审查报告中审查结论字段：必须无 🔴 阻断性问题，否则终止，提示先修复
        ↓
 [Step 1] 上线前检查清单（逐项确认）
          ↓
@@ -80,11 +84,12 @@
 ```
 docs/requirements/done/
   REQ-XXXXXXXX/
-    ├── REQ-XXXXXXXX.md           # 需求文档（从 backlog/ 移入）
-    ├── REQ-XXXXXXXX-design.md    # 技术设计文档（从 docs/design/ 复制）
-    ├── REQ-XXXXXXXX-test.md      # 测试报告（从 docs/test/ 复制）
-    ├── REQ-XXXXXXXX-review.md    # 代码审查报告（从 docs/review/ 复制）
-    └── REQ-XXXXXXXX-delivery.md  # 交付说明（从 docs/delivery/ 复制）
+    ├── REQ-XXXXXXXX.md                # 需求文档（从 backlog/ 移入）
+    ├── REQ-XXXXXXXX-design.md         # 技术设计文档（从 docs/design/ 复制）
+    ├── REQ-XXXXXXXX-code-report.md    # 编码完成报告（从 docs/design/ 复制）
+    ├── REQ-XXXXXXXX-test.md           # 测试报告（从 docs/test/ 复制）
+    ├── REQ-XXXXXXXX-review.md         # 代码审查报告（从 docs/review/ 复制）
+    └── REQ-XXXXXXXX-delivery.md       # 交付说明（从 docs/delivery/ 复制）
 ```
 
 ### 交付说明（delivery-note.md）格式

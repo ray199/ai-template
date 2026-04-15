@@ -8,11 +8,11 @@ argument-hint: [REQ-XXXXXXXX]
 
 需求ID：$ARGUMENTS
 
-**执行前，读取以下输入文件：**
-- `docs/requirements/backlog/$ARGUMENTS.md`（需求文档，验收标准来源）
-- `docs/design/$ARGUMENTS-design.md`（技术设计文档，若 M/L/XL 等级）
-- `docs/design/$ARGUMENTS-code-report.md`（编码完成报告，含前后端生成文件清单）
-- 编码完成报告中列出的所有源代码文件
+**执行前校验（缺少任一必须文件则终止，提示用户补充缺失步骤）：**
+- `docs/requirements/backlog/$ARGUMENTS.md` 必须存在 → 来自 `/intake`
+- `docs/design/$ARGUMENTS-code-report.md` 必须存在 → 来自 `/code $ARGUMENTS`，缺失请先执行 `/code $ARGUMENTS`
+- 可选读取（存在则必须读）：`docs/design/$ARGUMENTS-design.md`（技术设计文档，M/L/XL 等级）
+- 读取编码完成报告中列出的所有源代码文件（前后端文件清单）
 
 **执行步骤：**
 

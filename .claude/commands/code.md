@@ -1,7 +1,7 @@
 ---
 name: code
 description: 编码实现 - 根据需求或设计文档生成 Entity/Mapper/Service/Controller/VO 及测试骨架
-argument-hint: [REQ-XXXXXXXX]
+argument-hint: [REQ-XXXXXXXX | --frontend | --backend | --db]
 ---
 
 请执行**编码实现（阶段2）**。
@@ -10,11 +10,16 @@ argument-hint: [REQ-XXXXXXXX]
 
 执行规范参考：@.ai-config/skills/coding-impl/SKILL.md
 
-**输入来源（根据工作量等级）：**
-- S 等级 → 读取 `docs/requirements/backlog/$ARGUMENTS.md`（需求文档，无设计文档）
-- M/L/XL → 读取 `docs/design/$ARGUMENTS-design.md`（技术设计文档）
+**执行前校验（缺少任一必须文件则终止，提示用户补充缺失步骤）：**
+- `docs/requirements/backlog/$ARGUMENTS.md` 必须存在 → 来自 `/intake`
+- M/L/XL 等级：`docs/design/$ARGUMENTS-design.md` 必须存在 → 来自 `/design $ARGUMENTS`，缺失请先执行 `/design $ARGUMENTS`
+- 若 `docs/design/$ARGUMENTS-code-report.md` 已存在 → 提示用户确认是否重新生成
 
-如不确定等级，读取需求文档中的工作量评估结论。
+**输入来源（根据需求文档中的工作量等级结论）：**
+- S 等级 → `docs/requirements/backlog/$ARGUMENTS.md`（需求文档）
+- M/L/XL → `docs/design/$ARGUMENTS-design.md`（技术设计文档，必须已存在）
+
+如不确定等级，先读取需求文档中的工作量评估结论字段，再决定输入来源。
 
 **执行步骤：**
 1. 【Step 0】版本上下文扫描 - 检测项目技术栈（pom.xml / package.json 等），确定前后端版本

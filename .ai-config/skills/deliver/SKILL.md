@@ -7,6 +7,12 @@
 
 执行规范参考：@delivery/SKILL.md
 
+**执行前校验（缺少任一必须文件或验收未通过则终止）：**
+- `docs/test/REQ-XXXXXXXX-test.md` 必须存在 → 来自 `@check REQ-XXXXXXXX`，缺失请先执行 `@check REQ-XXXXXXXX`
+- `docs/review/REQ-XXXXXXXX-review.md` 必须存在 → 来自 `@check REQ-XXXXXXXX`
+- 读取测试报告中的**验收结论**字段：必须为 ✅ 通过，若为 ❌ 阻断则终止并提示先修复 P0/P1 问题
+- 读取审查报告中的**审查结论**字段：必须无 🔴 阻断性问题，否则终止并提示先修复
+
 **执行步骤：**
 1. 上线前检查清单（逐项确认：代码/后端DB配置/前端构建部署/测试/文档层面）
    - 后端：DDL迁移脚本验证、配置项同步、回滚方案

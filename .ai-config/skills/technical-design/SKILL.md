@@ -15,18 +15,31 @@
 ## 处理流程
 
 ```
-输入：approved 的需求文档 + 已确认的输出物清单（Spec / 原型 / 迭代计划）
+输入：approved 的需求文档（/intake 输出）+ 原型文件（若存在）
        ↓
-[Step 1] 加载上下文
-         - 读取需求文档（docs/requirements/backlog/REQ-XXXXXXXX.md）
-         - 扫描现有代码库结构（backend: src/main/java/；frontend: src/ 或 frontend/src/）
-         - 读取已有数据库表结构（docs/db/ 或 MCP 工具）
-         - 读取已有接口文档（docs/api/）
-         - 检测是否为前后端分离项目（存在 package.json + pom.xml / *.csproj / requirements.txt）
+[Step 1] 加载上下文并校验输入
+         必须存在（缺失则终止并提示先执行对应命令）：
+         - docs/requirements/backlog/REQ-XXXXXXXX.md  ← /intake 输出
+         可选读取（存在则必须读）：
+         - docs/prototype/REQ-XXXXXXXX.html / REQ-XXXXXXXX-wireframe.md  ← /intake 或 /prototype 输出
+         ↓
+         检测项目类型（二选一）：
+         ├─ 【全新项目】src/main/java/ 和 src/ 均不存在
+         │   → 跳过代码扫描
+         │   → 读取 .ai-config/rules/01_tech_stack.mdc 确定基础技术栈约定
+         │   → 架构影响分析中标注"全新项目，从零建立"
+         └─ 【已有项目】存在现有代码
+             → 扫描 backend: src/main/java/；frontend: src/ 或 frontend/src/
+             → 读取 docs/db/（已有表结构）、docs/api/（已有接口）
+             → 扫描 docs/requirements/done/（历史需求，排查依赖）
+         ↓
+         检测项目结构：
+         - 前后端分离：package.json + pom.xml / *.csproj / requirements.txt 同时存在
          ↓
 [Step 2] 架构影响分析
-         - 判断本次需求是新功能 / 改造已有功能 / 纯新模块
+         - 判断本次需求是：全新项目 / 新增模块 / 改造已有功能 / 跨模块联动
          - 识别受影响的前端页面模块和后端服务模块
+         - 全新项目：定义基础模块划分（如 user/auth/business）
          - 确定是否需要引入新技术组件（缓存、消息队列等）
          ↓
 [Step 3] 数据库设计（后端）
@@ -56,15 +69,19 @@
 
 ## 上下文扫描规则
 
-| 扫描目标 | 目的 | 工具 |
+| 扫描目标 | 目的 | 适用场景 |
 |---|---|---|
-| `src/main/java/` 目录结构 | 了解现有后端模块划分 | 代码搜索 |
-| `src/` 或 `frontend/src/`（views/、components/） | 了解现有前端页面和组件 | 代码搜索 |
-| `docs/db/` 或 MCP schema 工具 | 避免重复建表，了解已有字段 | Read / MCP |
-| `docs/api/` | 接口命名和版本保持一致 | Read |
-| `docs/requirements/done/` | 排查与历史功能的依赖 | Read |
+| `docs/requirements/backlog/REQ-XXXXXXXX.md` | 需求来源（必读） | 所有项目 |
+| `docs/prototype/REQ-XXXXXXXX*` | 需求阶段已生成的原型/截图描述（若存在必读） | 所有项目 |
+| `.ai-config/rules/01_tech_stack.mdc` | 确定基础技术栈约定 | 所有项目（全新项目必读） |
+| `src/main/java/` 目录结构 | 了解现有后端模块划分 | 已有项目 |
+| `src/` 或 `frontend/src/`（views/、components/） | 了解现有前端页面和组件 | 已有项目 |
+| `docs/db/` 或 MCP schema 工具 | 避免重复建表，了解已有字段 | 已有项目 |
+| `docs/api/` | 接口命名和版本保持一致 | 已有项目 |
+| `docs/requirements/done/` | 排查与历史功能的依赖 | 已有项目 |
 
-> ⚠️ 扫描结果必须引用来源，不允许凭空推断现有代码结构。
+> ⚠️ **已有项目**：扫描结果必须引用来源，不允许凭空推断现有代码结构。  
+> ✅ **全新项目**：无现有代码可扫描，基于 `01_tech_stack.mdc` 和需求文档定义初始结构，在设计文档中标注"全新项目"。
 
 ---
 
@@ -141,9 +158,13 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 ## 一、架构影响分析
 
 ### 变更类型
-[新增模块 / 改造已有模块 / 跨模块联动]
+[全新项目（从零建立）/ 新增模块 / 改造已有模块 / 跨模块联动]
 
-### 受影响模块
+### 原型/截图参考
+> 若 /intake 阶段有截图或原型图，在此说明UI参考来源。
+[来自 docs/prototype/REQ-XXXXXXXX.html / 无]
+
+### 受影响模块（已有项目填写；全新项目填写"初始模块规划"）
 | 模块 | 影响程度 | 说明 |
 |---|---|---|
 | user 模块 | 高 | 新增接口，需调整 Service 层 |

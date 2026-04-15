@@ -7,9 +7,17 @@
 
 执行规范参考：@technical-design/SKILL.md
 
+**执行前校验（缺少必须文件则终止，提示用户补充缺失步骤）：**
+- `docs/requirements/backlog/REQ-XXXXXXXX.md` 必须存在 → 来自 `@intake`，缺失请先执行 `@intake`
+- 若 `docs/design/REQ-XXXXXXXX-design.md` 已存在 → 提示用户确认是否覆盖重新设计
+- 可选读取（存在则必须读）：`docs/prototype/REQ-XXXXXXXX*.html` 或 `REQ-XXXXXXXX*-wireframe.md`
+
 **执行步骤：**
-1. 读取 docs/requirements/ 下对应需求文档和工作量评估报告
-2. 检测项目是否为前后端分离（package.json + 后端构建文件同时存在）
+1. 读取 docs/requirements/backlog/ 下对应需求文档（含工作量评估结论）
+2. 检测项目类型：
+   - 全新项目（src/main/java/ 和 src/ 均不存在）→ 读取 `.ai-config/rules/01_tech_stack.mdc` 确定技术栈
+   - 已有项目 → 扫描现有代码结构（backend: src/main/java/；frontend: src/ 或 frontend/src/）
+3. 检测项目是否为前后端分离（package.json + 后端构建文件同时存在）
 3. 以架构师代理角色执行技术设计，覆盖以下维度：
    - 架构影响分析（受影响的前端页面模块和后端服务模块）
    - 数据库设计（DDL、迁移脚本、回滚方案）
