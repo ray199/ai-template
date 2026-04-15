@@ -42,6 +42,10 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 
 `pom.xml` 含 `spring-ai` → ⚠️ 引入 Spring AI，设计阶段需补充 AI 架构章节
 
+### 1E. 全新项目识别
+
+若无 `pom.xml` / `package.json` / `src/` → 标记为**全新项目**，必须向用户询问技术栈（后端框架版本、是否含前端、数据库、是否引入 AI 框架、根包名），在 Step 4 执行骨架生成。
+
 ## Step 2：初始化规范目录
 
 **前后端分离项目同时创建前端 + 后端两个 Profile（按检测结果选择）：**
@@ -67,7 +71,19 @@ docs/
   delivery/               ← @deliver 输出位置
 ```
 
-## Step 4：老项目特殊处理
+## Step 4：全新项目骨架生成 / 老项目特殊处理
+
+**4A. 全新项目骨架生成（Step 1E 标记为全新项目时执行）**
+
+根据用户确认的技术栈生成最小可运行骨架：
+
+- **Java Spring Boot 后端**：生成 `pom.xml`（含 web/mybatis-plus/数据库驱动/lombok/validation/flyway）、`Application.java`、`application.yml`（占位符）、基础包结构（entity/mapper/service/controller/vo/config/exception/common）、`db/migration/` 目录
+- **Vue 3 前端（若含）**：生成 `package.json`（含 vue/vite/element-plus/axios/pinia/vue-router）、`vite.config.js`（含 API 代理）、`src/main.js`、`src/App.vue`、`src/router/`、`src/api/request.js`（axios 封装）、`.env.development` / `.env.production`
+- **Spring AI（若选择）**：在 `pom.xml` 追加 `spring-ai-openai-spring-boot-starter`，在 `application.yml` 追加 AI 配置占位符
+
+骨架生成后提示用户：补充 `application.yml` 数据库配置 → 验证可启动 → 再执行 `@intake`
+
+**4B. 老项目特殊处理（有代码但无 docs/ 目录）**
 
 有代码但无 `docs/` → 创建目录结构，提示"直接 `@intake` 开始"，不阻断流程
 
