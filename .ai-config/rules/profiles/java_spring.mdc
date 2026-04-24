@@ -232,4 +232,17 @@ spring:
 Java / Spring 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
 
 | 中间件 | 规范 | Java 推荐 |
-|---|
+|---|---|---|
+| HTTP 客户端 | [`../middleware/api-client.md`](../middleware/api-client.md) | OkHttp / Spring `WebClient`（**避免 `HttpURLConnection`**） |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | Logback（Spring Boot 默认）+ SLF4J |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | Spring Security 6.x + JWT filter |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | Spring Data Redis + Lettuce（异步）/ Jedis |
+| RocketMQ | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | rocketmq-client 4.x / 5.x（优先 5.x） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | Spring AI（advisor 机制做重试/缓存） |
+
+---
+
+## 6. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

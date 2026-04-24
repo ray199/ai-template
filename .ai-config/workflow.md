@@ -282,4 +282,52 @@ rollback_verified: true
 
 ```yaml
 ---
-kind: project-map                   # 必填，固�
+kind: project-map                   # 必填，固定值
+generated_at: 2026-04-24            # 必填，ISO 日期
+updated_at: 2026-04-24              # 可选，追加记录时更新
+---
+```
+
+**正文强制章节**：
+- `## 技术栈` `## 模块清单` `## 表清单` `## 对外接口清单`
+- `## 不可变约束`（schema 强制；新项目可留占位不写条目）
+- `## 追加记录`（由 `/deliver` 按需 append；格式：`### YYYY-MM-DD REQ-xxx` 子标题下若干 `- [invariant|debt|decision] 描述`）
+
+---
+
+## 4. 命令依赖图（给自动化用）
+
+```
+/init ─────────────┐
+                   ▼
+/intake ──► workload ∈ {XS,S} ──► /code ──► /check ──► /deliver
+            workload ∈ {M,L,XL} ──► /design ──► /code ──► /check ──► /deliver
+```
+
+每条边都由 schema 校验脚本守门，不通过不能前进。
+
+---
+
+## 5. 多平台适配约定
+
+各平台适配文件应**只做薄引用**，不重复写执行逻辑：
+
+| 平台 | 适配文件 | 引用方式 |
+|---|---|---|
+| Claude Code | `.claude/commands/*.md` | `@.ai-config/workflow.md#命令契约` |
+| Cursor | `.cursor/rules/*.mdc` | 同上 |
+| Codex CLI | `AGENTS.md` | 同上 |
+| Trae | `.trae/rules/` | 同上 |
+
+适配层只做两件事：
+1. 把平台的命令触发映射到本文件的对应章节
+2. 调用 `.ai-config/scripts/validate-doc.js` 作为后置 gate
+
+---
+
+## 6. 修改本文件的注意事项
+
+1. 任何命令契约改动都要同步更新 `.ai-config/scripts/validate-doc.js`
+2. 字段增删要更新对应 schema（第 3 节）
+3. 平台适配层不需要改（只要它们仍然只做薄引用）
+4. 在 `docs/_changelog/workflow.md` 记录变更（项目生命周期内）

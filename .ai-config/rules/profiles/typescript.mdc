@@ -33,4 +33,383 @@
 ```
 ────────────────────────────────────────────
   TypeScript 版本上下文（自动检测）
-────────────────────────────�
+────────────────────────────────────────────
+  TypeScript 版本 : [4.x / 5.x / ❓未检测到]
+  Node.js 版本    : [18 / 20 / 22 / ❓]
+  模块系统        : [ESM / CJS / 混合]
+  严格模式        : [strict: true / false]
+  用途            : [前端 React / 前端 Vue / Node 服务端 / 共享库]
+  运行时校验      : [zod / yup / 无]
+
+  适用规范        : typescript.mdc §[对应章节]
+────────────────────────────────────────────
+```
+
+若 `tsconfig.json` 中 `strict` 非 `true`，必须在设计阶段给出**收敛到严格模式的迁移计划**（见 §2）。
+
+---
+
+## 1. 版本适配
+
+### TypeScript 4.x
+
+- 可用：模板字面量类型、`as const`、递归类型别名、可变参数元组、`satisfies`（4.9+）
+- **不可用**：const type parameters（5.0+）、`using` 资源管理（5.2+）、装饰器标准形态（5.0+）
+- 编译目标推荐：`target: ES2020+`、`module: ESNext`（新项目）
+
+### TypeScript 5.x（推荐新项目）
+
+- 可使用 `const` 类型参数（`function foo<const T>`），避免不必要的类型宽化
+- 可使用 `satisfies` 精确约束对象字面量（替代类型断言）
+- `using` / `await using`（5.2+）做资源清理（等效 try-finally）
+- 装饰器（Stage 3）原生支持；与 `experimentalDecorators: true` 互斥，新项目选择标准形态
+
+### `tsconfig.json` 必选项（强制）
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  }
+}
+```
+
+- `strict: true` 是**底线**，不开 strict 的项目必须有明确收敛计划
+- `noUncheckedIndexedAccess` 强烈推荐（`arr[0]` 类型变成 `T | undefined`，防止运行时越界）
+- `isolatedModules: true` 保证与 Babel/esbuild/swc 兼容
+
+---
+
+## 2. 类型设计（强制）
+
+### 2.1 禁止 `any` 扩散
+
+```typescript
+// ❌ any 泛滥
+function handleData(data: any) {
+  return data.user.name;  // 运行时可能炸
+}
+
+// ✅ 显式类型 + 边界校验
+function handleData(data: unknown): string {
+  const parsed = UserSchema.parse(data);  // zod 校验
+  return parsed.user.name;
+}
+```
+
+- 业务代码禁止 `any`；必须用 `unknown` 后做类型收窄
+- 仅在与三方库互操作的**边界层**可局部使用 `any`，并在注释中说明原因
+- 不准用 `// @ts-ignore` 绕过错误（需要时改用 `// @ts-expect-error` 并加说明注释）
+
+### 2.2 避免类型断言（`as`）
+
+```typescript
+// ❌ 强断言，编译期过但运行期炸
+const user = response as User;
+
+// ✅ 类型守卫或运行时校验
+function isUser(x: unknown): x is User {
+  return typeof x === 'object' && x !== null && 'id' in x;
+}
+if (isUser(response)) {
+  // response: User
+}
+
+// ✅ satisfies（TS 4.9+）
+const config = {
+  port: 3000,
+  host: 'localhost',
+} satisfies ServerConfig;
+```
+
+仅在以下情况允许 `as`：DOM API（`el as HTMLInputElement`）、运行时已证明过的场景、`as const`。
+
+### 2.3 区分 Nullable 语义
+
+- 可选属性：`user?: User` 表示字段可能不存在
+- 可空：`user: User | null` 表示字段存在但可能为空
+- **不要混用**：同一字段含义必须统一，否则下游要写两套判断
+
+### 2.4 Discriminated Union（推荐）
+
+```typescript
+// ✅ 用 tag 区分不同分支
+type Result<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+function handle(r: Result<User>) {
+  if (r.ok) r.data;      // User
+  else r.error;          // string
+}
+```
+
+### 2.5 禁止类型定义漂移
+
+- 实体类型（User、Order 等）必须只有一份事实源；不允许前后端各写一遍
+- 推荐：后端导出 OpenAPI → 前端代码生成（`openapi-typescript`）；或共享 package
+- 禁止"手工维护两套"：容易因字段增改产生运行时错误
+
+---
+
+## 3. 运行时边界校验（强制）
+
+TypeScript 类型**只在编译期存在**，运行时数据必须校验。必须在以下边界做运行时校验：
+
+- HTTP 请求入参 / 出参
+- 外部 API 响应
+- 消息队列消息体
+- 配置文件 / 环境变量
+- `localStorage` / `IndexedDB` 反序列化结果
+
+### 推荐：zod
+
+```typescript
+import { z } from 'zod';
+
+const UserSchema = z.object({
+  id: z.number().int().positive(),
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150).optional(),
+});
+type User = z.infer<typeof UserSchema>;
+
+// 接口入口
+app.post('/users', (req, res) => {
+  const parsed = UserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ errors: parsed.error.flatten() });
+  }
+  // parsed.data 类型已收窄为 User
+});
+```
+
+- **必须**用 `safeParse` 而非 `parse`，否则未捕获异常直接 500
+- 类型从 schema 派生（`z.infer`），不要手写 interface 再对照 schema
+
+### 环境变量校验
+
+```typescript
+const EnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']),
+  DATABASE_URL: z.string().url(),
+  JWT_SECRET: z.string().min(32),
+});
+export const env = EnvSchema.parse(process.env);
+```
+
+启动时失败直接暴毙，好过运行到关键路径才报错。
+
+---
+
+## 4. 异步与错误处理（强制）
+
+### 4.1 Promise 必须处理
+
+- 所有 async 函数必须有调用方 `await` 或 `.then().catch()`；悬空 Promise 会吞错
+- 启用 ESLint 规则 `no-floating-promises`（`@typescript-eslint/no-floating-promises`）
+
+### 4.2 错误类型
+
+```typescript
+// ❌ throw string
+throw 'user not found';
+
+// ✅ 自定义 Error 子类
+class BizError extends Error {
+  constructor(public code: string, message: string, public cause?: unknown) {
+    super(message);
+    this.name = 'BizError';
+  }
+}
+throw new BizError('USER_NOT_FOUND', '用户不存在');
+```
+
+- 禁止 `throw` 字符串或对象字面量
+- 自定义 Error 必须设 `name`，便于 `instanceof` 判断
+- 保留原因链：`new BizError('...', '...', { cause: originalError })`
+
+### 4.3 catch 中的 `unknown`
+
+```typescript
+try {
+  await doSomething();
+} catch (e) {
+  // e 类型是 unknown（TS 4.4+）
+  if (e instanceof BizError) handleBiz(e);
+  else if (e instanceof Error) log.error(e.message);
+  else log.error('unknown error', { e });
+}
+```
+
+不要直接 `e.message`；必须先收窄类型。
+
+### 4.4 并发控制
+
+- `Promise.all`：一个失败全部 reject；适合"全成功"语义
+- `Promise.allSettled`：返回每个结果状态；适合"部分失败可容忍"
+- 大量并发时必须限流（p-limit / 手工信号量），避免打爆下游
+
+---
+
+## 5. 工程组织（强制）
+
+### 5.1 目录结构
+
+- 类型定义**与实现同目录**，禁止"全局 types 巨石"（`src/types/index.ts` 里 3000 行）
+- 每个模块有清晰的 `index.ts` 导出公共 API；内部文件不跨模块直引
+- 共享工具/类型下沉到稳定的 `packages/shared`（monorepo）或 `src/core/`（单仓）
+
+### 5.2 禁止循环依赖
+
+- 模块 A 引用模块 B，B 不得回引 A
+- 推荐启用 `eslint-plugin-import` 的 `import/no-cycle`
+- 出现循环依赖 → 抽象公共依赖到下层模块
+
+### 5.3 Barrel 文件（`index.ts` 重导出）谨慎使用
+
+- 深层 barrel 会拖累 Tree-shaking 和构建速度
+- 只对**模块公共 API 入口**做 barrel，不要给每个子目录都建
+
+### 5.4 路径别名
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] }
+  }
+}
+```
+
+- 用 `@/` 替代相对路径深度超过 2 层（`../../../`）
+- 构建工具（Vite/Webpack/tsc）必须同步配置别名解析
+
+---
+
+## 6. 依赖与构建（强制）
+
+### 6.1 包管理器
+
+- 同一仓库只使用一种包管理器（npm / yarn / pnpm 其一）
+- 必须提交 lockfile（`package-lock.json` / `yarn.lock` / `pnpm-lock.yaml`）
+- Monorepo 强烈推荐 pnpm workspace 或 Turborepo
+
+### 6.2 依赖治理
+
+- **定期扫漏**：`npm audit` / `pnpm audit` / Snyk，CI 中必须跑
+- 禁止同时引入功能重叠的库（如 moment + dayjs + date-fns 三选一）
+- 大小敏感：前端禁止引入 lodash 全量（`import _ from 'lodash'`），必须按需 `import debounce from 'lodash/debounce'` 或用 `lodash-es`
+- `peerDependencies` 与实际版本不匹配会默默运行错，CI 必须校验
+
+### 6.3 构建工具选型
+
+| 场景 | 推荐 | 备注 |
+|---|---|---|
+| 前端应用 | Vite / Next.js / Nuxt | Vite 原生 ESM 快 |
+| Node 库 | tsup / unbuild | 双产物 CJS+ESM |
+| Monorepo | Turborepo / Nx | 缓存/并行 |
+| 生产 bundler | esbuild / swc / rollup | tsc 只做类型检查 |
+
+- `tsc` 在现代项目里主要做类型检查（`--noEmit`），实际打包交给 esbuild/swc
+- `vite build` / `tsup` 自带类型与代码分离处理
+
+---
+
+## 7. 测试（强制）
+
+- 测试框架：Vitest（Vite 生态）/ Jest（传统）/ Node `node:test`（原生）
+- 每个导出函数原则上要有 unit test；复杂业务路径要 integration test
+- Mock：`vi.mock` / `jest.mock`；禁止 mock 整个模块后又导入真实实现
+- 类型测试：关键泛型/类型工具必须有 `expectTypeOf` / `tsd` 测试，防止类型回退
+
+```typescript
+import { expectTypeOf } from 'vitest';
+expectTypeOf<Pick<User, 'id'>>().toEqualTypeOf<{ id: number }>();
+```
+
+---
+
+## 8. 安全（强制）
+
+- 禁止在客户端代码中写死 Secret、API Key、JWT（任何打包到浏览器的都是公开的）
+- `localStorage` 禁止存 Access Token；敏感 Token 放 `HttpOnly` Cookie
+- `innerHTML` / `dangerouslySetInnerHTML` 使用前必须 sanitize（DOMPurify）
+- 服务端：原始 SQL 必须参数化；禁止字符串拼 SQL
+- 日志脱敏（详见 [middleware/logging.md](../middleware/logging.md)）：密码、Token、手机号、身份证绝不出现在日志里
+
+---
+
+## 9. 中间件约束
+
+服务端/前端工程涉及下列中间件时，必须同时遵循 `../middleware/` 下对应规范：
+
+| 中间件类型 | 规范文件 | TypeScript 场景 |
+|---|---|---|
+| API 请求层 | [`../middleware/api-client.md`](../middleware/api-client.md) | 前端 axios 封装、Node 后端 httpx/undici |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | pino（推荐）/ winston |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | jsonwebtoken、passport、next-auth |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | ioredis / node-redis |
+| 消息队列 | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | rocketmq-client-nodejs（实验性，建议后端代理） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | Vercel AI SDK、LangChain.js、OpenAI SDK |
+
+---
+
+## 10. 反面案例
+
+```typescript
+// ❌ 多重问题：any 泛滥、无运行时校验、强断言、悬空 Promise
+function fetchUser(id: any) {
+  fetch('/api/user/' + id)
+    .then(r => r.json())
+    .then(data => {
+      const user = data as User;
+      console.log(user.email.toLowerCase());  // email 可能 undefined
+    });
+}
+
+// ✅ 类型安全 + 运行时校验 + 错误处理
+async function fetchUser(id: number): Promise<User> {
+  const r = await fetch(`/api/user/${id}`);
+  if (!r.ok) throw new BizError('FETCH_FAIL', `HTTP ${r.status}`);
+  const json: unknown = await r.json();
+  return UserSchema.parse(json);
+}
+```
+
+```typescript
+// ❌ 悬空 Promise
+app.get('/users', (req, res) => {
+  userService.find(req.query.id);  // 无 await，错误吞掉
+  res.json({ ok: true });
+});
+
+// ✅ await + try/catch
+app.get('/users', async (req, res) => {
+  try {
+    const user = await userService.find(req.query.id);
+    res.json(user);
+  } catch (e) {
+    next(e);
+  }
+});
+```
+
+---
+
+## 11. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)
+- 框架专项（React / Vue / Node 后端）：参见对应 profile

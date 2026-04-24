@@ -81,4 +81,32 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 ```
 docs/
   requirements/backlog/   ← @intake 输出位置
-  requ
+  requirements/done/      ← @deliver 归档位置
+  design/                 ← @design 输出位置
+  test/                   ← @check 输出位置
+  review/                 ← @check 输出位置
+  delivery/               ← @deliver 输出位置
+```
+
+## Step 4：老项目特殊处理（有代码但无 docs/ 目录）
+
+有代码但无 `docs/` → 创建目录结构，提示"直接 `@intake` 开始"，不阻断流程
+
+> `@init` **不生成任何源代码**。全新项目的项目骨架（pom.xml、src/、package.json 等）由 `@code` 阶段根据 `@design` 输出的骨架规划生成。
+
+## Step 5：输出初始化报告
+
+```
+## ✅ 项目初始化完成
+
+**项目架构**：[前后端分离 / 纯后端 / 纯前端]
+**前端技术栈**：[Vue 3 / React / 无]
+**后端技术栈**：[Java Spring Boot x.x / Python / 无]
+**特殊组件**：[Spring AI / 无]
+**加载规范**：profiles/node_vue.mdc + profiles/java_spring.mdc
+
+### 需要手动完成的配置
+- [ ] 补充 01_tech_stack.mdc 中的具体版本号
+
+**下一步**：使用 `@intake` 开始接入第一个需求
+```

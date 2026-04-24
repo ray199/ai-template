@@ -321,4 +321,17 @@ async def test_create_user_duplicate(client: AsyncClient):
 Python 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
 
 | 中间件 | 规范 | Python 推荐 |
-|---|---|-
+|---|---|---|
+| HTTP 客户端 | [`../middleware/api-client.md`](../middleware/api-client.md) | `httpx`（async）/ `requests`（sync） |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | 标准库 `logging` + `python-json-logger` / `structlog` |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | FastAPI：`fastapi-jwt-auth` / `authlib`；Django：SimpleJWT |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | `redis-py`（5.x）/ `aioredis`（已合入 redis-py） |
+| RocketMQ | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | `rocketmq-client-python`（功能有限） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | `openai` / `anthropic` / LangChain / LlamaIndex |
+
+---
+
+## 7. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

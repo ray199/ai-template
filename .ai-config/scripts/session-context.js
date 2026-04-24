@@ -39,4 +39,4 @@ for (const [stage, items] of Object.entries(byStage)) {
   console.log(`  ${stage} (${items.length}):`);
   for (const it of items) console.log(`    · ${it}`);
 }
-process.exit(0)
+process.exit(0);

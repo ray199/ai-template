@@ -311,4 +311,17 @@ public class UserServiceTests
 .NET 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
 
 | 中间件 | 规范 | .NET 推荐 |
-|---|---|---|
+|---|---|---|
+| HTTP 客户端 | [`../middleware/api-client.md`](../middleware/api-client.md) | `HttpClient`（**单例**，`IHttpClientFactory`）+ Polly（重试/熔断） |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | Serilog（Sinks 灵活） |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | `Microsoft.AspNetCore.Authentication.JwtBearer`（必须配全 `ValidateIssuer/Audience/Lifetime/Key`） |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | `StackExchange.Redis`（单例 ConnectionMultiplexer） |
+| RocketMQ | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | `RocketMQ.Client`（官方 5.x；4.x 已停更） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | Semantic Kernel（微软官方） |
+
+---
+
+## 7. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

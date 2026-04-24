@@ -506,4 +506,58 @@ docs/prototype/REQ-20240315-001.figma
 
 ## 与AI生成的集成
 
-### H
+### HTML原型的自动生成
+
+```javascript
+// 伪代码：原型生成算法
+
+function generatePrototype(requirement, prototypeType) {
+    
+    if (prototypeType === 'HTML') {
+        // 1. 解析需求中的页面清单和流程
+        const pages = parsePages(requirement);
+        const flows = parseFlows(requirement);
+        
+        // 2. 生成HTML骨架
+        const html = generateHTMLStructure(pages);
+        
+        // 3. 添加交互逻辑
+        const interactions = generateInteractions(flows);
+        
+        // 4. 应用样式（Bootstrap / Ant Design）
+        const styled = applyStyles(html, 'ant-design');
+        
+        // 5. 输出文件
+        return outputHTML(styled + interactions);
+    }
+    
+    else if (prototypeType === 'Figma') {
+        // 调用Figma API或导出设计稿
+        return generateFigmaDesign(requirement);
+    }
+    
+    else if (prototypeType === 'Wireframe') {
+        // 生成Markdown线框图
+        return generateWireframeMarkdown(requirement);
+    }
+}
+```
+
+### Figma集成方案
+
+```
+选项1: 导出Figma设计稿
+- 使用 Figma API 生成设计稿
+- 导出为 PNG/SVG 保存到项目中
+- 在需求文档中嵌入图片链接
+
+选项2: 生成Figma链接
+- 创建共享链接
+- 在需求文档中包含可点击的Figma链接
+- 便于多人实时评审
+
+选项3: 使用Figma插件
+- 创建Claude插件自动生成Figma设计
+- 与Figma系统集成，更新时实时同步
+```
+

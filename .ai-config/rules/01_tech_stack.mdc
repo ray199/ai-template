@@ -38,4 +38,45 @@
 | RocketMQ（含 Kafka/RabbitMQ 差异） | [middleware/rocketmq.md](middleware/rocketmq.md) |
 | 鉴权（JWT / OAuth / Session） | [middleware/auth.md](middleware/auth.md) |
 | 日志框架 | [middleware/logging.md](middleware/logging.md) |
-| API 请求层（前端 + 后端 HTTP 客户端） | [middleware/api-client.md](middleware/ap
+| API 请求层（前端 + 后端 HTTP 客户端） | [middleware/api-client.md](middleware/api-client.md) |
+| AI / LLM 接入 | [middleware/ai-llm.md](middleware/ai-llm.md) |
+
+各 Profile 末尾"中间件约束"章节会列出在该语言中推荐的客户端与注意点。
+
+## 2. 全局约束（强制底线）
+
+### 2.1 依赖与可用性
+
+- 禁止"凭空假设"项目已存在某个库/工具链；引入新依赖必须说明理由与替代方案，并遵循最小依赖原则
+- 禁止引入明显重叠的库（同类功能多个实现），除非有充分理由并写清迁移策略
+
+### 2.2 版本与兼容性
+
+- 版本优先：优先使用项目已锁定/已采用的版本；如需升级，必须说明影响面（API 变更、构建链、运行时）
+- 兼容优先：选择对团队与运行环境更稳定的方案，避免"炫技式选型"
+
+### 2.3 安全与密钥
+
+- 禁止在代码、配置、日志中写入或输出密钥/口令/Token 等敏感信息
+- 所有敏感配置必须来自环境变量或安全配置中心（由各 Profile 细化）
+
+### 2.4 可维护性
+
+- 复杂逻辑必须具备必要的代码注释与可测试性设计（注释与测试具体规范由各 Profile 补充）
+- 禁止复制粘贴式堆砌；重复逻辑必须抽取公共模块/函数
+
+## 3. 老项目接入指引
+
+老项目引入本规范时，`/init existing` 会自动扫描并识别技术栈。识别策略：
+
+| 语言 | 检测文件 |
+|---|---|
+| Java | `pom.xml` / `build.gradle` / `*.java` |
+| Python | `pyproject.toml` / `requirements.txt` / `*.py` |
+| Go | `go.mod` / `*.go` |
+| TypeScript | `tsconfig.json` / `*.ts` / `*.tsx` |
+| React | `package.json` 含 `react` / `next` |
+| Vue | `package.json` 含 `vue` / `*.vue` |
+| .NET | `*.csproj` / `*.sln` |
+
+识别到的技术栈会写入 `docs/_context/project-map.md` 的 `tech_stack` 字段，后续所有阶段以此为准。

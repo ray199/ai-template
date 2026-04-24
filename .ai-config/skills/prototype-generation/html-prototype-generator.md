@@ -522,4 +522,271 @@
                 <label>名称:</label>
                 <input type="text" placeholder="示例项目1">
             </div>
-           
+            <div class="form-group">
+                <label>描述:</label>
+                <textarea placeholder="项目描述" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary" onclick="closeModal('edit-modal')">取消</button>
+            <button onclick="alert('编辑成功'); closeModal('edit-modal')">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 搜索对话框 -->
+<div id="search-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>高级搜索</h2>
+            <button class="close-btn" onclick="closeModal('search-modal')">✕</button>
+        </div>
+        <div>
+            <div class="form-group">
+                <label>名称:</label>
+                <input type="text" placeholder="搜索名称">
+            </div>
+            <div class="form-group">
+                <label>状态:</label>
+                <select>
+                    <option>全部</option>
+                    <option>已完成</option>
+                    <option>进行中</option>
+                    <option>待启动</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary" onclick="closeModal('search-modal')">取消</button>
+            <button onclick="alert('搜索结果...'); closeModal('search-modal')">搜索</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// 点击模态框外部关闭
+window.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('show');
+    }
+});
+</script>
+
+</body>
+</html>
+```
+
+---
+
+## L2 - 标准原型（Ant Design）
+
+### 适用条件
+
+- 判定分数: 5-7分
+- 需求特征: 中等复杂度、多个页面或状态
+- 生成时间: 10分钟
+
+### 特点
+
+```
+1. 使用 Ant Design Pro 组件库（更专业的UI）
+2. 包含多种交互：
+   - 标签页切换
+   - 级联选择
+   - 日期选择
+   - 树形菜单
+   - 拖拽排序
+3. 伪数据支持（数组渲染表格）
+4. 更复杂的表单和验证
+```
+
+### 生成规则
+
+```html
+<!-- 使用CDN引入Ant Design -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@4/dist/antd.css">
+<script src="https://cdn.jsdelivr.net/npm/antd@4/dist/antd.js"></script>
+
+<!-- 组件库 -->
+- Button、Input、Select、DatePicker
+- Table、Form、Modal
+- Tabs、Menu、Layout
+- Badge、Tag、Pagination
+- Notification、Message、Popover
+```
+
+### 示例结构
+
+```
+文件: docs/prototype/REQ-XXXXXXXX-l2.html
+
+包含内容:
+1. 完整的顶部导航（公司logo、用户菜单）
+2. 左侧菜单（可折叠）
+3. 主内容区（标签页或多页面切换）
+4. 表格、表单、图表
+5. 分页、排序、搜索
+6. 弹窗、通知提示
+```
+
+---
+
+## L3 - 高保真原型（完整设计规范）
+
+### 适用条件
+
+- 判定分数: ≥8分
+- 需求特征: 复杂应用、数据大屏、用户交互密集
+- 生成时间: 20分钟
+
+### 特点
+
+```
+1. 完整的设计系统
+   - 颜色规范（品牌色、功能色）
+   - 字体规范（大小、行高、字重）
+   - 间距规范（padding、margin）
+   - 圆角、阴影规范
+
+2. 高级交互
+   - 图表实时更新（ECharts）
+   - 拖拽支持（拖拽排序、拖拽调整布局）
+   - 动画过渡（平滑的页面切换）
+   - 响应式设计（自适应不同屏幕）
+
+3. 模拟数据API
+   - 假数据生成（实现搜索、排序、分页）
+   - 表单提交模拟
+   - 延迟模拟（网络请求延迟）
+
+4. 完整的业务流程
+   - 多步骤流程（步骤条）
+   - 审批流程（流程图）
+   - 权限控制（不同角色不同界面）
+```
+
+### 包含的库
+
+```html
+- Ant Design Pro: 企业级UI
+- ECharts: 图表库
+- Sortable: 拖拽库
+- Moment: 日期处理
+```
+
+---
+
+## 自动代码生成规则
+
+### 解析需求文档提取信息
+
+```javascript
+function parseRequirement(requirement) {
+    return {
+        // 页面清单
+        pages: extractPages(requirement),
+        
+        // 表单字段
+        formFields: extractFormFields(requirement),
+        
+        // 表格列
+        tableColumns: extractTableColumns(requirement),
+        
+        // 流程和交互
+        flows: extractFlows(requirement),
+        
+        // 状态值
+        statusOptions: extractStatusValues(requirement),
+        
+        // 图表需求
+        charts: extractCharts(requirement)
+    };
+}
+```
+
+### HTML生成算法
+
+```javascript
+function generateHTML(parsed, level) {
+    let html = getHTMLTemplate();
+    
+    // 1. 生成导航菜单
+    html.navigation = generateMenu(parsed.pages);
+    
+    // 2. 生成表格
+    html.table = generateTable(parsed.tableColumns, parsed.flows);
+    
+    // 3. 生成表单
+    html.forms = generateForms(parsed.formFields);
+    
+    // 4. 生成对话框
+    html.modals = generateModals(parsed.pages, parsed.forms);
+    
+    // 5. 添加交互脚本
+    if (level >= 2) {
+        html.scripts = generateInteractionScripts(parsed.flows);
+    }
+    
+    // 6. 应用样式
+    if (level === 3) {
+        html.styles = applyDesignSystem(parsed.designSpec);
+        html.charts = generateCharts(parsed.charts);
+    }
+    
+    return html;
+}
+```
+
+---
+
+## 原型验收标准
+
+### 功能性检查
+
+- [ ] 所有需求文档中提到的页面都已实现
+- [ ] 所有主要操作（增删改查）都可交互验证
+- [ ] 流程跳转正确（点击按钮跳转到对应页面）
+- [ ] 表单数据能正确显示和提交
+
+### 交互性检查
+
+- [ ] 按钮点击有反馈（颜色变化或提示）
+- [ ] 对话框能正确打开和关闭
+- [ ] 表单输入有基本校验（非空检查）
+- [ ] 分页、搜索、排序功能可用
+
+### 视觉设计检查
+
+- [ ] 布局清晰，层级合理
+- [ ] 颜色使用一致（品牌色、功能色）
+- [ ] 文字大小和行距舒适（可读性）
+- [ ] 间距均匀（上下左右对齐）
+
+### 信息完整性检查
+
+- [ ] 所有验收标准都在原型中有体现
+- [ ] 关键字段和说明清晰可见
+- [ ] 异常和错误提示能展示
+- [ ] 权限限制能展示（如按钮禁用）
+
+---
+
+## 完成标准
+
+HTML原型生成器完成标准：
+
+- [ ] L1快速原型模板完整（5分钟生成）
+- [ ] L2标准原型模板完整（10分钟生成）
+- [ ] L3高保真原型设计规范清晰（20分钟生成）
+- [ ] 自动代码生成算法可行（能从需求文档提取关键信息）
+- [ ] 原型验收标准明确
+- [ ] 原型文件可独立打开（无依赖）
+- [ ] 原型具有基本的交互能力

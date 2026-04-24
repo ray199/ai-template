@@ -346,4 +346,20 @@ export const useUserStore = defineStore('user', () => {
 Node + Vue 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
 
 | 中间件 | 规范 | Node 推荐 |
-|---|---
+|---|---|---|
+| API 请求层（前端） | [`../middleware/api-client.md`](../middleware/api-client.md) §A | axios + 拦截器 |
+| HTTP 客户端（后端） | [`../middleware/api-client.md`](../middleware/api-client.md) §B | axios / undici（原生） |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | `pino`（高性能）/ `winston` |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | passport / jsonwebtoken（注意默认不校 `aud`） |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | `ioredis` / `node-redis` |
+| RocketMQ | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | rocketmq-client-nodejs（实验性，生产建议走后端代理） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | Vercel AI SDK / LangChain.js |
+
+TypeScript 通用规范另见 [`typescript.mdc`](typescript.mdc)。
+
+---
+
+## 6. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

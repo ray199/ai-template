@@ -24,4 +24,10 @@
           {
             "type": "command",
             "command": "node .ai-config/scripts/post-write-validate.js \"$CLAUDE_TOOL_INPUT_file_path\"",
-            "_description": "若修改的是 docs/ 下受管文档则跑 validate-doc.js；其他文件跳过。失败时把错误回传给 
+            "_description": "若修改的是 docs/ 下受管文档则跑 validate-doc.js；其他文件跳过。失败时把错误回传给 AI 让它修正（不硬阻断）。"
+          }
+        ]
+      }
+    ]
+  }
+}
