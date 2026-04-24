@@ -29,6 +29,7 @@ S/M/L/XL：
 | 命令 | 阶段 | 主要产出物 | 后置校验 |
 |---|---|---|---|
 | `/init` | 项目初始化 | `.ai-config/`、`docs/`、老项目 `project-map.md` | 目录结构 + project-map |
+| `/explore` | 想法探索（可选） | `docs/_exploration/EXPLORE-xxx.md`（草稿） | — |
 | `/intake` | 需求接入 | `docs/requirements/backlog/REQ-xxx.md` | `validate-doc.js requirement` |
 | `/design` | 技术设计（M/L/XL） | `docs/design/REQ-xxx-design.md` | `validate-doc.js design` |
 | `/code` | 编码 | 源码 + 迁移脚本 + code-report | `validate-doc.js code-report` |

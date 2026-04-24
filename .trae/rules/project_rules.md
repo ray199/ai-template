@@ -14,6 +14,7 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 | 用户可能说 | 对应阶段 | 契约章节 |
 |---|---|---|
 | `/init` / "初始化项目" / "接入老项目" | init | `.ai-config/workflow.md` §2.1 |
+| `/explore <想法>` / "我想做 xxx 但没想清楚" / "帮我理一下思路" / "要不要做 xxx" | explore | §2.0 |
 | `/intake <内容>` / "接入这个需求：..." / "帮我梳理需求" | intake | §2.2 |
 | `/design <REQ-id>` / "给 REQ-xxx 做技术设计" | design | §2.3 |
 | `/code <REQ-id>` / "实现 REQ-xxx" / "写代码" | code | §2.4 |
@@ -26,6 +27,14 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 ---
 
 ## 阶段执行要点（每阶段必做动作）
+
+### /explore（可选，pre-intake）
+- 参考：`.ai-config/skills/idea-exploration/SKILL.md`
+- 适用：用户想法模糊，连 /intake 三个基础问题（目标 / 时间 / 不做什么）都答不清楚
+- 5 步：问题框定 → 维度拆解 → 候选方案 → 边界扫坑 → 未知识别（可中途停止）
+- 产出：`docs/_exploration/EXPLORE-YYYYMMDD-<slug>.md`
+- **不分配 need_id，不进 backlog，不走 schema 校验**
+- 下一步：想清楚了 → /intake / 要验证 → POC / 不做 → 归档 dropped/
 
 ### /init
 - 参考：`.ai-config/skills/init/SKILL.md`
