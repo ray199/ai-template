@@ -27,7 +27,15 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 
 ### 1B. 前端技术栈检测
 
-扫描 `package.json`：Vue → `profiles/node_vue.mdc`，React/Next → 通用前端规范，未识别 → 询问用户
+扫描 `package.json` 的 `dependencies`：
+
+| 依赖命中 | 技术栈 | 加载 Profile |
+|---|---|---|
+| `vue` | Vue 2/3 | `profiles/node_vue.mdc` |
+| `react` + `next` | Next.js | `profiles/react.mdc` + `profiles/typescript.mdc`（若有 TS） |
+| `react`（无 next） | React SPA | `profiles/react.mdc` + `profiles/typescript.mdc`（若有 TS） |
+| 仅 TS 无前端框架 | TS 库/工具 | `profiles/typescript.mdc` |
+| 未识别 | — | 询问用户 |
 
 ### 1C. 后端技术栈检测
 
@@ -35,12 +43,16 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 |---|---|---|
 | `pom.xml` / `build.gradle` | Java / Spring | `profiles/java_spring.mdc` |
 | `requirements.txt` / `pyproject.toml` | Python | `profiles/python.mdc` |
+| `go.mod` | Go | `profiles/go.mdc` |
 | `*.csproj` / `*.sln` | C# / .NET | `profiles/dotnet_csharp.mdc` |
+| `package.json` + Node 服务端依赖（express/nest/fastify/koa/hono） | Node 服务端 | `profiles/typescript.mdc`（TS）或基础规则 |
 | 未识别 | — | 询问用户 |
 
 ### 1D. 特殊依赖检测
 
-`pom.xml` 含 `spring-ai` → ⚠️ 引入 Spring AI，设计阶段需补充 AI 架构章节
+- `pom.xml` 含 `spring-ai` → ⚠️ 引入 Spring AI，设计阶段需补充 AI 架构章节
+- 任何项目检测到 LLM / OpenAI / Anthropic / LangChain 依赖 → 加载 [`middleware/ai-llm.md`](../../rules/middleware/ai-llm.md)
+- 检测到 Redis / RocketMQ / Kafka / RabbitMQ 依赖 → 加载对应 `middleware/*.md`
 
 ### 1E. 全新项目识别
 
@@ -52,10 +64,15 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 
 | 前端 | 后端 | 加载的 Profile |
 |---|---|---|
-| Vue / React | Java Spring | `node_vue.mdc` + `java_spring.mdc` |
-| Vue / React | Python | `node_vue.mdc` + `python.mdc` |
-| Vue / React | C# .NET | `node_vue.mdc` + `dotnet_csharp.mdc` |
-| 无前端 | Java / Python / C# | 仅加载对应后端 profile |
+| Vue | Java Spring | `node_vue.mdc` + `java_spring.mdc` |
+| Vue | Python | `node_vue.mdc` + `python.mdc` |
+| Vue | Go | `node_vue.mdc` + `go.mdc` |
+| Vue | C# .NET | `node_vue.mdc` + `dotnet_csharp.mdc` |
+| React（TS） | Java / Python / Go / .NET | `react.mdc` + `typescript.mdc` + 对应后端 |
+| React（JS） | — 同上 — | `react.mdc` + 对应后端 |
+| 无前端 | Java / Python / Go / C# | 仅加载对应后端 profile |
+
+**中间件 Profile 按需叠加**：无论语言，只要检测到 Redis / MQ / JWT / LLM 等依赖，都必须加载 `.ai-config/rules/middleware/` 下对应规范。
 
 ## Step 3：初始化文档目录结构
 
@@ -64,32 +81,4 @@ backend/ 或 server/ 或 api/     ← 后端子目录
 ```
 docs/
   requirements/backlog/   ← @intake 输出位置
-  requirements/done/      ← @deliver 归档位置
-  design/                 ← @design 输出位置
-  test/                   ← @check 输出位置
-  review/                 ← @check 输出位置
-  delivery/               ← @deliver 输出位置
-```
-
-## Step 4：老项目特殊处理（有代码但无 docs/ 目录）
-
-有代码但无 `docs/` → 创建目录结构，提示"直接 `@intake` 开始"，不阻断流程
-
-> `@init` **不生成任何源代码**。全新项目的项目骨架（pom.xml、src/、package.json 等）由 `@code` 阶段根据 `@design` 输出的骨架规划生成。
-
-## Step 5：输出初始化报告
-
-```
-## ✅ 项目初始化完成
-
-**项目架构**：[前后端分离 / 纯后端 / 纯前端]
-**前端技术栈**：[Vue 3 / React / 无]
-**后端技术栈**：[Java Spring Boot x.x / Python / 无]
-**特殊组件**：[Spring AI / 无]
-**加载规范**：profiles/node_vue.mdc + profiles/java_spring.mdc
-
-### 需要手动完成的配置
-- [ ] 补充 01_tech_stack.mdc 中的具体版本号
-
-**下一步**：使用 `@intake` 开始接入第一个需求
-```
+  requ

@@ -316,7 +316,9 @@ async def test_create_user_duplicate(client: AsyncClient):
 
 ---
 
-## 6. 与通用规则的关系
+## 6. 中间件约束
 
-- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
-- 安全红线：遵循 [03_security.mdc](../03_security.mdc)
+Python 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
+
+| 中间件 | 规范 | Python 推荐 |
+|---|---|-

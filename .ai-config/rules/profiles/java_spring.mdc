@@ -227,7 +227,9 @@ spring:
 
 ---
 
-## 5. 与通用规则的关系
+## 5. 中间件约束
 
-- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
-- 安全红线：遵循 [03_security.mdc](../03_security.mdc)
+Java / Spring 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
+
+| 中间件 | 规范 | Java 推荐 |
+|---|

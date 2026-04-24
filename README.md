@@ -76,7 +76,6 @@ cd my-project
 │   ├── delivery/            # 交付文档
 │   └── prototype/           # 原型文件（/intake 自动生成）
 │
-├── WORKFLOW-GUIDE.md        # 工作流快速参考（各命令输入输出说明）
 └── claude.md                # 完整规范（各阶段详细说明）
 ```
 
@@ -86,7 +85,6 @@ cd my-project
 
 | 文档 | 用途 |
 |---|---|
-| [WORKFLOW-GUIDE.md](./WORKFLOW-GUIDE.md) | 4阶段完整流程 + 各命令输入输出说明，首次使用必读 |
 | [claude.md](./claude.md) | 各阶段详细规范说明（完整版） |
 
 ---

@@ -1,8 +1,11 @@
 # 需求接入规范
 
+> 字段的机械校验规则定义在 `.ai-config/workflow.md` 第 3.1 节和 `.ai-config/scripts/validate-doc.js` 的 SCHEMAS.requirement。
+> 本文件只谈人工理解层面的规范。
+
 ## 核心原则
 
-所有需求在进入开发流程之前，**必须**完成标准化接入，不允许基于口头描述或非结构化文本直接开始开发。
+除 XS 级外，所有需求在进入开发流程前必须完成标准化接入；不允许基于口头描述或非结构化文本直接开始开发。
 
 ## 需求来源分类
 
@@ -11,33 +14,34 @@
 | 内部研发自驱 | 技术优化、重构、新特性提案 | `from_prd.md` |
 | 运营/业务方 | 飞书消息、口头描述、会议记录 | `from_verbal.md` |
 
-## 必填字段
+## 按工作量等级的必填字段
 
-### 6个核心字段（所有等级必须）
+### XS 级（≤ 30 分钟改动，快车道）
 
-以下字段缺失时，**禁止**流转至下一阶段：
+**不走 `/intake` 流程**。允许直接在 git 上操作：
 
-- `need_id`：需求唯一编号（格式：`REQ-YYYYMMDD-XXX`，AI自动分配）
-- `title`：一句话标题，不超过20字，包含动词+对象
-- `priority`：P0 / P1 / P2（定义见下方），需说明定级理由
-- `deadline`：具体日期或明确里程碑，不接受"尽快"
-- `goal`：可量化目标（含数字或可验证状态），至少1条
-- `acceptance`：验收标准，格式"当[条件]时，系统应[行为]"，至少1条
+```
+commit message: XS: 调登录页文案
+PR 描述: 简单说明改动 + 自测截图
+```
 
-### 扩展字段（M/L/XL等级额外要求）
+不产生 `docs/requirements/backlog/*.md`。commit-msg hook 会校验 `XS:` 前缀是否合法。
 
-M等级及以上还需要：
-- `background`：业务背景，回答"为什么要做"
-- `scope`：功能边界（包含什么、不包含什么）
-- `tech_constraints`：技术约束（技术栈、依赖系统、兼容性要求）
-- `acceptance`：至少2条验收标准
+### S 级（6 个核心字段）
 
-L等级及以上还需要：
-- `stakeholders`：干系人列表（提需人、技术负责人、影响方）
-- `non_functional`：非功能需求（性能、安全、兼容性）
-- `risks`：已知风险点，至少1项
-- `tech_sketch`：技术思路骨架（受影响模块、关键决策点）
-- `acceptance`：至少3条验收标准
+走 `/intake`，必填：`need_id / title / workload / priority / deadline / goal / acceptance≥1 / stage / status`
+
+### M 级（补充 4 个业务字段）
+
+S 的全部 + `background / scope / tech_constraints`，`acceptance≥2`
+
+### L 级（补充 4 个方案字段）
+
+M 的全部 + `stakeholders / non_functional / risks / tech_sketch`，`acceptance≥3`
+
+### XL 级（L 的全部 + 迭代拆分）
+
+L 的全部 + `iteration_plan / milestones`
 
 ## 优先级定义
 
@@ -47,16 +51,17 @@ L等级及以上还需要：
 
 ## AI 处理规则
 
-1. 收到非结构化需求时，**必须先调用** `intake-requirement` 技能进行结构化
-2. 结构化完成后，**主动列出**所有缺失或模糊的字段，并向提需方澄清
-3. 未获得澄清确认前，**不得**生成技术方案或开发计划
-4. 需求变更时，**必须**更新原需求文档并记录变更原因和时间
+1. 收到非结构化需求时先评估等级。若是 XS：直接指引 git 快车道，不走 `/intake`
+2. 其他等级：调用 `intake-requirement` skill 结构化
+3. 主动列出缺失或模糊字段，向提需方澄清
+4. 未澄清前，不生成技术方案或开发计划
+5. 需求变更必须更新原文档并记录原因和时间
 
 ## 需求文档存放规范
 
 ```
 docs/
 └── requirements/
-    ├── backlog/          # 待开发需求（/intake 写入）
+    ├── backlog/          # 待开发需求（/intake 写入，XS 不写入）
     └── done/             # 已交付需求（/deliver 归档）
 ```

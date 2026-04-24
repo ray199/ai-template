@@ -1,0 +1,451 @@
+# Profile：Go
+
+适用范围：以 Go 为主的后端服务、CLI 工具、基础设施组件等。
+
+> **重要**：本 Profile 不锁定版本号。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定。
+
+---
+
+## 0. 版本与依赖检测（每次编码阶段开始前自动执行）
+
+### 检测来源（按优先级）
+
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `go.mod` | `go 1.xx` 指令、module 名 |
+| 2 | `go.sum` | 已锁定依赖 |
+| 3 | `.tool-versions` / `Dockerfile` | `FROM golang:1.xx` |
+| 4 | CI 配置 | `go-version: 1.xx` |
+
+### 框架/库推断（从 `go.mod` 依赖）
+
+| 依赖 | 用途 |
+|---|---|
+| `github.com/gin-gonic/gin` | Gin Web 框架 |
+| `github.com/labstack/echo` | Echo Web 框架 |
+| `github.com/go-chi/chi` | chi 路由 |
+| `net/http`（仅标准库） | 原生 HTTP |
+| `gorm.io/gorm` | GORM ORM |
+| `github.com/jmoiron/sqlx` | sqlx |
+| `github.com/uptrace/bun` | bun ORM |
+| `go.uber.org/zap` / `log/slog` | 日志 |
+| `github.com/redis/go-redis/v9` | Redis |
+| `github.com/apache/rocketmq-client-go/v2` | RocketMQ |
+
+### 输出版本上下文
+
+```
+────────────────────────────────────────────
+  Go 版本上下文（自动检测）
+────────────────────────────────────────────
+  Go 版本     : [1.21 / 1.22 / 1.23 / ❓]
+  Web 框架    : [Gin / Echo / chi / net/http]
+  ORM         : [GORM / sqlx / bun / 无]
+  日志库      : [zap / slog / logrus]
+  配置管理    : [viper / envconfig / 手工]
+
+  适用规范    : go.mdc §[对应章节]
+────────────────────────────────────────────
+```
+
+---
+
+## 1. Go 版本适配
+
+### Go 1.18+ 基线
+
+- 泛型（Generics）可用：优先用泛型替代 `interface{}` 类型容器
+- `errors.Is` / `errors.As` 标准错误判断（禁止 `err == someErr` 直接比较）
+
+### Go 1.21（推荐新项目最低版本）
+
+- 标准库 `log/slog`（结构化日志）可直接用，无需引入第三方
+- `slices` / `maps` / `cmp` 标准库泛型工具
+- `min` / `max` 内置函数
+
+### Go 1.22+
+
+- `for range` 循环变量作用域修复（闭包捕获不再共享，默认安全）
+- `net/http` 路由增强（原生支持 `{id}` 路径参数）
+
+### `go.mod` 要求（强制）
+
+- `go` 指令版本不低于当前环境次新（避免使用 EOL 版本）
+- `toolchain` 指令锁定工具链版本
+- **禁止 `replace` 指向本地路径**进入 main 分支（仅 dev 用）
+
+---
+
+## 2. 工程结构（推荐）
+
+```
+myservice/
+├── cmd/                # 入口（每个二进制一个子目录）
+│   └── server/main.go
+├── internal/           # 不对外暴露的业务代码（Go 编译器强制）
+│   ├── handler/        # HTTP handler
+│   ├── service/        # 业务逻辑
+│   ├── repo/           # 数据访问
+│   ├── model/          # 领域模型
+│   └── middleware/
+├── pkg/                # 可被外部 import 的工具库（慎用，能放 internal 就放）
+├── api/                # OpenAPI / proto 定义
+├── configs/            # 配置文件模板
+├── scripts/            # 运维/构建脚本
+├── go.mod
+└── go.sum
+```
+
+- `internal/` 是 Go 原生机制：其他 module 无法 import；公司内通用库也要放 internal 避免被滥用
+- **禁止 `pkg/` 塞一切**：只有确实要让外部项目 import 才放 pkg
+
+---
+
+## 3. 错误处理（强制）
+
+### 3.1 `error` 必须处理，不得忽略
+
+```go
+// ❌ 忽略错误
+data, _ := json.Marshal(obj)
+
+// ✅ 处理或显式说明
+data, err := json.Marshal(obj)
+if err != nil {
+    return fmt.Errorf("marshal obj: %w", err)
+}
+```
+
+例外：类型断言的双返回值形式中的 `ok` 可以忽略（因为已转为布尔语义）。
+
+### 3.2 错误包装
+
+```go
+// ❌ 丢失原错误
+if err != nil {
+    return errors.New("db failed")
+}
+
+// ✅ %w 包装保留链
+if err != nil {
+    return fmt.Errorf("query user id=%d: %w", id, err)
+}
+```
+
+- 向上传递时必须 `fmt.Errorf("context: %w", err)` 包装
+- 同一错误链中**禁止**重复日志（每一层都打 ERROR → 日志爆炸）：在有响应能力的地方（HTTP handler、消费者入口）统一打
+
+### 3.3 Sentinel Errors 与自定义 Error 类型
+
+```go
+// 定义
+var ErrUserNotFound = errors.New("user not found")
+
+// 自定义类型（带元数据）
+type BizError struct {
+    Code    string
+    Message string
+    Cause   error
+}
+func (e *BizError) Error() string { return e.Message }
+func (e *BizError) Unwrap() error { return e.Cause }
+
+// 判断
+if errors.Is(err, ErrUserNotFound) { ... }
+var bizErr *BizError
+if errors.As(err, &bizErr) { ... }
+```
+
+禁止用字符串比对错误（`err.Error() == "xxx"`）。
+
+### 3.4 panic / recover 的边界
+
+- 业务代码**禁止用 panic 做错误返回**。panic 仅用于真正不可恢复的情形（初始化失败、不可能发生的分支）
+- Web 框架入口必须有 recover middleware，保证 panic 不会杀死进程
+- `recover()` 捕获到 panic 后必须打 ERROR 日志并返回 500，不可静默
+
+---
+
+## 4. 并发（强制）
+
+### 4.1 goroutine 必须有明确退出条件
+
+```go
+// ❌ 泄漏的 goroutine
+go func() {
+    for {
+        doSomething()  // 永远跑
+    }
+}()
+
+// ✅ context 控制退出
+go func(ctx context.Context) {
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-ticker.C:
+            doSomething()
+        }
+    }
+}(ctx)
+```
+
+### 4.2 context 传递（强制）
+
+- 第一个参数必须是 `ctx context.Context`
+- **禁止把 ctx 存到 struct 字段**（除少数长生命周期场景）
+- `context.Background()` / `context.TODO()` 只在入口或确实无上下文时使用
+- 所有对外调用（DB、HTTP、RPC）必须传 ctx，以便 deadline 传播（见 [middleware/api-client.md](../middleware/api-client.md) §B5）
+
+### 4.3 共享数据
+
+- 读写共享变量必须用 `sync.Mutex` / `sync.RWMutex` 或 channel
+- **禁止用 map 做并发读写**（Go map 不是并发安全，会 fatal）；用 `sync.Map` 或 `sync.RWMutex + map`
+- `-race` 必须在 CI 中跑（`go test -race ./...`）
+
+### 4.4 channel 使用规则
+
+- 谁创建谁关闭：禁止在消费端 `close(ch)`
+- 向已关闭 channel 发送会 panic；关闭已关闭 channel 会 panic
+- 默认用有缓冲 channel（避免 sender block），缓冲大小按压力确定
+- `select` 的 `default` 分支会让 select 非阻塞，注意别变成忙等
+
+### 4.5 goroutine 并发数控制
+
+- 外部调用的并发必须限流（`golang.org/x/sync/semaphore` 或自建 worker pool）
+- `errgroup.Group` 用于"一批并行任务等全部结束"：
+
+```go
+g, ctx := errgroup.WithContext(ctx)
+for _, id := range ids {
+    id := id  // Go 1.21 以下必须重新绑定
+    g.Go(func() error { return processOne(ctx, id) })
+}
+if err := g.Wait(); err != nil { ... }
+```
+
+---
+
+## 5. HTTP 服务（强制）
+
+### 5.1 超时配置
+
+```go
+// ❌ 默认无超时，慢请求打死服务
+srv := &http.Server{ Handler: mux }
+
+// ✅ 显式超时
+srv := &http.Server{
+    Addr:              ":8080",
+    Handler:           mux,
+    ReadHeaderTimeout: 5 * time.Second,   // 防慢头攻击
+    ReadTimeout:       15 * time.Second,
+    WriteTimeout:      30 * time.Second,
+    IdleTimeout:       120 * time.Second,
+}
+```
+
+### 5.2 优雅关闭（强制）
+
+```go
+go func() { _ = srv.ListenAndServe() }()
+
+<-shutdownSignal  // SIGTERM / SIGINT
+ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+defer cancel()
+_ = srv.Shutdown(ctx)
+```
+
+- 必须处理 `SIGTERM`（K8s 发送的优雅关闭信号）
+- Shutdown 超时要大于最长正在进行的请求
+
+### 5.3 请求/响应
+
+- 入参必须绑定到 struct 并校验（`github.com/go-playground/validator/v10`）
+- `c.BindJSON` 失败必须返回 400 并给出字段级错误
+- 响应结构统一（`{ code, data, message }`）
+- 禁止直接暴露 GORM model 到 API：用独立的 DTO / Response 类型
+
+### 5.4 Gin 约束（项目使用 Gin 时）
+
+- 路由注册放独立文件，按业务分组，不要在 main.go 里堆满
+- 禁止 `c.AbortWithStatus(500)` 吞错，必须配合日志
+- **禁止 `gin.Default()` 进入生产**：默认包含 Logger 中间件且格式不可控；用 `gin.New()` 后自行装配
+
+---
+
+## 6. 数据库（强制）
+
+### 6.1 连接池
+
+```go
+db.SetMaxOpenConns(50)
+db.SetMaxIdleConns(10)
+db.SetConnMaxLifetime(time.Hour)    // 防止长连接被中间件 kill
+db.SetConnMaxIdleTime(10 * time.Minute)
+```
+
+- 不配置 `ConnMaxLifetime` 常见后果：LB 切断闲置连接后 Go 端仍持有，业务报错
+
+### 6.2 事务
+
+```go
+// ✅ 封装避免忘记 Commit/Rollback
+func WithTx(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error) error {
+    tx, err := db.BeginTx(ctx, nil)
+    if err != nil { return err }
+    defer func() {
+        if p := recover(); p != nil { _ = tx.Rollback(); panic(p) }
+    }()
+    if err := fn(tx); err != nil {
+        _ = tx.Rollback()
+        return err
+    }
+    return tx.Commit()
+}
+```
+
+### 6.3 SQL 注入
+
+- 所有参数必须用 `?` 占位符，禁止 `fmt.Sprintf` 拼 SQL
+- `gorm` 的 `Where("status = ?", status)` 而非 `Where("status = " + status)`
+
+### 6.4 N+1 问题
+
+- 列表查询后循环查关联数据 → 改 Preload / Join / IN 批查
+- `gorm` 的 `Preload("Orders")`；sqlx 手工收集 ID 后 `WHERE id IN (...)`
+
+---
+
+## 7. 配置与密钥（强制）
+
+- 不硬编码任何密钥、数据库连接串、API Key
+- 环境变量优先；复杂配置用 viper 或 envconfig
+- 启动时校验必填项：
+
+```go
+type Config struct {
+    Port        int    `env:"PORT" envDefault:"8080"`
+    DatabaseURL string `env:"DATABASE_URL,required"`
+}
+```
+
+- 敏感配置走配置中心 / KMS，禁止进 git
+
+---
+
+## 8. 日志（强制）
+
+- Go 1.21+ 推荐 `log/slog`（标准库）；高性能场景用 `zap`
+- **禁止 `fmt.Println` / `log.Println`** 进入生产（无结构化、无级别、无 traceId）
+- 结构化字段 + context 传递 traceId：
+
+```go
+slog.InfoContext(ctx, "user login",
+    slog.Int64("user_id", userID),
+    slog.String("ip", ip))
+```
+
+详细规则见 [`../middleware/logging.md`](../middleware/logging.md)。
+
+---
+
+## 9. 测试（强制）
+
+- 单元测试：`go test ./...`；覆盖率 `go test -cover`
+- Table-driven tests 是惯用法
+- 对外依赖用 interface + mock（`gomock` / `mockery`）；**禁止直接调用生产数据库的单元测试**
+- 集成测试用 testcontainers-go 启动 MySQL/Redis，CI 中跑
+- `go test -race` 必须通过；CI 挂门禁
+
+```go
+func TestAdd(t *testing.T) {
+    cases := []struct{
+        name string; a, b, want int
+    }{
+        {"positive", 1, 2, 3},
+        {"negative", -1, -1, -2},
+    }
+    for _, c := range cases {
+        t.Run(c.name, func(t *testing.T) {
+            if got := Add(c.a, c.b); got != c.want {
+                t.Errorf("got=%d want=%d", got, c.want)
+            }
+        })
+    }
+}
+```
+
+---
+
+## 10. 工具链与格式化（强制）
+
+- `gofmt` / `goimports` 必须在 pre-commit 或 IDE 保存时跑
+- `go vet ./...` CI 必跑
+- `golangci-lint run` 配置基础检查（errcheck、govet、staticcheck、gosec、revive）
+- `govulncheck` 定期扫依赖漏洞
+
+推荐的 `.golangci.yml` 基础项：`errcheck` / `govet` / `staticcheck` / `gosimple` / `ineffassign` / `gosec` / `unused`。
+
+---
+
+## 11. 中间件约束
+
+Go 服务涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
+
+| 中间件 | 规范 | Go 推荐 |
+|---|---|---|
+| HTTP 客户端 | [`../middleware/api-client.md`](../middleware/api-client.md) | `net/http` + 自定义 `*http.Client`（**禁用 `http.DefaultClient`**：无超时） |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | `log/slog` / `zap` |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | `golang-jwt/jwt/v5` + middleware |
+| Redis | [`../middleware/redis.md`](../middleware/redis.md) | `github.com/redis/go-redis/v9` |
+| RocketMQ | [`../middleware/rocketmq.md`](../middleware/rocketmq.md) | `rocketmq-client-go/v2` |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | 官方 HTTP SDK + 自封装（无官方成熟框架） |
+
+---
+
+## 12. 反面案例
+
+```go
+// ❌ goroutine 泄漏 + ctx 未传 + 错误忽略
+func handleBackground(id int) {
+    go func() {
+        data, _ := fetchFromAPI(id)  // 没 ctx、忽略 err
+        process(data)                // 永远不会退出
+    }()
+}
+
+// ✅
+func handleBackground(ctx context.Context, id int) error {
+    go func() {
+        data, err := fetchFromAPI(ctx, id)
+        if err != nil {
+            slog.ErrorContext(ctx, "fetch failed", "id", id, "err", err)
+            return
+        }
+        process(data)
+    }()
+    return nil
+}
+```
+
+```go
+// ❌ 默认 client 无超时 + 无错误包装
+resp, err := http.Get(url)
+if err != nil { return err }
+
+// ✅ 自定义 client + 错误包装
+var client = &http.Client{ Timeout: 5 * time.Second }
+req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+resp, err := client.Do(req)
+if err != nil { return fmt.Errorf("call %s: %w", url, err) }
+defer resp.Body.Close()
+```
+
+---
+
+## 13. 与通用规则的关系
+
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

@@ -1,0 +1,496 @@
+# Profile：React
+
+适用范围：以 React 为前端框架的项目（React 18/19，TypeScript 优先；CSR / SSR / Next.js 均适用）。
+
+> **重要**：本 Profile 不锁定版本号。所有版本相关约束在进入编码阶段前，通过**自动扫描项目配置**确定。
+
+---
+
+## 0. 版本与技术栈检测（每次编码阶段开始前自动执行）
+
+### 检测来源（按优先级）
+
+| 优先级 | 文件 | 读取字段 |
+|---|---|---|
+| 1 | `package.json` | `dependencies.react`、`react-dom`、`next`、`engines.node` |
+| 2 | `tsconfig.json` | `jsx`（`react-jsx` / `preserve`）、`strict` |
+| 3 | `vite.config.*` / `next.config.*` | 构建器识别 |
+| 4 | 依赖关键词 | 状态管理 / 路由 / 请求 |
+
+### 依赖推断
+
+| 依赖 | 用途 |
+|---|---|
+| `react-router-dom` | 客户端路由 |
+| `next` | Next.js（App Router / Pages Router） |
+| `@tanstack/react-query` | 服务器状态 |
+| `zustand` / `jotai` / `redux-toolkit` | 客户端状态 |
+| `react-hook-form` + `zod` | 表单 + 校验 |
+| `tailwindcss` / `styled-components` / `emotion` | 样式方案 |
+| `@testing-library/react` + `vitest`/`jest` | 测试 |
+
+### 输出版本上下文
+
+```
+────────────────────────────────────────────
+  React 版本上下文（自动检测）
+────────────────────────────────────────────
+  React 版本     : [18 / 19 / ❓]
+  构建器         : [Vite / Next.js App Router / Next.js Pages / CRA（已废弃）]
+  渲染模式       : [CSR / SSR / SSG / RSC]
+  TypeScript     : [✅ / ❌]
+  状态管理       : [Zustand / Jotai / Redux Toolkit / 无]
+  服务端状态     : [React Query / SWR / 无]
+  路由           : [React Router 6 / Next.js / 其他]
+  样式方案       : [Tailwind / CSS Modules / styled-components / ...]
+  表单           : [React Hook Form / Formik / 原生]
+
+  适用规范       : react.mdc §[对应章节]
+────────────────────────────────────────────
+```
+
+**CRA（Create React App）已停止维护**，检测到 CRA 项目必须在设计阶段提出迁移建议（迁 Vite 或 Next.js）。
+
+---
+
+## 1. 版本适配
+
+### React 18
+
+- 并发特性：`useTransition`、`useDeferredValue`、Automatic Batching、Suspense for Data Fetching
+- `<StrictMode>`：开发下组件会 mount 两次，必须适配（effect 要能重复执行且清理干净）
+- `createRoot` 替代 `ReactDOM.render`（已移除）
+
+### React 19（推荐新项目）
+
+- 原生 Actions / `useActionState` / `useOptimistic` / `useFormStatus`
+- Server Components（配合 Next.js / Remix）
+- `use()` 可在渲染中读取 Promise / Context（替代大部分 `useContext`）
+- `ref` 作为普通 prop，不再需要 `forwardRef`
+- 废弃 `defaultProps`（函数组件）：必须用默认参数
+
+---
+
+## 2. 组件设计（强制）
+
+### 2.1 函数组件 + Hooks（唯一选择）
+
+- **禁止新写 Class Component**；旧代码维护时可保留
+- **禁止 HOC 写新逻辑**：用 custom hook 替代
+
+### 2.2 组件职责单一
+
+- "展示型" vs "容器型" 分离：`<UserCard user={user} />` 只渲染；数据获取在上层 hook / 页面层
+- Server Component（React 19 / Next.js）优先；需要交互时再标 `"use client"`，不是反过来
+- **单文件组件 > 400 行**必须拆分
+
+### 2.3 Props 设计
+
+```tsx
+// ❌ 布尔参数爆炸（每加一种状态都要加 bool）
+<Button primary large disabled loading outlined />
+
+// ✅ 变体 + 状态分离
+type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
+interface ButtonProps {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  disabled?: boolean;
+  loading?: boolean;
+  children: React.ReactNode;
+}
+```
+
+- **禁止 `any`** 作为 prop 类型
+- 可选 props 必须有合理默认值
+- 事件命名：`onXxx`（如 `onSubmit`、`onClose`），子组件暴露的事件不直接叫 `onClick`（歧义）
+
+### 2.4 children 的使用
+
+- 尽量用 `children` 替代 `content` / `text` 类 prop
+- 复杂插槽用渲染 prop 或具名 slot（`<Card header={...} body={...}>`）
+
+---
+
+## 3. Hooks 规则（强制）
+
+### 3.1 Hooks 官方规则（不可违反）
+
+- 只在函数组件 / 自定义 Hook 顶层调用
+- 不要在循环、条件、嵌套函数中调用
+- 自定义 Hook 必须以 `use` 开头
+- ESLint 必须启用 `eslint-plugin-react-hooks`
+
+### 3.2 `useEffect` 使用边界
+
+```tsx
+// ❌ 在 useEffect 里做派生状态（应该是 useMemo / 渲染中计算）
+const [fullName, setFullName] = useState('');
+useEffect(() => {
+  setFullName(`${firstName} ${lastName}`);
+}, [firstName, lastName]);
+
+// ✅ 直接在渲染中计算
+const fullName = `${firstName} ${lastName}`;
+
+// ❌ 在 useEffect 里响应 props 变化做同步
+useEffect(() => { setItems(props.items); }, [props.items]);
+
+// ✅ 直接用 props
+const items = props.items;
+```
+
+**决策树**：先问"这个值能不能从现有 state/props 派生？"→ 能就用 `useMemo` / 直接计算。`useEffect` 只用于"与外部系统同步"（DOM、网络、订阅、定时器）。
+
+### 3.3 依赖数组（强制）
+
+- 禁用 `// eslint-disable-next-line react-hooks/exhaustive-deps` 绕过警告
+- 真需要稳定引用的函数 → 提到组件外 / 用 `useCallback`
+- effect 里依赖太多 → 拆小 effect
+
+### 3.4 清理函数
+
+```tsx
+useEffect(() => {
+  const ctrl = new AbortController();
+  fetch('/api/data', { signal: ctrl.signal }).then(...);
+  return () => ctrl.abort();   // ✅ 卸载时清理
+}, []);
+```
+
+- 订阅、定时器、AbortController 必须在 cleanup 中释放
+- StrictMode 下 effect 会跑两遍，cleanup 必须幂等
+
+### 3.5 `useRef` vs `useState`
+
+- UI 变化 → `useState`
+- 不触发渲染的可变值（DOM 引用、计数器、timer id）→ `useRef`
+- **禁止用 `useRef` 代替 state 来省渲染**：用户看不到的变化就不是 UI
+
+---
+
+## 4. 状态管理（强制）
+
+### 4.1 分层
+
+| 层 | 工具 | 用途 |
+|---|---|---|
+| 局部 UI 状态 | `useState` / `useReducer` | 表单、弹窗 open/close |
+| 跨组件共享 | React Context + `useContext` | 主题、用户信息（低频变化） |
+| 客户端全局 | Zustand / Jotai / Redux Toolkit | 跨页面业务状态 |
+| 服务器状态 | React Query / SWR | API 数据（缓存、重验证、乐观更新） |
+
+**禁止把服务端数据塞进客户端 store**（Redux 拉取后手动管 loading/error/stale）：用 React Query 省 80% 样板。
+
+### 4.2 Context 性能陷阱
+
+```tsx
+// ❌ value 每次 render 都是新对象 → 所有 consumer 都 re-render
+<UserContext.Provider value={{ user, setUser }}>
+
+// ✅ useMemo 稳定引用
+const value = useMemo(() => ({ user, setUser }), [user]);
+<UserContext.Provider value={value}>
+```
+
+- 高频变化的数据不要走 Context；用 Zustand 等外部 store
+- 同一 Context 承载的字段不要杂糅（把"主题"和"购物车"分两个 Context）
+
+### 4.3 React Query（推荐）
+
+```tsx
+const { data, error, isLoading } = useQuery({
+  queryKey: ['user', userId],
+  queryFn: () => userApi.getById(userId),
+  staleTime: 30_000,
+  retry: 1,
+});
+```
+
+- `queryKey` 必须是稳定、可序列化的数组
+- Mutation 后用 `queryClient.invalidateQueries` 刷新相关查询
+- 错误处理走全局 `QueryClient` 的 `defaultOptions.queries.onError` 或 ErrorBoundary
+
+---
+
+## 5. 渲染性能（强制）
+
+### 5.1 优化的前提是先测量
+
+- React DevTools Profiler 先定位瓶颈，不要 premature memoization
+- `React.memo` / `useMemo` / `useCallback` 不是免费的：比较开销、内存开销
+- 超过 1000 条 DOM 节点的列表才值得考虑虚拟化
+
+### 5.2 列表渲染
+
+```tsx
+// ❌ index 作为 key，列表重排后 state 错位
+items.map((item, i) => <Item key={i} data={item} />)
+
+// ✅ 稳定唯一 id
+items.map((item) => <Item key={item.id} data={item} />)
+```
+
+- **禁止 `key={index}`** 除非列表完全不变
+- 长列表（> 200 项）用 `react-window` / `@tanstack/react-virtual`
+
+### 5.3 重渲染抑制
+
+- 子组件频繁 re-render → 检查 parent 是否传入新对象/新函数
+- `React.memo` 配合 `useCallback` 才有效；只 memo 组件但每次传新 prop 等于没 memo
+- Context 拆分：把"高频变化"和"低频变化"分到不同 Context
+
+### 5.4 代码分割
+
+```tsx
+const OrderDetail = lazy(() => import('./OrderDetail'));
+// 必须配合 Suspense
+<Suspense fallback={<Spinner />}>
+  <OrderDetail id={id} />
+</Suspense>
+```
+
+- 路由级懒加载是标配
+- 首屏 JS 控制在 200KB（gzipped）以内是值得追求的目标
+
+---
+
+## 6. 表单（强制）
+
+### 6.1 复杂表单用 React Hook Form
+
+```tsx
+const schema = z.object({
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150),
+});
+type FormData = z.infer<typeof schema>;
+
+const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  resolver: zodResolver(schema),
+});
+
+<form onSubmit={handleSubmit(onSubmit)}>
+  <input {...register('email')} />
+  {errors.email && <span>{errors.email.message}</span>}
+</form>
+```
+
+- 表单字段 > 3 个必须用表单库（RHF / Formik）而不是 `useState` 堆
+- 校验用 zod / yup schema，与 TS 类型同源（`z.infer`）
+
+### 6.2 受控 vs 非受控
+
+- 简单场景优先非受控（`defaultValue` + `ref`）
+- 需要实时响应输入（联动搜索、格式化）才用受控
+
+### 6.3 禁止常见错误
+
+- 不要在 `onChange` 里做昂贵计算 → debounce
+- 密码类 input 必须 `type="password"` + `autoComplete="new-password"`
+- 提交按钮必须 `disabled` 或 loading 期间禁止重复提交
+
+---
+
+## 7. 路由（React Router / Next.js）
+
+### 7.1 React Router 6+
+
+- 只用声明式路由（`<Route>`）或 `createBrowserRouter`，不要混用
+- Protected Route 写成专门的 wrapper（`<RequireAuth>`），不要在每个页面里 `if (!user) navigate(...)`
+- Loader / Action API（React Router 6.4+）优先用于数据获取，比页面内 useEffect 简洁
+
+### 7.2 Next.js App Router
+
+- Server Component 默认；需要交互时 `"use client"`
+- `page.tsx` 只做编排，业务逻辑在 `components/` 和 `lib/`
+- `generateMetadata` 做 SEO，不要在 Client Component 里设 `<head>`
+- `loading.tsx` / `error.tsx` 必须写，不能让用户看白屏
+
+---
+
+## 8. 样式（强制）
+
+### 8.1 统一样式方案
+
+- 一个项目只选一种主力方案（Tailwind / CSS Modules / styled-components）
+- 禁止"Tailwind + CSS Modules + 内联样式"三管齐下
+- Design Token（颜色、间距、字号）必须集中定义（tailwind.config / CSS 变量），禁止硬编码 `#3b82f6`
+
+### 8.2 Tailwind 约束（项目使用 Tailwind 时）
+
+- 类名太长（> 15 个）→ 抽到 `@apply` 或拆组件
+- `className={cn(...)}` 条件组合用 `clsx` / `tailwind-merge`，禁止字符串拼接（类名冲突时后写的不一定覆盖前面的）
+- 禁止 arbitrary value 满天飞（`top-[17px]`）；先看设计系统是否该加 token
+
+### 8.3 可访问性（A11y）
+
+- 必须有 `alt` 的图片、`label` 关联的 input、可键盘操作的交互元素
+- 色对比度 ≥ WCAG AA（正文 4.5:1）
+- `<div onClick>` 禁止，用 `<button>` 或加 `role="button"` + 键盘事件
+
+---
+
+## 9. 错误边界 & Suspense
+
+### 9.1 错误边界
+
+- 必须有顶层 ErrorBoundary，防止单组件崩溃白屏全站
+- 推荐 `react-error-boundary` 库，标准组件 + `onReset` / `onError`
+- 异步错误（Promise reject）不会被 ErrorBoundary 捕获：用 React Query 的 `useErrorBoundary: true` 或手工 throw 到渲染
+
+```tsx
+<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+  <App />
+</ErrorBoundary>
+```
+
+### 9.2 Suspense
+
+- 数据加载 Suspense（React 19 / React Query）可以替代大部分 `isLoading` 判断
+- Fallback 必须有占位 UI（Skeleton），不要只用 Spinner 导致布局抖动
+
+---
+
+## 10. 安全（强制）
+
+- `dangerouslySetInnerHTML` 使用前必须 DOMPurify sanitize，并注明来源
+- 禁止把 Access Token 存 `localStorage` / `sessionStorage`：XSS 直接偷走。用 HttpOnly Cookie 或内存
+- URL 参数展示到 DOM 前做 encode
+- 第三方 `<script>` 必须 `integrity` + `crossorigin`
+- 任何前端"密钥"都是公开的：禁止在前端代码中硬编码 API Secret；只有"短期 Token"能给前端
+- CSP 头配合后端设置，前端尽量避免 inline script/style
+
+---
+
+## 11. 测试（强制）
+
+- 框架：Vitest + `@testing-library/react`（推荐）或 Jest
+- 原则：**测行为，不测实现**
+  - 用 `getByRole('button', { name: /提交/ })` 而不是 `getByTestId('submit-btn')`（更贴近用户）
+  - 禁止 shallow render 测试组件内部 state
+- Mock API：MSW（Mock Service Worker）统一拦截请求，不要满项目 `jest.mock('@/api/...')`
+- 关键交互路径必须有测试：表单提交、权限守卫、列表筛选
+- e2e：Playwright / Cypress 覆盖冒烟场景，CI 中跑
+
+```tsx
+test('submit form shows success', async () => {
+  render(<UserForm />);
+  await userEvent.type(screen.getByLabelText(/邮箱/), 'a@b.com');
+  await userEvent.click(screen.getByRole('button', { name: /提交/ }));
+  expect(await screen.findByText(/提交成功/)).toBeInTheDocument();
+});
+```
+
+---
+
+## 12. TypeScript 与 React
+
+- React 项目强烈建议 TS。详细类型规范见 [`typescript.mdc`](typescript.mdc)
+- 组件 Props 用 `interface`，可选字段必须有默认值或类型里标 `?`
+- `React.FC` 不推荐（有隐式 children + 历史问题）；直接函数 + 显式 Props 类型：
+  ```tsx
+  interface Props { title: string; children: React.ReactNode }
+  export function Panel({ title, children }: Props) { ... }
+  ```
+- 事件类型：`React.ChangeEvent<HTMLInputElement>` / `React.MouseEvent<HTMLButtonElement>`
+- Ref：`useRef<HTMLInputElement>(null)` 必须给具体元素类型
+
+---
+
+## 13. 工程规范
+
+### 13.1 目录结构
+
+```
+src/
+├── app/ or pages/       # 路由入口
+├── components/          # 通用组件（ui/、business/ 两层）
+│   ├── ui/              # 原子 UI（Button、Input...）
+│   └── business/        # 业务组件
+├── hooks/               # 自定义 hooks（use 前缀）
+├── api/ or services/    # 请求封装（见 middleware/api-client.md）
+├── stores/              # 客户端状态（Zustand 等）
+├── types/               # 共享类型
+├── utils/               # 工具函数
+└── styles/              # 全局样式 / tokens
+```
+
+### 13.2 命名
+
+- 组件文件 PascalCase：`UserCard.tsx`
+- Hook 文件 camelCase：`useUser.ts`
+- 每个组件一个文件；同文件多组件仅限局部小辅助组件
+
+### 13.3 依赖治理
+
+- Bundle 分析：`vite-bundle-visualizer` / Next.js `@next/bundle-analyzer` 纳入发布前检查
+- 禁止引入 jQuery、Lodash 全量、moment（选 date-fns / dayjs）
+
+---
+
+## 14. 中间件约束
+
+React 项目涉及下列中间件时，必须同时遵循 `../middleware/` 规范：
+
+| 中间件 | 规范 | React 场景 |
+|---|---|---|
+| API 请求层 | [`../middleware/api-client.md`](../middleware/api-client.md) §A | axios / fetch 封装 + 拦截器 |
+| 鉴权 | [`../middleware/auth.md`](../middleware/auth.md) | Token 存储、刷新、路由守卫 |
+| 日志 | [`../middleware/logging.md`](../middleware/logging.md) | 前端错误上报（Sentry 等） |
+| AI / LLM | [`../middleware/ai-llm.md`](../middleware/ai-llm.md) | Vercel AI SDK / 流式渲染 |
+
+---
+
+## 15. 反面案例
+
+```tsx
+// ❌ 多重问题：any 类型、index key、内联函数导致 re-render、useEffect 做派生
+function UserList({ users }: { users: any[] }) {
+  const [filtered, setFiltered] = useState([]);
+  useEffect(() => {
+    setFiltered(users.filter(u => u.active));
+  }, [users]);
+
+  return filtered.map((u, i) => (
+    <UserItem key={i} user={u} onClick={() => console.log(u)} />
+  ));
+}
+
+// ✅ 类型安全 + 渲染中派生 + 稳定 key + useCallback
+interface Props { users: User[]; onSelect: (u: User) => void }
+function UserList({ users, onSelect }: Props) {
+  const filtered = useMemo(() => users.filter(u => u.active), [users]);
+  return filtered.map(u => (
+    <UserItem key={u.id} user={u} onClick={onSelect} />
+  ));
+}
+```
+
+```tsx
+// ❌ 在 onClick 里做异步且不处理并发
+<button onClick={async () => {
+  const res = await api.buy(item);
+  setResult(res);
+}}>购买</button>
+
+// ✅ 防重复点击 + 错误处理
+const [loading, setLoading] = useState(false);
+const onBuy = async () => {
+  if (loading) return;
+  setLoading(true);
+  try { setResult(await api.buy(item)); }
+  catch (e) { toast.error('购买失败'); }
+  finally { setLoading(false); }
+};
+<button onClick={onBuy} disabled={loading}>购买</button>
+```
+
+---
+
+## 16. 与通用规则的关系
+
+- TypeScript 规范：遵循 [`typescript.mdc`](typescript.mdc)
+- 代码风格：遵循 [02_code_style.mdc](../02_code_style.mdc)
+- 安全红线：遵循 [03_security.mdc](../03_security.mdc)

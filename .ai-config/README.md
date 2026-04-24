@@ -23,7 +23,7 @@
  │
  ├── skills/                 # 【能力层】可调用的具体技能库
  │   ├── write-plan/         # 技能：生成计划
- │   ├── generate-prototype/ # 技能：生成原型
+ │   ├── prototype-generation/ # 技能：生成原型
  │   ├── code-review/        # 技能：代码审查
  │   └── scripts/            # 通用脚本库
  │
@@ -51,7 +51,7 @@
 
 ### 2. 流程执行
 - **生成计划**：使用 write-plan 技能生成开发计划
-- **生成原型**：使用 generate-prototype 技能生成前端原型
+- **生成原型**：使用 prototype-generation 技能生成前端原型
 - **代码审查**：使用 code-review 技能审查代码质量
 - **运行测试**：使用相关测试命令执行测试
 

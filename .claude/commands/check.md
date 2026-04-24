@@ -1,46 +1,35 @@
 ---
 name: check
-description: 测试+审查 - 设计测试用例、代码审查，输出验收结论，一步完成阶段3全部工作
+description: 测试 + 代码审查，输出验收结论
 argument-hint: [REQ-XXXXXXXX]
 ---
 
-请执行**测试与审查（阶段3完整流程）**。
+按 @.ai-config/workflow.md 第 **2.5 节（/check）** 的契约执行。
 
 需求ID：$ARGUMENTS
 
-**执行前校验（缺少任一必须文件则终止，提示用户补充缺失步骤）：**
-- `docs/requirements/backlog/$ARGUMENTS.md` 必须存在 → 来自 `/intake`
-- `docs/design/$ARGUMENTS-code-report.md` 必须存在 → 来自 `/code $ARGUMENTS`，缺失请先执行 `/code $ARGUMENTS`
-- 可选读取（存在则必须读）：`docs/design/$ARGUMENTS-design.md`（技术设计文档，M/L/XL 等级）
-- 读取编码完成报告中列出的所有源代码文件（前后端文件清单）
+**执行规范参考**：
+- @.ai-config/skills/testing/SKILL.md
+- @.ai-config/skills/code-review/SKILL.md
+- @.ai-config/skills/code-review/checklists.md
 
-**执行步骤：**
+**前置校验（缺一终止）**：
+- `docs/requirements/backlog/$ARGUMENTS.md` 存在
+- 若 `workload` ∈ {M, L, XL}：`docs/design/$ARGUMENTS-code-report.md` 必须存在
+- XS / S 级允许不做独立 report，只需 PR 描述覆盖测试 + 审查结论
 
-**第一部分：测试验证**（参考 @.ai-config/skills/testing/SKILL.md）
+**执行方式（按等级分级，做减法）**：
 
-1. 读取需求验收标准（acceptance 字段）作为测试用例来源
-2. 生成后端测试用例集（正常路径 + 边界值 + 异常场景 + 权限场景 + 回归场景）
-3. 生成接口测试脚本（curl / Postman 格式）
-4. 若项目含前端，额外生成：
-   - Hook 单元测试骨架（Vitest）
-   - 组件交互人工验收清单（按页面逐项列出）
-   - 前后端联调验证要点（字段名、分页格式、错误码、Token过期等）
-5. 记录发现的问题（P0 阻断 / P1 严重 / P2 一般 / P3 建议）
-6. 输出测试报告至 docs/test/$ARGUMENTS-test.md
+- **XS / S**：生成接口测试 curl 片段 + 5 维度 PR review 清单，结论写入 PR 描述。**不生成独立 test/review md**。
+- **M**：生成 `docs/test/$ARGUMENTS-test.md` + `docs/review/$ARGUMENTS-review.md`
+- **L / XL**：同 M，额外加并发和性能测试
 
-**第二部分：代码审查**（参考 @.ai-config/skills/code-review/checklists.md 和 @.ai-config/rules/02_code_style.mdc）
+**后置校验（强制门，仅 M/L/XL）**：
 
-7. 读取编码完成报告中的生成文件清单，逐一审查所有源代码文件（前端+后端）
-8. 执行5个维度审查：
-   - 代码质量（命名、逻辑、无魔法值、日志规范）
-   - 架构合理性（模块划分、依赖关系；前端：组件拆分是否合理）
-   - 安全性（SQL注入、XSS、权限校验、敏感数据脱敏）
-   - 可维护性（注释、错误处理、测试覆盖）
-   - 业务完整性（是否覆盖所有验收标准，前端页面是否与原型对齐）
-9. 前端代码额外对照 @.ai-config/skills/coding-phase/vue-code-review-checklist.md
-10. 标注：🔴 阻断性问题 / 🟡 警告性问题 / ✅ 赞扬点
-11. 输出审查报告至 docs/review/$ARGUMENTS-review.md
+```bash
+node .ai-config/scripts/validate-doc.js check $ARGUMENTS
+```
 
-**完成后，明确告知下一步：**
-- 无 🔴 阻断性问题 → 执行 `/deliver $ARGUMENTS`
-- 有 🔴 阻断性问题 → 修复后重新执行 `/check $ARGUMENTS`
+**下一步**：
+- 无 🔴 → `/deliver $ARGUMENTS`
+- 有 🔴 → 修复后重跑 `/check`

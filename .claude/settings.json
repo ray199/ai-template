@@ -6,5 +6,29 @@
         "repo": "ray199/ai-template"
       }
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai-config/scripts/session-context.js 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai-config/scripts/post-write-validate.js \"$CLAUDE_TOOL_INPUT_file_path\""
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,0 +1,34 @@
+#!/bin/sh
+# 校验 commit message 格式：
+#   <type>(<scope>): <subject>
+#   或：XS: <subject>（XS 快车道）
+# 允许 type：feat|fix|refactor|docs|test|chore|perf|ci|build|style|revert
+
+set -e
+
+MSG_FILE="$1"
+FIRST_LINE=$(head -1 "$MSG_FILE")
+
+# 忽略 merge / revert / fixup 自动消息
+case "$FIRST_LINE" in
+  Merge*|Revert*|"fixup!"*|"squash!"*) exit 0 ;;
+esac
+
+# XS 快车道
+if echo "$FIRST_LINE" | grep -qE '^XS: .+'; then
+  exit 0
+fi
+
+# 常规 conventional commit
+if echo "$FIRST_LINE" | grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci|build|style|revert)(\([a-z0-9_-]+\))?: .+'; then
+  exit 0
+fi
+
+echo "❌ commit message 格式不合法："
+echo "   $FIRST_LINE"
+echo ""
+echo "   允许的格式："
+echo "   · feat(user): 新增角色权限"
+echo "   · fix(auth): 修复 token 过期"
+echo "   · XS: 调登录页文案（XS 快车道）"
+exit 1

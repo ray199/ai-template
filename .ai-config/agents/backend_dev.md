@@ -64,8 +64,8 @@ Vue/Node 项目（package.json）：
 
 - 通用规范：`.ai-config/rules/02_code_style.mdc`
 - 安全规范：`.ai-config/rules/03_security.mdc`
-- Java 详细规范：`.ai-config/skills/coding-phase/java-code-review-checklist.md`
-- Vue 详细规范：`.ai-config/skills/coding-phase/vue-code-review-checklist.md`
-- .NET 详细规范：`.ai-config/skills/coding-phase/dotnet-code-review-checklist.md`
+- Java 详细规范：`.ai-config/skills/code-review/java-code-review-checklist.md`
+- Vue 详细规范：`.ai-config/skills/code-review/vue-code-review-checklist.md`
+- .NET 详细规范：`.ai-config/skills/code-review/dotnet-code-review-checklist.md`
 
 完成后告知用户：`/check REQ-XXXXXXXX`

@@ -95,6 +95,112 @@
 
 > 用户选择"D 自定义"时，根据其描述从 `ui-ux-pro-max` 中匹配最接近的色板 + 字体配对，生成对应 `:root` 块。
 
+#### 方案 E — Redoe Industrial 制造业运营（工业 MES / ERP / 车间）
+
+> **来源**：蒸馏自 `development-pack-main`（Redoe OS Design Pack），参照系为 Linear 的密度 + Plane 的层次 + Stripe 的 KPI 克制。
+> **触发条件**：产品类型识别为"制造业 / 工业运营 / MES / ERP"，或用户显式选择 E。
+> **配套资产**：`.ai-config/skills/redoe-prototype-style/mockup-template.html` 提供 1280×820 画布 + 真实侧栏 + Lucide 图标，可直接作为原型起点。
+
+```css
+:root {
+  /* 品牌 */
+  --color-primary: #1F4E79;        /* Redoe Navy */
+  --color-primary-hover: #2E75B6;  /* Redoe Blue */
+  --color-primary-light: #D6E4F0;  /* Redoe Light */
+  --color-danger: #EF4444;
+  /* 表面（Canvas > Surface > Stripe 三层深度） */
+  --color-bg: #F5F4F2;             /* 暖白 canvas，非纯白 */
+  --color-surface: #FFFFFF;        /* 卡片 / 侧栏 */
+  --color-stripe: #F9FAFB;         /* 表头 / 次级面板 */
+  --color-text: #0F172A;
+  --color-text-secondary: #6B7280;
+  --color-text-tertiary: #94A3B8;
+  --color-border: #E5E7EB;
+  --color-border-soft: #EEF0F3;    /* near-invisible 分隔线 */
+  /* 状态（永远：色 + 图标 + 文字，绝不能只有色） */
+  --status-healthy:  #22C55E;      /* 在跑 / on-track */
+  --status-warning:  #F59E0B;      /* pending / 待处理 ← 永远琥珀色，不是蓝色 */
+  --status-critical: #EF4444;      /* 阻塞 / 超预算 */
+  --status-complete: #10B981;      /* 已发货 / 完成 */
+  --status-neutral:  #94A3B8;      /* 暂停 / 不活跃 */
+  --status-info:     #38BDF8;
+  /* 多工厂实体色（若无多工厂场景可忽略） */
+  --ent-windsor: #2563EB; --ent-hunan: #7C3AED; --ent-pes: #EA580C;
+  --ent-pangeo: #6B7280; --ent-gta: #0891B2; --ent-ipo: #DB2777;
+  /* 字体：固定双栈，不允许替换 */
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-data:    'JetBrains Mono', ui-monospace, monospace;  /* 工单号 / KPI / 时间戳 */
+  /* 圆角：按钮 6px，卡片 8-12px，徽章 9999px（胶囊）；硬上限 12px */
+  --radius:       8px;
+  --radius-sm:    6px;
+  --radius-pill:  9999px;
+  /* 阴影：深度靠 bg 色分层，阴影仅用于 elevated layer */
+  --shadow:       0 1px 3px rgba(0,0,0,.06), 0 1px 2px -1px rgba(0,0,0,.06);
+  --shadow-md:    0 4px 6px -1px rgba(0,0,0,.07);
+  --shadow-modal: 0 16px 70px rgba(0,0,0,.12);
+  /* 动效：只允许 transform/opacity 过渡 */
+  --dur-fast:   150ms;
+  --dur-normal: 200ms;
+  --ease-out:   cubic-bezier(.25, 1, .5, 1);
+}
+```
+
+**Redoe Industrial 与其他方案的差异化硬规则**（选定 E 方案后必须遵守）：
+
+| 规则 | 说明 |
+|---|---|
+| Pending = 琥珀 | "待处理 / 需审批"一律 `--status-warning`，禁止蓝色（蓝色保留给"信息 / 已选"） |
+| 字体上限 | 一屏最多 4 种字号 + 3 种字重；层级靠字重而非字号 |
+| 数字必须等宽 | 工单号（G-1234）、KPI 数值、金额、时间戳须挂 `font-family: var(--font-data)` + `tabular-nums` |
+| 状态 = 色 + 图标 + 文字 | 禁止单凭颜色表达状态；status badge 必须带 Lucide 图标 |
+| 圆角 ≤ 12px | 容器最大 12px 圆角，按钮 6px；禁用 `rounded-3xl` 或更大卡片圆角 |
+| sidebar 图标黑白 | 左导航图标不上色，保持同一视觉权重 |
+| 表格行 44px | 数据表格最小行高 44px，数字右对齐；车间场景（tier 1）56px |
+| 空态必备四要素 | 图标（48px 轮廓）+ 标题（3-6 字）+ 描述（10-20 字）+ CTA 按钮，禁"暂无数据"单行 |
+| 禁用项 | 紫色渐变、玻璃拟态（E 与 C 不兼容）、硬编码 hex、spinner（改 skeleton 闪烁）、`<select>` 原生下拉 |
+| 触控目标 | 桌面 44px，车间 tier 1 场景 56px（WCAG AAA 对比度 7:1） |
+
+**Redoe 专属组件块**（可直接复用的 HTML 片段）：
+
+```html
+<!-- KPI 卡片（Stripe pattern） -->
+<div style="padding:14px 16px;border:1px solid var(--color-border);border-radius:8px">
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-secondary);margin-bottom:4px">工单总数</div>
+  <div style="font-family:var(--font-data);font-size:28px;font-weight:500;line-height:1">47</div>
+  <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">
+    <span style="color:#16A34A">↑ 4</span> 相较昨日
+  </div>
+</div>
+
+<!-- 状态 badge（color + 图标 + 文字） -->
+<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;background:#FEF3C7;color:#B45309">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+  待审批
+</span>
+
+<!-- 数据表格行（44px, mono + 右对齐数字） -->
+<tr style="height:44px;border-bottom:1px solid var(--color-border-soft)">
+  <td style="padding:9px 12px;font-family:var(--font-data);color:var(--color-text-secondary)">G-8232</td>
+  <td style="padding:9px 12px">CNC 外壳加工</td>
+  <td style="padding:9px 12px;text-align:right;font-family:var(--font-data);font-variant-numeric:tabular-nums">¥45,200</td>
+</tr>
+
+<!-- 空态（4 要素齐全） -->
+<div style="display:flex;flex-direction:column;align-items:center;padding:64px 16px;text-align:center;gap:8px">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:rgba(107,114,128,.4)"><path d="M3 7V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/><path d="M3 7h18"/><path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/></svg>
+  <h3 style="font-size:15px;font-weight:500">还没有工单</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);max-width:320px">新建工单后，它会出现在这里，等待分派到下一工序。</p>
+  <button style="padding:7px 14px;background:var(--color-primary);color:#fff;border:none;border-radius:6px;font-weight:500">+ 新建工单</button>
+</div>
+```
+
+**快速起步**：选定 E 方案后，不从头写 HTML。直接拷贝 `.ai-config/skills/redoe-prototype-style/mockup-template.html` 作为起点。模板已内置 1280×820 画布、深蓝 presentation bar、240px 侧栏（6 个 nav 分组 + Lucide SVG 图标）、所有上述组件样式。只需：
+1. 替换 `.pbar-brand` 与 `.pbar-ctx` 为本需求的名称；
+2. 增减 `<button class="stab">` 标签和对应 `<div class="scr">` 屏幕；
+3. 在 `<div class="sb" data-sb="xxx">` 上设置高亮菜单项 key（可选：`dashboard`, `pipeline`, `schedule`, `employees`, `machines`, `quality`, `jobcosting`, `reports`, `settings` 等）；
+4. 在 `.cb` 内填充业务内容，遵守上方硬规则。
+
 ---
 
 ## HTML原型的质量等级
@@ -416,271 +522,4 @@
                 <label>名称:</label>
                 <input type="text" placeholder="示例项目1">
             </div>
-            <div class="form-group">
-                <label>描述:</label>
-                <textarea placeholder="项目描述" rows="4"></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="secondary" onclick="closeModal('edit-modal')">取消</button>
-            <button onclick="alert('编辑成功'); closeModal('edit-modal')">保存</button>
-        </div>
-    </div>
-</div>
-
-<!-- 搜索对话框 -->
-<div id="search-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>高级搜索</h2>
-            <button class="close-btn" onclick="closeModal('search-modal')">✕</button>
-        </div>
-        <div>
-            <div class="form-group">
-                <label>名称:</label>
-                <input type="text" placeholder="搜索名称">
-            </div>
-            <div class="form-group">
-                <label>状态:</label>
-                <select>
-                    <option>全部</option>
-                    <option>已完成</option>
-                    <option>进行中</option>
-                    <option>待启动</option>
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="secondary" onclick="closeModal('search-modal')">取消</button>
-            <button onclick="alert('搜索结果...'); closeModal('search-modal')">搜索</button>
-        </div>
-    </div>
-</div>
-
-<script>
-function openModal(id) {
-    document.getElementById(id).classList.add('show');
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.remove('show');
-}
-
-// 点击模态框外部关闭
-window.addEventListener('click', function(event) {
-    if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('show');
-    }
-});
-</script>
-
-</body>
-</html>
-```
-
----
-
-## L2 - 标准原型（Ant Design）
-
-### 适用条件
-
-- 判定分数: 5-7分
-- 需求特征: 中等复杂度、多个页面或状态
-- 生成时间: 10分钟
-
-### 特点
-
-```
-1. 使用 Ant Design Pro 组件库（更专业的UI）
-2. 包含多种交互：
-   - 标签页切换
-   - 级联选择
-   - 日期选择
-   - 树形菜单
-   - 拖拽排序
-3. 伪数据支持（数组渲染表格）
-4. 更复杂的表单和验证
-```
-
-### 生成规则
-
-```html
-<!-- 使用CDN引入Ant Design -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@4/dist/antd.css">
-<script src="https://cdn.jsdelivr.net/npm/antd@4/dist/antd.js"></script>
-
-<!-- 组件库 -->
-- Button、Input、Select、DatePicker
-- Table、Form、Modal
-- Tabs、Menu、Layout
-- Badge、Tag、Pagination
-- Notification、Message、Popover
-```
-
-### 示例结构
-
-```
-文件: docs/prototype/REQ-XXXXXXXX-l2.html
-
-包含内容:
-1. 完整的顶部导航（公司logo、用户菜单）
-2. 左侧菜单（可折叠）
-3. 主内容区（标签页或多页面切换）
-4. 表格、表单、图表
-5. 分页、排序、搜索
-6. 弹窗、通知提示
-```
-
----
-
-## L3 - 高保真原型（完整设计规范）
-
-### 适用条件
-
-- 判定分数: ≥8分
-- 需求特征: 复杂应用、数据大屏、用户交互密集
-- 生成时间: 20分钟
-
-### 特点
-
-```
-1. 完整的设计系统
-   - 颜色规范（品牌色、功能色）
-   - 字体规范（大小、行高、字重）
-   - 间距规范（padding、margin）
-   - 圆角、阴影规范
-
-2. 高级交互
-   - 图表实时更新（ECharts）
-   - 拖拽支持（拖拽排序、拖拽调整布局）
-   - 动画过渡（平滑的页面切换）
-   - 响应式设计（自适应不同屏幕）
-
-3. 模拟数据API
-   - 假数据生成（实现搜索、排序、分页）
-   - 表单提交模拟
-   - 延迟模拟（网络请求延迟）
-
-4. 完整的业务流程
-   - 多步骤流程（步骤条）
-   - 审批流程（流程图）
-   - 权限控制（不同角色不同界面）
-```
-
-### 包含的库
-
-```html
-- Ant Design Pro: 企业级UI
-- ECharts: 图表库
-- Sortable: 拖拽库
-- Moment: 日期处理
-```
-
----
-
-## 自动代码生成规则
-
-### 解析需求文档提取信息
-
-```javascript
-function parseRequirement(requirement) {
-    return {
-        // 页面清单
-        pages: extractPages(requirement),
-        
-        // 表单字段
-        formFields: extractFormFields(requirement),
-        
-        // 表格列
-        tableColumns: extractTableColumns(requirement),
-        
-        // 流程和交互
-        flows: extractFlows(requirement),
-        
-        // 状态值
-        statusOptions: extractStatusValues(requirement),
-        
-        // 图表需求
-        charts: extractCharts(requirement)
-    };
-}
-```
-
-### HTML生成算法
-
-```javascript
-function generateHTML(parsed, level) {
-    let html = getHTMLTemplate();
-    
-    // 1. 生成导航菜单
-    html.navigation = generateMenu(parsed.pages);
-    
-    // 2. 生成表格
-    html.table = generateTable(parsed.tableColumns, parsed.flows);
-    
-    // 3. 生成表单
-    html.forms = generateForms(parsed.formFields);
-    
-    // 4. 生成对话框
-    html.modals = generateModals(parsed.pages, parsed.forms);
-    
-    // 5. 添加交互脚本
-    if (level >= 2) {
-        html.scripts = generateInteractionScripts(parsed.flows);
-    }
-    
-    // 6. 应用样式
-    if (level === 3) {
-        html.styles = applyDesignSystem(parsed.designSpec);
-        html.charts = generateCharts(parsed.charts);
-    }
-    
-    return html;
-}
-```
-
----
-
-## 原型验收标准
-
-### 功能性检查
-
-- [ ] 所有需求文档中提到的页面都已实现
-- [ ] 所有主要操作（增删改查）都可交互验证
-- [ ] 流程跳转正确（点击按钮跳转到对应页面）
-- [ ] 表单数据能正确显示和提交
-
-### 交互性检查
-
-- [ ] 按钮点击有反馈（颜色变化或提示）
-- [ ] 对话框能正确打开和关闭
-- [ ] 表单输入有基本校验（非空检查）
-- [ ] 分页、搜索、排序功能可用
-
-### 视觉设计检查
-
-- [ ] 布局清晰，层级合理
-- [ ] 颜色使用一致（品牌色、功能色）
-- [ ] 文字大小和行距舒适（可读性）
-- [ ] 间距均匀（上下左右对齐）
-
-### 信息完整性检查
-
-- [ ] 所有验收标准都在原型中有体现
-- [ ] 关键字段和说明清晰可见
-- [ ] 异常和错误提示能展示
-- [ ] 权限限制能展示（如按钮禁用）
-
----
-
-## 完成标准
-
-HTML原型生成器完成标准：
-
-- [ ] L1快速原型模板完整（5分钟生成）
-- [ ] L2标准原型模板完整（10分钟生成）
-- [ ] L3高保真原型设计规范清晰（20分钟生成）
-- [ ] 自动代码生成算法可行（能从需求文档提取关键信息）
-- [ ] 原型验收标准明确
-- [ ] 原型文件可独立打开（无依赖）
-- [ ] 原型具有基本的交互能力
+           

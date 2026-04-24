@@ -1,48 +1,27 @@
 {
-  "on_requirement_intake": [
-    "trigger_agent:requirement_analyst",
-    "trigger_skill:intake-requirement"
-  ],
-  "on_requirement_approved": [
-    "trigger_agent:requirement_analyst",
-    "trigger_skill:evaluate-requirement"
-  ],
-  "on_file_save": [
-    "trigger_skill:code_format",
-    "trigger_skill:code_lint"
-  ],
-  "on_commit": [
-    "trigger_skill:commit_lint",
-    "trigger_skill:code_review"
-  ],
-  "on_pr_create": [
-    "trigger_agent:architect",
-    "trigger_skill:code_review"
-  ],
-  "on_pr_merge": [
-    "trigger_skill:test_run"
-  ],
-  "on_deploy": [
-    "trigger_skill:security_scan",
-    "trigger_skill:performance_test"
-  ],
-  "on_issue_create": [
-    "trigger_agent:qa_engineer",
-    "trigger_skill:write_test"
-  ],
-  "on_schedule": {
-    "daily": [
-      "trigger_skill:security_scan",
-      "trigger_skill:dependency_check"
+  "$schema": "https://docs.claude.com/schemas/hooks.json",
+  "_comment": "Claude Code 原生 hook 配置。只匹配 PreToolUse / PostToolUse / SessionStart 三类 IDE 事件；PR / 部署 / 定时任务不属于 IDE hook，已迁移到 .ai-config/scripts/git-hooks/ 和 .github/workflows/。",
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai-config/scripts/session-context.js 2>/dev/null || true",
+            "_description": "进入会话时扫描 docs/ 给出当前在制品状态摘要。失败不阻断。"
+          }
+        ]
+      }
     ],
-    "weekly": [
-      "trigger_agent:architect",
-      "trigger_skill:code_quality_report"
-    ]
-  },
-  "on_evaluation_confirmed": [
-    "trigger_skill:project-docs-standards",
-    "trigger_skill:generate-prototype",
-    "trigger_skill:write-plan"
-  ]
-}
+
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "_description": "文档写入后立即校验 front-matter",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai-config/scripts/post-write-validate.js \"$CLAUDE_TOOL_INPUT_file_path\"",
+            "_description": "若修改的是 docs/ 下受管文档则跑 validate-doc.js；其他文件跳过。失败时把错误回传给 

@@ -1,0 +1,56 @@
+#!/bin/sh
+# 强制门：提交前跑文档 schema 校验。
+# 安装方式：
+#   git config core.hooksPath .ai-config/scripts/git-hooks
+# 或者 symlink 到 .git/hooks/pre-commit
+
+set -e
+
+# 只对本次 commit 涉及的 docs/**.md 做校验，避免扫全仓
+CHANGED=$(git diff --cached --name-only --diff-filter=AM | grep -E '^docs/(requirements/backlog|design|test|review|delivery)/REQ-[0-9]{8}-[0-9]{3}' || true)
+
+if [ -z "$CHANGED" ]; then
+  exit 0
+fi
+
+echo "── pre-commit: 校验受影响文档 ──"
+
+FAILED=0
+for f in $CHANGED; do
+  # 从路径推断 type 和 reqId
+  case "$f" in
+    docs/requirements/backlog/*.md)
+      REQ=$(basename "$f" .md)
+      node .ai-config/scripts/validate-doc.js requirement "$REQ" || FAILED=1
+      ;;
+    docs/design/*-design.md)
+      REQ=$(basename "$f" -design.md)
+      node .ai-config/scripts/validate-doc.js design "$REQ" || FAILED=1
+      ;;
+    docs/design/*-code-report.md)
+      REQ=$(basename "$f" -code-report.md)
+      node .ai-config/scripts/validate-doc.js code-report "$REQ" || FAILED=1
+      ;;
+    docs/test/*-test.md)
+      REQ=$(basename "$f" -test.md)
+      node .ai-config/scripts/validate-doc.js test "$REQ" || FAILED=1
+      ;;
+    docs/review/*-review.md)
+      REQ=$(basename "$f" -review.md)
+      node .ai-config/scripts/validate-doc.js review "$REQ" || FAILED=1
+      ;;
+    docs/delivery/*-delivery.md)
+      REQ=$(basename "$f" -delivery.md)
+      node .ai-config/scripts/validate-doc.js delivery "$REQ" || FAILED=1
+      ;;
+  esac
+done
+
+if [ "$FAILED" -ne 0 ]; then
+  echo ""
+  echo "❌ 文档 schema 校验未通过，commit 已阻止。"
+  echo "   临时跳过：git commit --no-verify（仅紧急情况）"
+  exit 1
+fi
+
+echo "✓ 所有文档 schema 通过"

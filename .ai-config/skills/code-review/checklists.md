@@ -49,9 +49,9 @@
 
 | 语言 | 详细清单文件 |
 |---|---|
-| Java | `coding-phase/java-code-review-checklist.md` |
-| Vue / Node | `coding-phase/vue-code-review-checklist.md` |
-| Python | `coding-phase/python-code-review-checklist.md` |
-| C# / .NET | `coding-phase/dotnet-code-review-checklist.md` |
+| Java | `code-review/java-code-review-checklist.md` |
+| Vue / Node | `code-review/vue-code-review-checklist.md` |
+| Python | `code-review/python-code-review-checklist.md` |
+| C# / .NET | `code-review/dotnet-code-review-checklist.md` |
 
 > 语言特定清单包含版本矩阵检查和框架特定规范，与本通用清单配合使用。

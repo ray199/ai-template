@@ -1,92 +1,24 @@
 # 工作流程规范
 
-## 命令总览
+> **本文件不再承载流程细节。** 流程契约、产出物 schema、命令行为全部定义在 [`.ai-config/workflow.md`](../workflow.md)。
 
-| 命令 | 阶段 | 主要工作 | 下一步 |
-|---|---|---|---|
-| `/intake` | 需求接入 | 需求结构化 + 工作量评估 + 伪需求扫描 | AI 告知 |
-| `/design REQ-xxx` | 技术设计 | 架构 + DB + 接口设计 | `/code` |
-| `/code REQ-xxx` | 编码实现 | 生成源码 + DB脚本 + 测试骨架 | `/check` |
-| `/check REQ-xxx` | 测试+审查 | 测试用例 + 5维度代码审查 | AI 告知 |
-| `/deliver REQ-xxx` | 交付上线 | 上线前检查 + 文档归档 | 完成 |
+## 速查
 
-## 完整流程
+| 命令 | 产出物 | 下一步 |
+|---|---|---|
+| `/init` | 目录骨架 + 老项目 project-map | `/intake` |
+| `/intake` | `docs/requirements/backlog/REQ-xxx.md` | XS/S→`/code`，M/L/XL→`/design` |
+| `/design` | `docs/design/REQ-xxx-design.md` | `/code` |
+| `/code` | 源码 + DB 脚本 +（M/L/XL）code-report | `/check` |
+| `/check` | （M/L/XL）test.md + review.md | 无🔴→`/deliver` |
+| `/deliver` | delivery.md + 归档 done/ | 完成 |
 
-```
-原始需求（任意形式：一句话 / 零散描述 / 完整PRD）
-    ↓
-[阶段1] 需求接入
-  /intake  ← skill: intake-requirement + evaluate-requirement
-  输出：docs/requirements/backlog/REQ-YYYYMMDD-XXX.md
-  AI 自动告知下一步：
-    S     → 直接 /code REQ-xxx
-    M/L/XL → 先 /design REQ-xxx
-    🔴阻断 → 修复后重跑 /intake
-    ↓
-         ┌──────────────────────┬────────────────────────────┐
-         │ S 等级                │ M / L / XL 等级             │
-         ▼                      ▼                            │
-[阶段2] 编码              [阶段2] 设计 + 编码               │
-  /code                    /design → /code                  │
-  读取：需求文档            读取：设计文档                   │
-  skill: coding-impl        skill: technical-design          │
-                            skill: coding-impl              │
-         └──────────────────────┴────────────────────────────┘
-    ↓
-[阶段3] 测试+审查
-  /check  ← skill: testing + code-review
-  输出：docs/test/REQ-xxx-test.md + docs/review/REQ-xxx-review.md
-  AI 自动告知下一步：
-    无🔴 → /deliver REQ-xxx
-    有🔴 → 修复后重跑 /check REQ-xxx
-    ↓
-[阶段4] 交付上线
-  /deliver  ← skill: delivery
-  输出：docs/requirements/done/REQ-xxx/（完整归档包）
-```
-
-## 工作量等级
-
-| 等级 | 特征 | 工期 | 需要 /design？ |
-|---|---|---|---|
-| S | 新增字段、简单改动、≤1个页面 | 1-2天 | 否 |
-| M | 新增模块、2-4个页面、新表 | 3-5天 | 是 |
-| L | 跨模块改造、5+页面、有技术风险 | 1-2周 | 是 |
-| XL | 整体重构、需拆分迭代 | 4周+ | 是 |
+每个命令的前置/后置校验、schema、退出码见 `.ai-config/workflow.md`。
 
 ## 关键规则
 
-1. **S等级跳过设计**：`/code` 直接读取需求文档，无需运行 `/design`
-2. **M/L/XL必须先设计**：运行 `/code` 前必须已有 `docs/design/REQ-xxx-design.md`
-3. **伪需求扫描**：`/intake` 自动执行，有 🔴 阻断项时禁止继续流转
-4. **重跑不回退**：`/check` 发现 🔴 问题时，修复代码后重跑 `/check` 即可，不需要重跑前面阶段
-5. **文档路径规范**：
-   - 需求文档：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`
-   - 设计文档：`docs/design/REQ-xxx-design.md`
-   - 归档目录：`docs/requirements/done/REQ-xxx/`
-
-## 技能库架构说明
-
-`.ai-config/skills/` 下的技能分两类，维护时请注意区分：
-
-**用户可调用技能**（通过 `.claude/commands/` 命令触发）
-
-| 技能目录 | 对应命令 |
-|---|---|
-| `intake-requirement/` | `/intake` |
-| `technical-design/` | `/design` |
-| `coding-impl/` | `/code` |
-| `delivery/` | `/deliver` |
-| `prototype-generation/` | `/prototype`（可选） |
-
-**内部支撑技能**（由命令内部引用，不直接调用）
-
-| 技能目录 | 被谁引用 | 用途 |
-|---|---|---|
-| `evaluate-requirement/` | `/intake` Step 3 | 伪需求扫描逻辑 |
-| `testing/` | `/check` 第一部分 | 测试用例设计 |
-| `code-review/` | `/check` 第二部分 | 5维度代码审查 |
-| `change-tracking/` | 手动参考 | 变更影响评估 |
-| `write-plan/` | 手动参考 | 迭代计划生成 |
-| `project-docs-standards/` | 手动参考 | 文档规范参考 |
-| `database-dba/` | 手动参考 | 数据库设计参考 |
+1. **XS 级走 git 快车道**：不生成 backlog 文档，commit 加 `XS:` 前缀
+2. **S 级跳过 `/design`**：`/code` 直接读需求
+3. **M/L/XL 必须先 `/design`**
+4. **重跑不回退**：`/check` 发现🔴只需修代码后重跑 `/check`
+5. **强制门分两层**：Git hooks（跨平台）+ Claude hooks（提示）

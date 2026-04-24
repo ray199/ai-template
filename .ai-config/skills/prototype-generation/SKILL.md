@@ -118,14 +118,17 @@ ELSE IF 判定分数 ≥8分 THEN
 
 ### 产品类型 → 推荐风格映射
 
-| 产品类型 | 推荐方案 A | 推荐方案 B | 推荐方案 C |
-|---|---|---|---|
-| 企业管理 / 后台系统 | Minimalism（蓝白） | Dark Mode（深色专业） | Material Design（灰蓝） |
-| 数据大屏 / 仪表盘 | Dark + Glassmorphism | Data Viz（深蓝科技） | Light Dashboard（白底） |
-| 电商 / 消费品 | Clean Modern（清新） | Bold Typography（活力） | Colorful（多彩） |
-| SaaS / 工具产品 | Minimalism + Bento | Glassmorphism | Flat Design |
-| 移动端应用 | iOS-style（圆角卡片） | Material You | Dark Mode |
-| 内容 / 资讯平台 | Editorial（阅读优先） | Minimal Blog | Magazine |
+| 产品类型 | 推荐方案 A | 推荐方案 B | 推荐方案 C | 备选 E |
+|---|---|---|---|---|
+| 企业管理 / 后台系统 | Minimalism（蓝白） | Dark Mode（深色专业） | Material Design（灰蓝） | **Redoe Industrial** |
+| 数据大屏 / 仪表盘 | Dark + Glassmorphism | Data Viz（深蓝科技） | Light Dashboard（白底） | **Redoe Industrial** |
+| 电商 / 消费品 | Clean Modern（清新） | Bold Typography（活力） | Colorful（多彩） | — |
+| SaaS / 工具产品 | Minimalism + Bento | Glassmorphism | Flat Design | **Redoe Industrial** |
+| 移动端应用 | iOS-style（圆角卡片） | Material You | Dark Mode | — |
+| 内容 / 资讯平台 | Editorial（阅读优先） | Minimal Blog | Magazine | — |
+| **制造业 / 工业运营 / MES / ERP** | **Redoe Industrial**（推荐） | Minimalism（蓝白） | Dark Mode（车间暗色） | — |
+
+> **方案 E — Redoe Industrial** 是从 `development-pack-main` 蒸馏出的一套制造业专用设计系统。当产品涉及工单、机台、车间操作员、多工厂实体、KPI 密度展示时，优先推荐此方案。详见 `.ai-config/skills/redoe-prototype-style/SKILL.md`。
 
 ### 呈现格式（必须按此格式向使用者展示）
 
@@ -153,9 +156,19 @@ ELSE IF 判定分数 ≥8分 THEN
 方案 D — 自定义
   输入您的偏好（色系 / 风格 / 参考网站均可）
 
-请选择方案（A / B / C / D）：
+方案 E — Redoe Industrial（制造业/工业运营专用）
+  色板：主色 #1F4E79 Navy · 辅色 #2E75B6 · 背景 #F5F4F2 暖白
+  字体：Inter（界面） + JetBrains Mono（工单号 / KPI 数字 / 时间戳）
+  适合：制造业 MES/ERP、车间操作界面、多工厂运营看板、需要严肃品牌调性和信息密度的工业产品
+  来源：development-pack-main（蒸馏自 Linear + Plane + Stripe 三家视觉语言）
+  额外资产：1280×820 画布模板、6 种页面 archetype、3 层用户规则（Shop Floor/Management/Admin）、15 条反 AI-slop 硬规则
+  详见：.ai-config/skills/redoe-prototype-style/SKILL.md
+
+请选择方案（A / B / C / D / E）：
 ───────────────────────────────────────────────────
 ```
+
+> **何时优先推荐 E**：当识别到的产品类型是"制造业 / 工业运营 / MES / ERP"，或用户提到"工单、车间、机台、生产、装配、质检、多工厂"等领域词，应将 E 置于"推荐"位置（标注"（推荐）"）；其他场景下 E 作为备选呈现。
 
 ### 设计 Token 注入规则
 
@@ -493,58 +506,4 @@ docs/prototype/REQ-20240315-001.figma
 
 ## 与AI生成的集成
 
-### HTML原型的自动生成
-
-```javascript
-// 伪代码：原型生成算法
-
-function generatePrototype(requirement, prototypeType) {
-    
-    if (prototypeType === 'HTML') {
-        // 1. 解析需求中的页面清单和流程
-        const pages = parsePages(requirement);
-        const flows = parseFlows(requirement);
-        
-        // 2. 生成HTML骨架
-        const html = generateHTMLStructure(pages);
-        
-        // 3. 添加交互逻辑
-        const interactions = generateInteractions(flows);
-        
-        // 4. 应用样式（Bootstrap / Ant Design）
-        const styled = applyStyles(html, 'ant-design');
-        
-        // 5. 输出文件
-        return outputHTML(styled + interactions);
-    }
-    
-    else if (prototypeType === 'Figma') {
-        // 调用Figma API或导出设计稿
-        return generateFigmaDesign(requirement);
-    }
-    
-    else if (prototypeType === 'Wireframe') {
-        // 生成Markdown线框图
-        return generateWireframeMarkdown(requirement);
-    }
-}
-```
-
-### Figma集成方案
-
-```
-选项1: 导出Figma设计稿
-- 使用 Figma API 生成设计稿
-- 导出为 PNG/SVG 保存到项目中
-- 在需求文档中嵌入图片链接
-
-选项2: 生成Figma链接
-- 创建共享链接
-- 在需求文档中包含可点击的Figma链接
-- 便于多人实时评审
-
-选项3: 使用Figma插件
-- 创建Claude插件自动生成Figma设计
-- 与Figma系统集成，更新时实时同步
-```
-
+### H

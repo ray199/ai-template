@@ -39,7 +39,7 @@
    - 技术维度4项评分（架构变更/引入新技术/性能挑战/安全权限）
    - 参考 workload-evaluation.md，综合判定等级：S / M / L / XL
    ↓
-【Step 3】伪需求扫描（参考 evaluate-requirement/SKILL.md）
+【Step 3】伪需求扫描（参考 intake-requirement/pseudo_checklist.md）
    - A 重复建设：扫描代码库和历史需求，查找相似功能
    - B 价值存疑：核查目标和验收标准的质量
    - C 逻辑冲突：比对设计文档和历史决策
