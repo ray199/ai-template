@@ -67,6 +67,22 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
   - 本次保留 vs 重写：<...>
   ```
 - 老项目必须读 `docs/_context/project-map.md` 并遵守 `invariants`
+- **L / XL 强制 `## 任务拆解` 章节**（M 建议；schema 会校验存在性 + 表头）：
+  ```markdown
+  ## 任务拆解
+  | ID | 任务 | 依赖 | 验收对应 | 预估 | 备注 |
+  |---|---|---|---|---|---|
+  | T1 | <任务> | — | A1 | 0.5d | <备注> |
+  | T2 | <任务> | T1 | A1, A2 | 1d | |
+  ...
+
+  **关键路径**：T1 → T2 → ...
+  **并行机会**：<...>
+  ```
+  - 每行任务 ID 必须 `T<数字>`
+  - 必须有"验收对应"列，引用 requirement.md 中的 acceptance 编号（A1/A2...）
+  - 至少 1 行任务
+- **重构 / 迁移类需求**：任务表后必须加"迁移顺序"和"回滚边界"段
 - 后置校验：`node .ai-config/scripts/validate-doc.js design <REQ-id>`
 
 ### /code
@@ -113,12 +129,4 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 
 1. **产出物文件名**：严格按 workflow.md §3 约定，文件名里的 REQ-id 必须匹配 `^REQ-\d{8}-\d{3}$`
 2. **后置校验退出码非 0**：不得告知用户进入下一阶段，必须先修产出物再重跑
-3. **XS 级不走 /intake**：直接 git commit `XS: <描述>` 交 commit-msg hook 把关
-4. **老项目识别**：`docs/_context/project-map.md` 存在即判为老项目，后续阶段触发对应强制约束
-5. **规则红线**：安全（`03_security.mdc`）和通用代码风格（`02_code_style.mdc`）始终适用，禁止以"用户没要求"为由绕开
-
----
-
-## 与 Claude Code / Cursor 的关系
-
-本文件与 `.claude/commands/` 里的 7 份命令文件是**同一契约的不同平台适配**。事实源永远是 `.ai-config/workflow.md` + `validate-doc.js`，任何工作流变更只改这两者，本文件被动同步。
+3. 

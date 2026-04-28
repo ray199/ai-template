@@ -122,8 +122,12 @@
 5. 接口设计：URL / Method / 请求响应 / 错误码
 6. 前端 UI 设计（若含前端）：页面、组件、状态、API 调用层
 7. 关键实现路径 + 风险点
+8. **任务拆解（L / XL 强制；M 建议）**：在 design 文档正文写 `## 任务拆解` 章节，包含表格 `ID | 任务 | 依赖 | 验收对应 | 预估 | 备注`。每行 ID 必须 `T<数字>` 形式，"验收对应"列引用 requirement.md 中的 acceptance 编号（A1/A2...），至少 1 行任务。表格后注明关键路径和并行机会
+9. **重构 / 迁移类需求额外要求**：任务表后追加"迁移顺序"段（每步标注是否可独立合并）和"回滚边界"（哪一步之前可回滚，哪一步是不可逆点）
 
-**后置校验**：运行 `validate-doc.js design REQ-xxx`。老项目 schema 会校验 `## 现状基线` 章节存在性。
+**后置校验**：运行 `validate-doc.js design REQ-xxx`。校验项：
+- 老项目：`## 现状基线` 章节存在
+- L / XL：`## 任务拆解` 章节存在 + 表头列名（ID / 任务 / 依赖 / 验收 / 预估）+ 至少一行 T<数字> 任务
 
 **产出物**：`docs/design/REQ-xxx-design.md`
 
@@ -258,6 +262,8 @@ invariants_respected: true          # 老项目必须为 true
 
 **老项目正文强制章节**：`## 现状基线`（schema 校验）。
 
+**L / XL 正文强制章节**：`## 任务拆解`（schema 校验）。表格列：`ID | 任务 | 依赖 | 验收对应 | 预估 | 备注`，ID 必须 `T<数字>` 形式，验收对应引用 requirement.md 的 acceptance 编号（A1/A2...）。重构 / 迁移类需求额外要求"迁移顺序" + "回滚边界"段。
+
 ### 3.3 编码完成报告（design/REQ-xxx-code-report.md）
 
 ```yaml
@@ -330,33 +336,4 @@ updated_at: 2026-04-24              # 可选，追加记录时更新
 /init ─────────────┐
                    ▼
 /intake ──► workload ∈ {XS,S} ──► /code ──► /check ──► /deliver
-            workload ∈ {M,L,XL} ──► /design ──► /code ──► /check ──► /deliver
-```
-
-每条边都由 schema 校验脚本守门，不通过不能前进。
-
----
-
-## 5. 多平台适配约定
-
-各平台适配文件应**只做薄引用**，不重复写执行逻辑：
-
-| 平台 | 适配文件 | 引用方式 |
-|---|---|---|
-| Claude Code | `.claude/commands/*.md` | `@.ai-config/workflow.md#命令契约` |
-| Cursor | `.cursor/rules/*.mdc` | 同上 |
-| Codex CLI | `AGENTS.md` | 同上 |
-| Trae | `.trae/rules/` | 同上 |
-
-适配层只做两件事：
-1. 把平台的命令触发映射到本文件的对应章节
-2. 调用 `.ai-config/scripts/validate-doc.js` 作为后置 gate
-
----
-
-## 6. 修改本文件的注意事项
-
-1. 任何命令契约改动都要同步更新 `.ai-config/scripts/validate-doc.js`
-2. 字段增删要更新对应 schema（第 3 节）
-3. 平台适配层不需要改（只要它们仍然只做薄引用）
-4. 在 `docs/_changelog/workflow.md` 记录变更（项目生命周期内）
+            workload ∈ 

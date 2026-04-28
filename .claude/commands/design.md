@@ -1,6 +1,6 @@
 ---
 name: design
-description: 技术设计 - 架构影响、DB、接口、前端 UI 设计
+description: 技术设计 - 架构影响、DB、接口、前端 UI 设计、L/XL 任务拆解
 argument-hint: [REQ-XXXXXXXX]
 ---
 
@@ -28,7 +28,44 @@ argument-hint: [REQ-XXXXXXXX]
 - 本次保留 vs 重写：<逐项说明>
 ```
 
-schema 会检查章节存在性，缺章节会在后置校验阶段报错。
+**任务拆解（L / XL 强制；M 建议）**：
+
+L / XL 级 design 必须包含 `## 任务拆解` 章节。多人协作和重构场景下，缺这块就漏 / 错序高发：
+
+```markdown
+## 任务拆解
+
+| ID | 任务 | 依赖 | 验收对应 | 预估 | 备注 |
+|---|---|---|---|---|---|
+| T1 | DB migration：新增 role / role_permission 表 | — | A1 | 0.5d | 老项目保留 user_id 外键 |
+| T2 | RoleRepository + Unit Test | T1 | A1 | 1d | |
+| T3 | RoleService 业务逻辑 + 缓存 | T2 | A1, A2 | 1.5d | Redis key 设计 |
+| T4 | UserController /users/{id}/roles 接口 | T3 | A2 | 0.5d | |
+| T5 | 前端权限组管理页面 | T3（接口契约定稿即可） | A3 | 2d | 可与 T4 并行 |
+| T6 | 集成测试 + e2e | T4, T5 | A1-A4 | 1d | |
+
+**关键路径**：T1 → T2 → T3 → T4 → T6（共 4.5 天）
+**并行机会**：T5 在 T3 接口契约定稿后即可启动，与 T4 并行
+```
+
+强制项：
+- 每行任务 ID 必须是 `T<数字>` 形式
+- 必须有"验收对应"列，引用 requirement.md 里的 acceptance 编号（A1/A2...）
+- 至少 1 行任务
+
+**重构 / 迁移类需求额外要求**：
+
+若需求标题 / affects_modules 涉及"重构、改造、迁移"等场景，任务表后必须追加：
+
+```markdown
+**迁移顺序**（标注每步的可逆点和不可逆点）：
+1. <步骤 1>，可独立合并：是 / 否
+2. <步骤 2>，可独立合并：是 / 否
+...
+**回滚边界**：在第 N 步之前可一键回滚，第 N 步之后只能前滚
+```
+
+schema 会校验任务拆解章节存在性 + 表头列名。
 
 **后置校验（强制门）**：
 

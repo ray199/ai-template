@@ -7,25 +7,20 @@
 //   node validate-doc.js code-report REQ-20260424-001
 //   node validate-doc.js check REQ-20260424-001
 //   node validate-doc.js delivery REQ-20260424-001
-//   node validate-doc.js project-map              # 校验 docs/_context/project-map.md（若存在）
-//   node validate-doc.js all                       # 扫描全仓 docs/ 下所有 md（含 project-map）
+//   node validate-doc.js project-map
+//   node validate-doc.js all
 //
 // 退出码：0 = 通过，1 = 校验失败
-//
-// 纯 Node（无第三方依赖），可在本地和 CI 通用。
 
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 
-// 颜色输出
 const red = s => `\x1b[31m${s}\x1b[0m`;
 const green = s => `\x1b[32m${s}\x1b[0m`;
-const yellow = s => `\x1b[33m${s}\x1b[0m`;
 const gray = s => `\x1b[90m${s}\x1b[0m`;
 
-// ---------- 极简 YAML front-matter 解析 ----------
 function parseFrontMatter(content) {
   const m = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!m) return null;
@@ -69,7 +64,6 @@ function coerce(s) {
   return s;
 }
 
-// ---------- schema 定义 ----------
 const REQ_ID_RE = /^REQ-\d{8}-\d{3}$/;
 
 const SCHEMAS = {
@@ -113,9 +107,33 @@ const SCHEMAS = {
       status: v => ['draft', 'approved'].includes(v) || 'status 必须是 draft|approved',
     },
     bodyChecks: (body, fm, ctx) => {
-      if (!ctx.isExistingProject) return [];
-      if (/^##\s+现状基线/m.test(body)) return [];
-      return ['老项目 design 必须包含 "## 现状基线" 章节（列出涉及模块 / 现有行为 / 已知坑）'];
+      const errs = [];
+      if (ctx.isExistingProject && !/^##\s+现状基线/m.test(body)) {
+        errs.push('老项目 design 必须包含 "## 现状基线" 章节（列出涉及模块 / 现有行为 / 已知坑）');
+      }
+      if (ctx.workload === 'L' || ctx.workload === 'XL') {
+        const start = body.search(/^##\s+任务拆解/m);
+        if (start === -1) {
+          errs.push(`${ctx.workload} 级 design 必须包含 "## 任务拆解" 章节（列任务 / 依赖 / 验收对应 / 预估）`);
+        } else {
+          const rest = body.slice(start + 1);
+          const nextRel = rest.search(/^##\s/m);
+          const sec = nextRel === -1 ? body.slice(start) : body.slice(start, start + 1 + nextRel);
+          const hasHeader = /\|\s*ID\s*\|/.test(sec)
+            && /任务/.test(sec)
+            && /依赖/.test(sec)
+            && /验收/.test(sec)
+            && /预估/.test(sec);
+          if (!hasHeader) {
+            errs.push('"## 任务拆解" 章节必须包含表格表头：ID | 任务 | 依赖 | 验收对应 | 预估');
+          }
+          const taskRows = sec.match(/^\|\s*T\d+\s*\|/gm);
+          if (!taskRows || taskRows.length === 0) {
+            errs.push('"## 任务拆解" 至少需要一行任务（T1 / T2 / ... 形式的 ID）');
+          }
+        }
+      }
+      return errs;
     },
   },
   'code-report': {
@@ -171,6 +189,20 @@ function isExistingProject(repoRoot) {
   return fs.existsSync(path.join(repoRoot, 'docs/_context/project-map.md'));
 }
 
+function getRequirementWorkload(reqId, repoRoot) {
+  const candidates = [
+    path.join(repoRoot, `docs/requirements/backlog/${reqId}.md`),
+    path.join(repoRoot, `docs/requirements/done/${reqId}/${reqId}.md`),
+    path.join(repoRoot, `docs/requirements/done/${reqId}.md`),
+  ];
+  for (const p of candidates) {
+    if (!fs.existsSync(p)) continue;
+    const fm = parseFrontMatter(fs.readFileSync(p, 'utf8'));
+    if (fm && fm.workload) return String(fm.workload).toUpperCase();
+  }
+  return null;
+}
+
 function splitFrontMatterAndBody(content) {
   const m = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
   if (!m) return { body: content };
@@ -180,10 +212,7 @@ function splitFrontMatterAndBody(content) {
 function validateCheck(reqId, repoRoot) {
   const testRes = validateOne('test', reqId, repoRoot);
   const reviewRes = validateOne('review', reqId, repoRoot);
-  return {
-    ok: testRes.ok && reviewRes.ok,
-    errors: [...testRes.errors, ...reviewRes.errors],
-  };
+  return { ok: testRes.ok && reviewRes.ok, errors: [...testRes.errors, ...reviewRes.errors] };
 }
 
 function validateOne(type, reqId, repoRoot) {
@@ -211,6 +240,9 @@ function validateOne(type, reqId, repoRoot) {
   }
   if (typeof schema.bodyChecks === 'function') {
     const ctx = { isExistingProject: isExistingProject(repoRoot) };
+    if (type === 'design' && reqId) {
+      ctx.workload = getRequirementWorkload(reqId, repoRoot);
+    }
     const bodyErrs = schema.bodyChecks(body || '', fm, ctx);
     for (const e of bodyErrs) errors.push(`${rel} 正文：${e}`);
   }
@@ -279,9 +311,7 @@ function main() {
       }
     }
     console.log('');
-    console.log(failed === 0
-      ? green(`全部 ${results.length} 份通过`)
-      : red(`${failed}/${results.length} 份未通过`));
+    console.log(failed === 0 ? green(`全部 ${results.length} 份通过`) : red(`${failed}/${results.length} 份未通过`));
     process.exit(failed === 0 ? 0 : 1);
   }
 
@@ -290,9 +320,7 @@ function main() {
     process.exit(2);
   }
 
-  const result = type === 'check'
-    ? validateCheck(reqId, repoRoot)
-    : validateOne(type, reqId, repoRoot);
+  const result = type === 'check' ? validateCheck(reqId, repoRoot) : validateOne(type, reqId, repoRoot);
 
   if (result.ok) {
     console.log(green('✓'), `${type} / ${reqId || ''} 校验通过`);
