@@ -4,7 +4,7 @@ description: 编码实现 - 生成源码 + DB 脚本 + 测试骨架
 argument-hint: [REQ-XXXXXXXX | --frontend | --backend | --db]
 ---
 
-按 @.ai-config/workflow.md 第 **2.4 节（/code）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.4 节（/pg:code）** 的契约执行。
 
 需求ID：$ARGUMENTS
 
@@ -28,4 +28,4 @@ argument-hint: [REQ-XXXXXXXX | --frontend | --backend | --db]
   node .ai-config/scripts/validate-doc.js code-report $ARGUMENTS
   ```
 
-**下一步**：`/check $ARGUMENTS`
+**下一步**：`/pg:check $ARGUMENTS`

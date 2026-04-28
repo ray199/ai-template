@@ -4,7 +4,7 @@ description: 交付 - 上线步骤 + 回滚方案 + 归档 + 沉淀
 argument-hint: [REQ-XXXXXXXX]
 ---
 
-按 @.ai-config/workflow.md 第 **2.6 节（/deliver）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.6 节（/pg:deliver）** 的契约执行。
 
 需求ID：$ARGUMENTS
 

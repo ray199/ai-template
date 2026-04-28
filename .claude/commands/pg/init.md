@@ -4,7 +4,7 @@ description: 项目初始化 - 检测技术栈、建立目录结构、（老项�
 argument-hint: [可选: new | existing | java | vue | python | dotnet]
 ---
 
-按 @.ai-config/workflow.md 第 **2.1 节（/init）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.1 节（/pg:init）** 的契约执行。
 
 可选参数：$ARGUMENTS（不填则自动检测）
 
@@ -16,13 +16,13 @@ argument-hint: [可选: new | existing | java | vue | python | dotnet]
 2. 建立目录骨架：
    ```
    docs/
-     requirements/backlog/   # /intake 产出
-     requirements/done/      # /deliver 归档
-     design/                 # /design、/code 产出
-     test/                   # /check 产出
-     review/                 # /check 产出
-     delivery/               # /deliver 产出
-     prototype/              # /prototype 产出
+     requirements/backlog/   # /pg:intake 产出
+     requirements/done/      # /pg:deliver 归档
+     design/                 # /pg:design、/pg:code 产出
+     test/                   # /pg:check 产出
+     review/                 # /pg:check 产出
+     delivery/               # /pg:deliver 产出
+     prototype/              # /pg:prototype 产出
      _context/               # 项目上下文（老项目必需）
    ```
 3. **老项目必须生成** `docs/_context/project-map.md`（模板见下）
@@ -38,7 +38,7 @@ generated_at: <ISO date>
 
 # 项目上下文地图
 
-> 本文件给 /intake / /design / /code 读取，作为老项目的"已有事实"。
+> 本文件给 /pg:intake / /pg:design / /pg:code 读取，作为老项目的"已有事实"。
 
 ## 技术栈
 - 后端：<语言/框架/版本>
@@ -60,7 +60,7 @@ generated_at: <ISO date>
 |---|---|---|---|
 
 ## 不可变约束（invariants）
-> 这些是 /design 阶段的硬约束，AI 不得违反。
+> 这些是 /pg:design 阶段的硬约束，AI 不得违反。
 
 - [ ] 禁止修改 `user` 表的主键结构
 - [ ] `/api/v1/*` 接口签名不得变更（旧客户端兼容）
@@ -71,4 +71,4 @@ generated_at: <ISO date>
 - 老项目：`docs/_context/project-map.md` 必须存在且 `invariants` 段非空
 - 新老项目：目录结构完整
 
-完成后告知用户：`/intake` 接入第一个需求。
+完成后告知用户：`/pg:intake` 接入第一个需求。

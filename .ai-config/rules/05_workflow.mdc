@@ -6,19 +6,19 @@
 
 | 命令 | 产出物 | 下一步 |
 |---|---|---|
-| `/init` | 目录骨架 + 老项目 project-map | `/intake` |
-| `/intake` | `docs/requirements/backlog/REQ-xxx.md` | XS/S→`/code`，M/L/XL→`/design` |
-| `/design` | `docs/design/REQ-xxx-design.md` | `/code` |
-| `/code` | 源码 + DB 脚本 +（M/L/XL）code-report | `/check` |
-| `/check` | （M/L/XL）test.md + review.md | 无🔴→`/deliver` |
-| `/deliver` | delivery.md + 归档 done/ | 完成 |
+| `/pg:init` | 目录骨架 + 老项目 project-map | `/pg:intake` |
+| `/pg:intake` | `docs/requirements/backlog/REQ-xxx.md` | XS/S→`/pg:code`，M/L/XL→`/pg:design` |
+| `/pg:design` | `docs/design/REQ-xxx-design.md` | `/pg:code` |
+| `/pg:code` | 源码 + DB 脚本 +（M/L/XL）code-report | `/pg:check` |
+| `/pg:check` | （M/L/XL）test.md + review.md | 无🔴→`/pg:deliver` |
+| `/pg:deliver` | delivery.md + 归档 done/ | 完成 |
 
 每个命令的前置/后置校验、schema、退出码见 `.ai-config/workflow.md`。
 
 ## 关键规则
 
 1. **XS 级走 git 快车道**：不生成 backlog 文档，commit 加 `XS:` 前缀
-2. **S 级跳过 `/design`**：`/code` 直接读需求
-3. **M/L/XL 必须先 `/design`**
-4. **重跑不回退**：`/check` 发现🔴只需修代码后重跑 `/check`
+2. **S 级跳过 `/pg:design`**：`/pg:code` 直接读需求
+3. **M/L/XL 必须先 `/pg:design`**
+4. **重跑不回退**：`/pg:check` 发现🔴只需修代码后重跑 `/pg:check`
 5. **强制门分两层**：Git hooks（跨平台）+ Claude hooks（提示）

@@ -12,19 +12,19 @@
 原始需求（一句话 / 零散描述 / 完整PRD）
     ↓
 【阶段1】需求接入
-/intake    需求结构化 + 工作量评估 + 伪需求扫描（一步完成）
-           → 告知下一步：/design（M/L/XL）或 /code（S）
+/pg:intake    需求结构化 + 工作量评估 + 伪需求扫描（一步完成）
+           → 告知下一步：/pg:design（M/L/XL）或 /pg:code（S）
     ↓
 【阶段2】设计+编码
-/design    技术设计（M/L/XL）→ docs/design/REQ-xxx-design.md
-/code      生成源代码 + DB迁移脚本 + 测试骨架
+/pg:design    技术设计（M/L/XL）→ docs/design/REQ-xxx-design.md
+/pg:code      生成源代码 + DB迁移脚本 + 测试骨架
     ↓
 【阶段3】测试+审查
-/check     测试用例设计 + 代码审查（一步完成）
-           → 告知下一步：/deliver（通过）或 重跑/check（有问题）
+/pg:check     测试用例设计 + 代码审查（一步完成）
+           → 告知下一步：/pg:deliver（通过）或 重跑/pg:check（有问题）
     ↓
 【阶段4】交付上线
-/deliver   上线前检查 + 文档归档 → docs/requirements/done/REQ-xxx/
+/pg:deliver   上线前检查 + 文档归档 → docs/requirements/done/REQ-xxx/
 ```
 
 ### 工作量分级
@@ -50,7 +50,7 @@ cd my-project
 命令**无前缀**，在当前项目内使用：
 
 ```
-/init      /intake    /design    /code    /check    /deliver
+/pg:init      /pg:intake    /pg:design    /pg:code    /pg:check    /pg:deliver
 ```
 
 
@@ -66,7 +66,7 @@ cd my-project
 │   └── skills/              # 各阶段详细执行技能
 │
 ├── .claude/
-│   └── commands/            # 项目级斜杠命令（/init /intake /design /code /check /deliver）
+│   └── commands/            # 项目级斜杠命令（/pg:init /pg:intake /pg:design /pg:code /pg:check /pg:deliver）
 │
 ├── docs/                    # 所有阶段输出文档（由命令自动生成）
 │   ├── requirements/        # 需求文档（backlog / done）
@@ -74,7 +74,7 @@ cd my-project
 │   ├── test/                # 测试报告
 │   ├── review/              # 审查报告
 │   ├── delivery/            # 交付文档
-│   └── prototype/           # 原型文件（/intake 自动生成）
+│   └── prototype/           # 原型文件（/pg:intake 自动生成）
 │
 └── claude.md                # 完整规范（各阶段详细说明）
 ```

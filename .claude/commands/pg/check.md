@@ -4,7 +4,7 @@ description: 测试 + 代码审查，输出验收结论
 argument-hint: [REQ-XXXXXXXX]
 ---
 
-按 @.ai-config/workflow.md 第 **2.5 节（/check）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.5 节（/pg:check）** 的契约执行。
 
 需求ID：$ARGUMENTS
 
@@ -31,5 +31,5 @@ node .ai-config/scripts/validate-doc.js check $ARGUMENTS
 ```
 
 **下一步**：
-- 无 🔴 → `/deliver $ARGUMENTS`
-- 有 🔴 → 修复后重跑 `/check`
+- 无 🔴 → `/pg:deliver $ARGUMENTS`
+- 有 🔴 → 修复后重跑 `/pg:check`

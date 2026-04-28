@@ -18,7 +18,7 @@
 
 ### XS 级（≤ 30 分钟改动，快车道）
 
-**不走 `/intake` 流程**。允许直接在 git 上操作：
+**不走 `/pg:intake` 流程**。允许直接在 git 上操作：
 
 ```
 commit message: XS: 调登录页文案
@@ -29,7 +29,7 @@ PR 描述: 简单说明改动 + 自测截图
 
 ### S 级（6 个核心字段）
 
-走 `/intake`，必填：`need_id / title / workload / priority / deadline / goal / acceptance≥1 / stage / status`
+走 `/pg:intake`，必填：`need_id / title / workload / priority / deadline / goal / acceptance≥1 / stage / status`
 
 ### M 级（补充 4 个业务字段）
 
@@ -51,7 +51,7 @@ L 的全部 + `iteration_plan / milestones`
 
 ## AI 处理规则
 
-1. 收到非结构化需求时先评估等级。若是 XS：直接指引 git 快车道，不走 `/intake`
+1. 收到非结构化需求时先评估等级。若是 XS：直接指引 git 快车道，不走 `/pg:intake`
 2. 其他等级：调用 `intake-requirement` skill 结构化
 3. 主动列出缺失或模糊字段，向提需方澄清
 4. 未澄清前，不生成技术方案或开发计划
@@ -62,6 +62,6 @@ L 的全部 + `iteration_plan / milestones`
 ```
 docs/
 └── requirements/
-    ├── backlog/          # 待开发需求（/intake 写入，XS 不写入）
-    └── done/             # 已交付需求（/deliver 归档）
+    ├── backlog/          # 待开发需求（/pg:intake 写入，XS 不写入）
+    └── done/             # 已交付需求（/pg:deliver 归档）
 ```

@@ -8,7 +8,7 @@
 
 ## 0. 术语
 
-- **命令（command）**：用户显式触发的工作流入口，5 个：`/init` `/intake` `/design` `/code` `/check` `/deliver`，加 1 个可选 `/prototype`
+- **命令（command）**：用户显式触发的工作流入口，5 个：`/pg:init` `/pg:intake` `/pg:design` `/pg:code` `/pg:check` `/pg:deliver`，加 1 个可选 `/pg:prototype`
 - **产出物（artifact）**：命令执行后必须生成的文件，受 schema 约束
 - **前置校验（precondition）**：命令开始前必须满足的文件存在性 / 字段条件，不满足即终止
 - **后置校验（postcondition）**：命令结束后对产出物跑 schema 检查，失败即回退状态
@@ -17,7 +17,7 @@
 
 ## 1. 工作量等级
 
-| 等级 | 触发条件 | 工期 | 需要 `/design` | 需要 `/prototype` | 需要 `/check` 独立报告 |
+| 等级 | 触发条件 | 工期 | 需要 `/pg:design` | 需要 `/pg:prototype` | 需要 `/pg:check` 独立报告 |
 |---|---|---|---|---|---|
 | **XS** | 改文案、加字段、调样式，≤ 30 分钟 | <1 天 | 否 | 否 | 否（合并到 PR 描述） |
 | **S** | 单文件新增、≤ 1 个页面 | 1-2 天 | 否 | 否 | 否（合并到 PR 描述） |
@@ -25,15 +25,15 @@
 | **L** | 跨模块改造、5+ 页面、有技术风险 | 1-2 周 | 是（完整） | 强烈建议 | 是 |
 | **XL** | 整体重构、需拆分迭代 | 4 周+ | 是（完整 + 拆分） | 必须 | 是 |
 
-**XS 快车道**：允许跳过 `/intake` 结构化阶段。只要在 git commit 里写 `XS: 一句话描述` 即可，走 PR review 流程。
+**XS 快车道**：允许跳过 `/pg:intake` 结构化阶段。只要在 git commit 里写 `XS: 一句话描述` 即可，走 PR review 流程。
 
 ---
 
 ## 2. 命令契约
 
-### 2.0 `/explore <想法>`（可选，pre-intake）
+### 2.0 `/pg:explore <想法>`（可选，pre-intake）
 
-**目的**：模糊想法的前置脑暴——用户连 /intake 的三个基础问题都答不清楚时使用。
+**目的**：模糊想法的前置脑暴——用户连 /pg:intake 的三个基础问题都答不清楚时使用。
 
 **输入**：一句话想法（"我想做 xxx 平台" / "要不要引入 xxx" / "类似 yyy 但有差异"）。
 
@@ -52,7 +52,7 @@
 - 不计工作量（XS/S/M/L/XL 不适用）
 
 **下一步**：
-- 想清楚了 → `/intake`（探索笔记作为 background 输入，填写效率大幅提高）
+- 想清楚了 → `/pg:intake`（探索笔记作为 background 输入，填写效率大幅提高）
 - 要验证 → 列出 POC / 调研 / 访谈动作
 - 决定不做 → 归档到 `docs/_exploration/dropped/`
 
@@ -60,7 +60,7 @@
 
 ---
 
-### 2.1 `/init`
+### 2.1 `/pg:init`
 
 **目的**：检测项目语言和现状，建立 `.ai-config/` 和 `docs/` 骨架。
 
@@ -80,7 +80,7 @@
 
 ---
 
-### 2.2 `/intake <需求描述>`
+### 2.2 `/pg:intake <需求描述>`
 
 **目的**：需求结构化 + 工作量评估 + 伪需求扫描，一步完成。
 
@@ -100,13 +100,13 @@
 **产出物**：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`（带 YAML front-matter）
 
 **下一步告知**：
-- XS/S → `/code REQ-xxx`
-- M/L/XL → `/design REQ-xxx`
-- 🔴 阻断 → 解决后重跑 `/intake`
+- XS/S → `/pg:code REQ-xxx`
+- M/L/XL → `/pg:design REQ-xxx`
+- 🔴 阻断 → 解决后重跑 `/pg:intake`
 
 ---
 
-### 2.3 `/design REQ-xxx`
+### 2.3 `/pg:design REQ-xxx`
 
 **目的**：技术设计文档。
 
@@ -131,11 +131,11 @@
 
 **产出物**：`docs/design/REQ-xxx-design.md`
 
-**下一步**：`/code REQ-xxx`
+**下一步**：`/pg:code REQ-xxx`
 
 ---
 
-### 2.4 `/code REQ-xxx [--frontend|--backend|--db]`
+### 2.4 `/pg:code REQ-xxx [--frontend|--backend|--db]`
 
 **目的**：生成源代码 + 数据库脚本 + 测试骨架。
 
@@ -157,11 +157,11 @@
 
 **产出物**：源代码 + 迁移脚本 + （M/L/XL）code-report.md
 
-**下一步**：`/check REQ-xxx`
+**下一步**：`/pg:check REQ-xxx`
 
 ---
 
-### 2.5 `/check REQ-xxx`
+### 2.5 `/pg:check REQ-xxx`
 
 **目的**：测试用例设计 + 代码审查。
 
@@ -190,12 +190,12 @@
 **产出物**：（M/L/XL）test.md + review.md；（XS/S）PR 描述块
 
 **下一步**：
-- 无 🔴 → `/deliver REQ-xxx`
-- 有 🔴 → 修复后重跑 `/check`
+- 无 🔴 → `/pg:deliver REQ-xxx`
+- 有 🔴 → 修复后重跑 `/pg:check`
 
 ---
 
-### 2.6 `/deliver REQ-xxx`
+### 2.6 `/pg:deliver REQ-xxx`
 
 **目的**：上线前检查 + 归档。
 
@@ -219,9 +219,9 @@
 
 ---
 
-### 2.7 `/prototype REQ-xxx`（可选）
+### 2.7 `/pg:prototype REQ-xxx`（可选）
 
-**目的**：按需手动生成原型（HTML / Figma / 线框图）。`/intake` 已自动判定；需要重新生成时才单独跑。
+**目的**：按需手动生成原型（HTML / Figma / 线框图）。`/pg:intake` 已自动判定；需要重新生成时才单独跑。
 
 ---
 
@@ -243,7 +243,7 @@ status: pending                    # 必填，枚举 pending|in_progress|done|bl
 goal: "..."                        # 必填
 acceptance:                        # 必填，≥1 条（M≥2，L≥3）
   - "当管理员配置角色时，系统应保存到 user_role 表"
-affects_modules: [user, auth]      # 可选；填了会参与 /intake 并行冲突软提示
+affects_modules: [user, auth]      # 可选；填了会参与 /pg:intake 并行冲突软提示
 # M/L/XL 额外字段见 .ai-config/rules/06_requirement.mdc
 ---
 ```
@@ -285,7 +285,7 @@ need_id: REQ-20260424-001
 stage: check
 test_pass_rate: 100
 coverage: 92
-blockers: 0                         # 数字，0 才能 /deliver
+blockers: 0                         # 数字，0 才能 /pg:deliver
 conclusion: pass                    # pass|fail
 ---
 ```
@@ -326,14 +326,14 @@ updated_at: 2026-04-24              # 可选，追加记录时更新
 **正文强制章节**：
 - `## 技术栈` `## 模块清单` `## 表清单` `## 对外接口清单`
 - `## 不可变约束`（schema 强制；新项目可留占位不写条目）
-- `## 追加记录`（由 `/deliver` 按需 append；格式：`### YYYY-MM-DD REQ-xxx` 子标题下若干 `- [invariant|debt|decision] 描述`）
+- `## 追加记录`（由 `/pg:deliver` 按需 append；格式：`### YYYY-MM-DD REQ-xxx` 子标题下若干 `- [invariant|debt|decision] 描述`）
 
 ---
 
 ## 4. 命令依赖图（给自动化用）
 
 ```
-/init ─────────────┐
+/pg:init ─────────────┐
                    ▼
-/intake ──► workload ∈ {XS,S} ──► /code ──► /check ──► /deliver
+/pg:intake ──► workload ∈ {XS,S} ──► /pg:code ──► /pg:check ──► /pg:deliver
             workload ∈ 

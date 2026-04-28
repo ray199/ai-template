@@ -7,16 +7,16 @@
 
 ## 触发指令
 
-- `/deliver` - 启动交付流程（需提供 need_id）
-- `/deliver --checklist` - 仅输出上线前检查清单（不执行操作）
-- `/deliver --docs` - 仅整理交付文档（不含上线操作）
+- `/pg:deliver` - 启动交付流程（需提供 need_id）
+- `/pg:deliver --checklist` - 仅输出上线前检查清单（不执行操作）
+- `/pg:deliver --docs` - 仅整理交付文档（不含上线操作）
 
 ## 处理流程
 
 ```
 输入校验（缺少任一必须文件或验收未通过则终止）：
-  - docs/test/REQ-XXXXXXXX-test.md        必须存在（来自 /check）
-  - docs/review/REQ-XXXXXXXX-review.md   必须存在（来自 /check）
+  - docs/test/REQ-XXXXXXXX-test.md        必须存在（来自 /pg:check）
+  - docs/review/REQ-XXXXXXXX-review.md   必须存在（来自 /pg:check）
   - 测试报告中验收结论字段：必须为 ✅ 通过，否则终止，提示先修复 P0/P1 问题
   - 审查报告中审查结论字段：必须无 🔴 阻断性问题，否则终止，提示先修复
        ↓
@@ -43,7 +43,7 @@
 ## 上线前检查清单
 
 ### 代码层面
-- [ ] PR 已通过 `/check` 审查（无 🔴 阻断性问题）
+- [ ] PR 已通过 `/pg:check` 审查（无 🔴 阻断性问题）
 - [ ] 所有 🔴 必须修复问题已关闭
 - [ ] 代码已合并到目标分支（`develop` / `release`）
 - [ ] 无冲突代码，合并后构建通过

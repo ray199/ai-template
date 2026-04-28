@@ -43,7 +43,7 @@
 
 ### 触发方式
 
-用户输入 `/intake` 后，系统自动执行 Step 0A → Step 0B → Step 1，无需分步触发。
+用户输入 `/pg:intake` 后，系统自动执行 Step 0A → Step 0B → Step 1，无需分步触发。
 
 ### 澄清问题的原则
 

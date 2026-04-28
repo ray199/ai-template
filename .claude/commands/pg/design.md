@@ -4,7 +4,7 @@ description: 技术设计 - 架构影响、DB、接口、前端 UI 设计、L/XL
 argument-hint: [REQ-XXXXXXXX]
 ---
 
-按 @.ai-config/workflow.md 第 **2.3 节（/design）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.3 节（/pg:design）** 的契约执行。
 
 需求ID：$ARGUMENTS
 
@@ -73,4 +73,4 @@ schema 会校验任务拆解章节存在性 + 表头列名。
 node .ai-config/scripts/validate-doc.js design $ARGUMENTS
 ```
 
-**下一步**：`/code $ARGUMENTS`
+**下一步**：`/pg:code $ARGUMENTS`

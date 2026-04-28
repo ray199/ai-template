@@ -7,21 +7,21 @@
 
 ## 触发指令
 
-- `/design` - 对指定需求启动完整技术设计
-- `/design --db` - 仅输出数据库设计
-- `/design --api` - 仅输出接口设计
-- `/design --check` - 检查设计文档完整性（不生成新内容）
+- `/pg:design` - 对指定需求启动完整技术设计
+- `/pg:design --db` - 仅输出数据库设计
+- `/pg:design --api` - 仅输出接口设计
+- `/pg:design --check` - 检查设计文档完整性（不生成新内容）
 
 ## 处理流程
 
 ```
-输入：approved 的需求文档（/intake 输出）+ 原型文件（若存在）
+输入：approved 的需求文档（/pg:intake 输出）+ 原型文件（若存在）
        ↓
 [Step 1] 加载上下文并校验输入
          必须存在（缺失则终止并提示先执行对应命令）：
-         - docs/requirements/backlog/REQ-XXXXXXXX.md  ← /intake 输出
+         - docs/requirements/backlog/REQ-XXXXXXXX.md  ← /pg:intake 输出
          可选读取（存在则必须读）：
-         - docs/prototype/REQ-XXXXXXXX.html / REQ-XXXXXXXX-wireframe.md  ← /intake 或 /prototype 输出
+         - docs/prototype/REQ-XXXXXXXX.html / REQ-XXXXXXXX-wireframe.md  ← /pg:intake 或 /pg:prototype 输出
          ↓
          检测项目类型（二选一）：
          ├─ 【全新项目】src/main/java/ 和 src/ 均不存在
@@ -40,7 +40,7 @@
          - 判断本次需求是：全新项目 / 新增模块 / 改造已有功能 / 跨模块联动
          - 识别受影响的前端页面模块和后端服务模块
          - 全新项目：定义基础模块划分（如 user/auth/business）
-         - 全新项目：**必须输出"项目骨架规划"节**（见输出格式），供 /code 阶段直接生成骨架文件
+         - 全新项目：**必须输出"项目骨架规划"节**（见输出格式），供 /pg:code 阶段直接生成骨架文件
          - 确定是否需要引入新技术组件（缓存、消息队列等）
          ↓
 [Step 3] 数据库设计（后端）
@@ -167,7 +167,7 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 [全新项目（从零建立）/ 新增模块 / 改造已有模块 / 跨模块联动]
 
 ### 原型/截图参考
-> 若 /intake 阶段有截图或原型图，在此说明UI参考来源。
+> 若 /pg:intake 阶段有截图或原型图，在此说明UI参考来源。
 [来自 docs/prototype/REQ-XXXXXXXX.html / 无]
 
 ### 受影响模块（已有项目填写；全新项目填写"初始模块规划"）
@@ -271,7 +271,7 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 - [ ] 重构 / 迁移顺序的回滚边界明确（涉及重构时）
 - [ ] [其他需要确认的决策点]
 
-确认无误后，执行：`/code REQ-XXXXXXXX`
+确认无误后，执行：`/pg:code REQ-XXXXXXXX`
 ```
 
 ---

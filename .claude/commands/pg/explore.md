@@ -4,13 +4,13 @@ description: 想法探索 - 模糊想法的前置脑暴（可选，产出不走 
 argument-hint: [想法一句话描述]
 ---
 
-按 @.ai-config/workflow.md 第 **2.0 节（/explore）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.0 节（/pg:explore）** 的契约执行。
 
 想法：$ARGUMENTS
 
 **执行规范参考**：@.ai-config/skills/idea-exploration/SKILL.md
 
-**适用场景**：用户连 `/intake` 的三个基础问题（目标 / 时间 / 不做什么）都还答不清楚时。需求明确直接走 `/intake`。
+**适用场景**：用户连 `/pg:intake` 的三个基础问题（目标 / 时间 / 不做什么）都还答不清楚时。需求明确直接走 `/pg:intake`。
 
 **5 步流程（可中途停止）**：
 1. 问题框定（5 Whys：谁痛 / 现状代价 / 已有方案为什么不够）
@@ -28,6 +28,6 @@ argument-hint: [想法一句话描述]
 - 用户觉得想清楚了随时可以停
 
 **下一步**：
-- 足够清楚 → `/intake`（把探索笔记作为 background 输入）
+- 足够清楚 → `/pg:intake`（把探索笔记作为 background 输入）
 - 还要验证 → 列出 POC / 调研 / 访谈动作
 - 决定不做 → 归档到 `docs/_exploration/dropped/`

@@ -1,4 +1,4 @@
-> **[Trae 兼容版]** 对应 Claude Code 命令 `/init`，调用方式：`@init`  
+> **[Trae 兼容版]** 对应 Claude Code 命令 `/pg:init`，调用方式：`@init`  
 > 如需修改执行逻辑，同步修改 `.claude/commands/init.md`
 
 ---

@@ -4,7 +4,7 @@ description: 需求接入 - 结构化 + 工作量评估 + 伪需求扫描
 argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 ---
 
-按 @.ai-config/workflow.md 第 **2.2 节（/intake）** 的契约执行。
+按 @.ai-config/workflow.md 第 **2.2 节（/pg:intake）** 的契约执行。
 
 需求输入：$ARGUMENTS
 
@@ -37,6 +37,6 @@ node .ai-config/scripts/validate-doc.js requirement <need_id>
 退出码非 0 则不得告知用户进入下一阶段，必须先修正产出物。
 
 **下一步路由（依据需求文档 `workload` 字段）**：
-- `XS` / `S` → `/code <need_id>`
-- `M` / `L` / `XL` → `/design <need_id>`
-- 伪需求扫描 🔴 → 修复后重跑 `/intake`
+- `XS` / `S` → `/pg:code <need_id>`
+- `M` / `L` / `XL` → `/pg:design <need_id>`
+- 伪需求扫描 🔴 → 修复后重跑 `/pg:intake`

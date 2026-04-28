@@ -81,4 +81,4 @@
 4. 关键实现路径（核心流程 + 并发场景 + 技术风险）
 5. 待评审确认项
 
-完成后告知用户：`/code REQ-XXXXXXXX`
+完成后告知用户：`/pg:code REQ-XXXXXXXX`

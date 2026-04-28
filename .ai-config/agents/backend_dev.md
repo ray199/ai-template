@@ -68,4 +68,4 @@ Vue/Node 项目（package.json）：
 - Vue 详细规范：`.ai-config/skills/code-review/vue-code-review-checklist.md`
 - .NET 详细规范：`.ai-config/skills/code-review/dotnet-code-review-checklist.md`
 
-完成后告知用户：`/check REQ-XXXXXXXX`
+完成后告知用户：`/pg:check REQ-XXXXXXXX`

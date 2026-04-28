@@ -2,7 +2,7 @@
 
 ## 定位
 
-模糊想法的前置脑暴——**用户连 /intake 的三个基础问题（目标 / 时间 / 不做什么）都还答不清楚**时使用。产出是**一份草稿探索笔记**，不是需求文档，不进 backlog，不走 schema 校验。
+模糊想法的前置脑暴——**用户连 /pg:intake 的三个基础问题（目标 / 时间 / 不做什么）都还答不清楚**时使用。产出是**一份草稿探索笔记**，不是需求文档，不进 backlog，不走 schema 校验。
 
 ## 触发场景
 
@@ -12,9 +12,9 @@
 - 知道要解决一类问题，但不知道有多少个切面
 
 **不适用**（直接走对应流程）：
-- 需求清楚 → `/intake`
+- 需求清楚 → `/pg:intake`
 - 纯技术选型 → 写 RFC 或 design
-- 1:1 复刻已有产品 → `/intake` T4
+- 1:1 复刻已有产品 → `/pg:intake` T4
 
 ---
 
@@ -165,7 +165,7 @@ slug: <short-kebab-case>
 
 ## 下一步
 
-- [ ] 足够清楚 → 用这份笔记跑 `/intake`
+- [ ] 足够清楚 → 用这份笔记跑 `/pg:intake`
 - [ ] 还要验证 → 列出动作：<POC / 调研 / 访谈 / 读代码>
 - [ ] 决定不做 → 归档到 `docs/_exploration/dropped/`，记录原因
 ```
@@ -178,11 +178,11 @@ slug: <short-kebab-case>
 想法模糊
    │
    ▼
-/explore ──▶ docs/_exploration/EXPLORE-xxx.md（草稿）
+/pg:explore ──▶ docs/_exploration/EXPLORE-xxx.md（草稿）
    │
-   ├── 想清楚了 ──▶ /intake（几乎秒过 T3/T4 档位）
-   ├── 要验证 ──▶ POC / 调研 → 回到 /explore 继续
+   ├── 想清楚了 ──▶ /pg:intake（几乎秒过 T3/T4 档位）
+   ├── 要验证 ──▶ POC / 调研 → 回到 /pg:explore 继续
    └── 不做 ──▶ 归档到 _exploration/dropped/
 ```
 
-`/explore` **不是** `/intake` 的替代，而是前置。走过 `/explore` 的需求进入 `/intake` 时可以直接把探索笔记当作 `background` 字段的依据，填写效率大幅提高。
+`/pg:explore` **不是** `/pg:intake` 的替代，而是前置。走过 `/pg:explore` 的需求进入 `/pg:intake` 时可以直接把探索笔记当作 `background` 字段的依据，填写效率大幅提高。

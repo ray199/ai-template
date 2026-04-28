@@ -7,11 +7,11 @@
 
 ## 触发指令
 
-- `/code` - 启动编码实现（需提供 need_id），前后端同时生成
-- `/code --backend` - 仅执行后端编码
-- `/code --frontend` - 仅执行前端编码（Vue 页面/组件/API层）
-- `/code --db` - 仅执行数据库变更（DDL + 迁移脚本）
-- `/code --check` - 对已生成代码执行规范自检（不生成新代码）
+- `/pg:code` - 启动编码实现（需提供 need_id），前后端同时生成
+- `/pg:code --backend` - 仅执行后端编码
+- `/pg:code --frontend` - 仅执行前端编码（Vue 页面/组件/API层）
+- `/pg:code --db` - 仅执行数据库变更（DDL + 迁移脚本）
+- `/pg:code --check` - 对已生成代码执行规范自检（不生成新代码）
 
 ## 处理流程
 
@@ -79,7 +79,7 @@
 
 ## Step 0：项目版本上下文扫描（Java 项目）
 
-> 每次执行 `/code` 指令时，在生成任何代码之前**必须先完成此步骤**。
+> 每次执行 `/pg:code` 指令时，在生成任何代码之前**必须先完成此步骤**。
 > 目的：确保生成的代码语法、包名、API 与项目实际版本一致，避免语法/兼容性问题。
 
 ### 自动扫描逻辑
@@ -672,5 +672,5 @@ CREATE TABLE IF NOT EXISTS `xxx_table` (
 - [ ] 单元测试骨架已填充测试数据（或标注 TODO）
 - [ ] DB 迁移脚本已在开发环境验证执行
 
-确认后，执行：`/check REQ-XXXXXXXX`
+确认后，执行：`/pg:check REQ-XXXXXXXX`
 ```

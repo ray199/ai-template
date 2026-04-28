@@ -14,12 +14,12 @@
 ## 工作流程全景
 
 ```
-XS 级：不走 /intake → git commit "XS: ..." → PR review
+XS 级：不走 /pg:intake → git commit "XS: ..." → PR review
 ────────────────────────────────────────────────
 S/M/L/XL：
-  /intake ──▶ /design (M/L/XL) ──▶ /code ──▶ /check ──▶ /deliver
+  /pg:intake ──▶ /pg:design (M/L/XL) ──▶ /pg:code ──▶ /pg:check ──▶ /pg:deliver
            ↑
-           └─ S 级跳过 /design
+           └─ S 级跳过 /pg:design
 ```
 
 详细契约见 [`.ai-config/workflow.md`](.ai-config/workflow.md)。
@@ -28,14 +28,14 @@ S/M/L/XL：
 
 | 命令 | 阶段 | 主要产出物 | 后置校验 |
 |---|---|---|---|
-| `/init` | 项目初始化 | `.ai-config/`、`docs/`、老项目 `project-map.md` | 目录结构 + project-map |
-| `/explore` | 想法探索（可选） | `docs/_exploration/EXPLORE-xxx.md`（草稿） | — |
-| `/intake` | 需求接入 | `docs/requirements/backlog/REQ-xxx.md` | `validate-doc.js requirement` |
-| `/design` | 技术设计（M/L/XL） | `docs/design/REQ-xxx-design.md` | `validate-doc.js design` |
-| `/code` | 编码 | 源码 + 迁移脚本 + code-report | `validate-doc.js code-report` |
-| `/check` | 测试+审查 | test.md + review.md（M/L/XL） | `validate-doc.js check` |
-| `/deliver` | 交付归档 | delivery.md + 归档到 done/ | `validate-doc.js delivery` |
-| `/prototype` | 按需原型 | `docs/prototype/*.html` | — |
+| `/pg:init` | 项目初始化 | `.ai-config/`、`docs/`、老项目 `project-map.md` | 目录结构 + project-map |
+| `/pg:explore` | 想法探索（可选） | `docs/_exploration/EXPLORE-xxx.md`（草稿） | — |
+| `/pg:intake` | 需求接入 | `docs/requirements/backlog/REQ-xxx.md` | `validate-doc.js requirement` |
+| `/pg:design` | 技术设计（M/L/XL） | `docs/design/REQ-xxx-design.md` | `validate-doc.js design` |
+| `/pg:code` | 编码 | 源码 + 迁移脚本 + code-report | `validate-doc.js code-report` |
+| `/pg:check` | 测试+审查 | test.md + review.md（M/L/XL） | `validate-doc.js check` |
+| `/pg:deliver` | 交付归档 | delivery.md + 归档到 done/ | `validate-doc.js delivery` |
+| `/pg:prototype` | 按需原型 | `docs/prototype/*.html` | — |
 
 ## 工作量等级
 
@@ -68,13 +68,13 @@ S/M/L/XL：
 docs/
 ├── _context/           # 老项目上下文（project-map.md）
 ├── requirements/
-│   ├── backlog/        # 待开发（/intake 写入，XS 不写入）
-│   └── done/           # 已交付归档（/deliver 写入）
-├── design/             # /design 和 /code 的产出
-├── test/               # /check 产出（M/L/XL）
-├── review/             # /check 产出（M/L/XL）
-├── delivery/           # /deliver 产出
-└── prototype/          # /prototype 产出
+│   ├── backlog/        # 待开发（/pg:intake 写入，XS 不写入）
+│   └── done/           # 已交付归档（/pg:deliver 写入）
+├── design/             # /pg:design 和 /pg:code 的产出
+├── test/               # /pg:check 产出（M/L/XL）
+├── review/             # /pg:check 产出（M/L/XL）
+├── delivery/           # /pg:deliver 产出
+└── prototype/          # /pg:prototype 产出
 ```
 
 ## 自动检查双层体系
@@ -100,15 +100,15 @@ chmod +x .ai-config/scripts/git-hooks/*
 
 | 平台 | 适配位置 | 角色 |
 |---|---|---|
-| Claude Code | `.claude/commands/` | 7 份斜杠命令（/init, /intake, /design, /code, /check, /deliver, /prototype） |
+| Claude Code | `.claude/commands/` | 7 份斜杠命令（/pg:init, /pg:intake, /pg:design, /pg:code, /pg:check, /pg:deliver, /pg:prototype） |
 | Trae | `.trae/rules/project_rules.md` | 单文件触发词映射（Trae 无斜杠命令机制） |
 | Cursor | `.cursor/rules/`（按需建立） | 同 Claude Code 模式 |
 | Codex CLI | `AGENTS.md`（按需建立） | 同 Claude Code 模式 |
 
 ## 快速开始
 
-1. **新项目**：执行 `/init` → 技术栈确认 → `/intake <第一个需求>`
-2. **老项目接入**：执行 `/init existing` → 填充 `docs/_context/project-map.md`（尤其是 invariants）→ `/intake`
+1. **新项目**：执行 `/pg:init` → 技术栈确认 → `/pg:intake <第一个需求>`
+2. **老项目接入**：执行 `/pg:init existing` → 填充 `docs/_context/project-map.md`（尤其是 invariants）→ `/pg:intake`
 3. **日常**：按等级走对应流程，所有校验失败都由脚本拦住，不会流转到下一阶段
 
 ## 反馈和改进
@@ -119,4 +119,4 @@ chmod +x .ai-config/scripts/git-hooks/*
 - 某个校验规则太严 / 太松 → 改
 - 缺少某类产出物的校验 → 加 schema
 
-原则：**减法优先**。每个规则 / 文档 / hook 都要能说清它守门的是什么风险；说不清就删。
+原则：**减法�
