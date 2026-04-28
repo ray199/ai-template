@@ -242,6 +242,8 @@ stage: intake                      # 必填，枚举 intake|design|code|check|de
 status: pending                    # 必填，枚举 pending|in_progress|done|blocked
 goal: "..."                        # 必填
 acceptance:                        # 必填，≥1 条（M≥2，L≥3）
+  # M/L/XL 至少 1 条须为 BDD 格式（含 GIVEN/WHEN/THEN 或 给定/当/则）
+  - "GIVEN 管理员已登录 · WHEN 提交角色配置 · THEN 写入 user_role 表并返回 200"
   - "当管理员配置角色时，系统应保存到 user_role 表"
 affects_modules: [user, auth]      # 可选；填了会参与 /pg:intake 并行冲突软提示
 # M/L/XL 额外字段见 .ai-config/rules/06_requirement.mdc
@@ -327,6 +329,33 @@ updated_at: 2026-04-24              # 可选，追加记录时更新
 - `## 技术栈` `## 模块清单` `## 表清单` `## 对外接口清单`
 - `## 不可变约束`（schema 强制；新项目可留占位不写条目）
 - `## 追加记录`（由 `/pg:deliver` 按需 append；格式：`### YYYY-MM-DD REQ-xxx` 子标题下若干 `- [invariant|debt|decision] 描述`）
+
+---
+
+### 3.8 项目宪法（_context/constitution.md，可选）
+
+可选的"长期不变原则"独立文档。模板见 `.ai-config/constitution-template.md`，老项目可由 `/pg:init` 复制生成。
+
+```yaml
+---
+kind: constitution                  # 必填，固定值
+project: <项目名>
+version: 1
+last_reviewed: 2026-04-28
+---
+```
+
+**正文强制章节**：`## 项目原则`（schema 强制；至少 1 条 `- 项目永远...` / `- 项目永远不...` 列表项）
+
+**可选章节**：`## 技术红线` / `## 业务不变量` / `## 修改记录`
+
+**与 project-map 的区别**：
+- project-map.md 的 `## 不可变约束` 偏向"现状已经是这样不要改"
+- constitution.md 偏向"这是项目的根本理念，未来也不能改"
+
+**何时建**：项目稳定后，从 project-map 的 invariants 抽出"长期原则"独立成文。也可以一直只用 project-map（schema 不强求 constitution 存在）。
+
+`/pg:design` 和 `/pg:code` 命令在执行前会检测该文件，存在则必须先读、不得违反"## 项目原则"任一条款。
 
 ---
 

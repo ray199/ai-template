@@ -1,17 +1,4 @@
 #!/usr/bin/env node
-// 产出物 schema 校验器
-//
-// 用法：
-//   node validate-doc.js requirement REQ-20260424-001
-//   node validate-doc.js design REQ-20260424-001
-//   node validate-doc.js code-report REQ-20260424-001
-//   node validate-doc.js check REQ-20260424-001
-//   node validate-doc.js delivery REQ-20260424-001
-//   node validate-doc.js project-map
-//   node validate-doc.js all
-//
-// 退出码：0 = 通过，1 = 校验失败
-
 'use strict';
 
 const fs = require('fs');
@@ -80,9 +67,37 @@ const SCHEMAS = {
         if (!Array.isArray(v) || v.length === 0) return 'acceptance 至少 1 条';
         const minByLevel = { XS: 1, S: 1, M: 2, L: 3, XL: 3 };
         const min = minByLevel[fm.workload] || 1;
-        return v.length >= min || `${fm.workload} 级 acceptance 至少 ${min} 条`;
+        if (v.length < min) return `${fm.workload} 级 acceptance 至少 ${min} 条`;
+        if (['M', 'L', 'XL'].includes(fm.workload)) {
+          const isBdd = s => {
+            const u = String(s).toUpperCase();
+            return (/\bGIVEN\b/.test(u) && /\bWHEN\b/.test(u) && /\bTHEN\b/.test(u))
+              || (/给定/.test(s) && /当/.test(s) && /则/.test(s));
+          };
+          if (!v.some(isBdd)) {
+            return `${fm.workload} 级 acceptance 至少 1 条须为 BDD 格式（含 GIVEN/WHEN/THEN 或 给定/当/则）`;
+          }
+        }
+        return true;
       },
       affects_modules: v => !v || (Array.isArray(v) && v.length > 0) || 'affects_modules 若填写须为非空数组',
+    },
+  },
+  constitution: {
+    required: ['kind'],
+    rules: {
+      kind: v => v === 'constitution' || 'kind 必须为 constitution',
+    },
+    bodyChecks: (body) => {
+      const errs = [];
+      if (!/^##\s+项目原则|^##\s+principles/im.test(body)) {
+        errs.push('constitution 必须包含 "## 项目原则" 章节');
+      }
+      const rules = body.match(/^-\s+/gm);
+      if (!rules || rules.length === 0) {
+        errs.push('"## 项目原则" 至少需要 1 条规则（- 列表项）');
+      }
+      return errs;
     },
   },
   'project-map': {
@@ -141,7 +156,7 @@ const SCHEMAS = {
     rules: {
       need_id: v => REQ_ID_RE.test(v) || 'need_id 非法',
       stage: v => v === 'code' || 'stage 必须为 code',
-      self_check_passed: v => v === true || '自检未通过，不允许流转到 /check',
+      self_check_passed: v => v === true || '自检未通过，不允许流转到 /pg:check',
     },
   },
   test: {
@@ -181,6 +196,7 @@ function pathFor(type, reqId) {
     review: `docs/review/${reqId}-review.md`,
     delivery: `docs/delivery/${reqId}-delivery.md`,
     'project-map': `docs/_context/project-map.md`,
+    constitution: `docs/_context/constitution.md`,
   };
   return p[type];
 }
@@ -283,6 +299,10 @@ function scanAll(repoRoot) {
     const r = validateOne('project-map', null, repoRoot);
     results.push({ file: 'docs/_context/project-map.md', ...r });
   }
+  if (fs.existsSync(path.join(repoRoot, 'docs/_context/constitution.md'))) {
+    const r = validateOne('constitution', null, repoRoot);
+    results.push({ file: 'docs/_context/constitution.md', ...r });
+  }
   return results;
 }
 
@@ -315,7 +335,7 @@ function main() {
     process.exit(failed === 0 ? 0 : 1);
   }
 
-  if (type !== 'project-map' && !reqId) {
+  if (!['project-map', 'constitution'].includes(type) && !reqId) {
     console.error('缺少 REQ-id 参数');
     process.exit(2);
   }
