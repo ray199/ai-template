@@ -2,7 +2,7 @@
 
 ## 技能描述
 
-在需求评估和输出物确认完成后，由架构师代理主导执行技术设计。  
+在需求评估和输出物确认完成后，由架构师代理主导执行技术设计。
 产出可供开发直接落地的设计文档，覆盖架构、数据库、接口、关键实现路径四个维度。
 
 ## 触发指令
@@ -63,6 +63,11 @@
          - 描述核心业务流程的前后端协作时序（用户操作 → 前端请求 → 后端处理 → 响应渲染）
          - 标注技术风险点和解决方案
          ↓
+[Step 5.5] 任务拆解（L/XL 强制；M 建议）
+         - 按"任务拆解方法论"章节列原子任务（ID/任务/依赖/验收对应/预估）
+         - 标注关键路径和并行机会
+         - 重构 / 迁移类需求额外列"迁移顺序"和"回滚边界"
+         ↓
 [Step 6] 输出设计文档，等待团队确认
 ```
 
@@ -81,7 +86,7 @@
 | `docs/api/` | 接口命名和版本保持一致 | 已有项目 |
 | `docs/requirements/done/` | 排查与历史功能的依赖 | 已有项目 |
 
-> ⚠️ **已有项目**：扫描结果必须引用来源，不允许凭空推断现有代码结构。  
+> ⚠️ **已有项目**：扫描结果必须引用来源，不允许凭空推断现有代码结构。
 > ✅ **全新项目**：无现有代码可扫描，基于 `01_tech_stack.mdc` 和需求文档定义初始结构，在设计文档中标注"全新项目"。
 
 ---
@@ -177,101 +182,18 @@ GET    /api/{version}/{模块}/{资源}/list     # 列表/分页
 | Redis 缓存 | ✅ 引入 | 高频查询接口，需缓存用户基础信息 |
 | MQ | ❌ 不引入 | 本期为同步流程，无异步需求 |
 
-### 项目骨架规划（全新项目必填，已有项目跳过）
-
-> `/code` 阶段将根据此节生成项目骨架文件，**已有项目删除本节**。
-
-**基础信息**
-- 根包名：`com.pangeo.{项目名}`（磐吉奥集团统一规范，如 `com.pangeo.oa`、`com.pangeo.erp`）
-- 后端框架版本：Spring Boot x.x + JDK xx
-- 前端框架版本：Vue x + Vite x（若含前端）
-
-**后端依赖清单（pom.xml）**
-| 依赖 | 说明 |
-|---|---|
-| spring-boot-starter-web | Web MVC |
-| mybatis-plus-boot-starter | ORM |
-| mysql-connector-j | 数据库驱动 |
-| lombok | 简化代码 |
-| spring-boot-starter-validation | 参数校验 |
-| flyway-core | DB 版本管理 |
-| [spring-ai-openai-spring-boot-starter] | 若含 Spring AI |
-| [spring-boot-starter-data-redis] | 若含 Redis |
-
-**后端基础目录结构**
-```
-src/main/java/{basePackage}/
-  ├── Application.java          # 启动类（@MapperScan）
-  ├── config/                   # 配置类（MybatisPlusConfig 等）
-  ├── exception/                # GlobalExceptionHandler、BusinessException
-  ├── common/                   # Result 统一响应体、常量
-  ├── entity/                   # 实体类（/code 填充）
-  ├── mapper/                   # Mapper 接口（/code 填充）
-  ├── service/ + impl/          # Service（/code 填充）
-  ├── controller/               # Controller（/code 填充）
-  └── vo/                       # VO/DTO（/code 填充）
-src/main/resources/
-  ├── application.yml           # 数据库、端口、日志配置（含 AI Key 占位符）
-  └── db/migration/             # Flyway 脚本（/code 填充）
-```
-
-**前端依赖清单（package.json，若含前端）**
-| 依赖 | 说明 |
-|---|---|
-| vue | Vue 3 |
-| vite | 构建工具 |
-| element-plus | UI 组件库 |
-| axios | HTTP 客户端 |
-| pinia | 状态管理 |
-| vue-router | 路由 |
-
-**前端基础目录结构**
-```
-src/
-  ├── main.js                   # 应用入口（挂载 Element Plus/Pinia/Router）
-  ├── App.vue                   # 根组件
-  ├── router/index.js           # 路由配置骨架
-  ├── stores/                   # Pinia Store
-  ├── api/request.js            # Axios 实例（拦截器、Token 注入）
-  ├── api/                      # API 调用层（/code 填充）
-  ├── views/                    # 页面组件（/code 填充）
-  └── components/               # 通用组件（/code 填充）
-.env.development                # VITE_API_BASE_URL=http://localhost:8080
-.env.production                 # VITE_API_BASE_URL=请配置
-```
-
 ---
 
 ## 二、数据库设计
 
 ### 新增/修改表
-
-**表：xxx_table**
-> 用途说明
-
-```sql
-CREATE TABLE `xxx_table` (
-  `id`          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `xxx_field`   VARCHAR(64)  NOT NULL DEFAULT '' COMMENT '字段说明',
-  `create_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `is_deleted`  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '软删除标记 0-正常 1-已删除',
-  PRIMARY KEY (`id`),
-  INDEX `idx_xxx_table_xxx_field` (`xxx_field`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='表用途说明';
-```
+（DDL + 索引 + 注释）
 
 ### 数据迁移脚本
-```sql
--- 新增字段示例
-ALTER TABLE `existing_table` ADD COLUMN `new_field` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '字段说明' AFTER `existing_field`;
-
--- 存量数据填充（如有）
-UPDATE `existing_table` SET `new_field` = 'default_value' WHERE `new_field` = '';
-```
+（DDL / DML + 存量填充）
 
 ### 回滚方案
-[说明如何回滚，包含 DDL 回滚语句]
+（如何回滚 + DDL 回滚语句）
 
 ---
 
@@ -280,119 +202,61 @@ UPDATE `existing_table` SET `new_field` = 'default_value' WHERE `new_field` = ''
 ### 接口清单
 | 接口名称 | Method | URL | 权限 |
 |---|---|---|---|
-| 创建XXX | POST | /api/v1/xxx | 登录用户 |
-| 获取XXX详情 | GET | /api/v1/xxx/{id} | 登录用户 |
 
 ### 接口详细说明
-
-**POST /api/v1/xxx — 创建XXX**
-
-**请求头**
-```
-Authorization: Bearer {token}
-Content-Type: application/json
-```
-
-**请求体**
-```json
-{
-  "field1": "string，必填，说明",
-  "field2": 0
-}
-```
-
-**响应**
-```json
-{
-  "code": 200,
-  "msg": "success",
-  "data": {
-    "id": 123
-  }
-}
-```
-
-**错误码**
-| 错误码 | 说明 | 触发场景 |
-|---|---|---|
-| XXX_001 | 参数缺失 | field1 为空 |
-| XXX_002 | 数据已存在 | 唯一键冲突 |
+（请求头 / 请求体 / 响应 / 错误码）
 
 ---
 
 ## 四、前端 UI 设计（若项目含前端）
 
-> 纯后端项目跳过此节。前后端分离项目必须填写。
-
 ### 页面清单
-
-| 页面名称 | 路由路径 | 对应 view 文件 | 变更类型 |
-|---|---|---|---|
-| XXX列表页 | /xxx/list | views/xxx/XxxList.vue | 新增 |
-| XXX详情页 | /xxx/:id | views/xxx/XxxDetail.vue | 新增 |
-| XXX编辑弹窗 | — | components/xxx/XxxEditDialog.vue | 新增 |
-
-### 组件拆分（以主要页面为例）
-
-```
-XxxList.vue（页面级 view）
-  ├── XxxSearchBar.vue（搜索栏，可复用）
-  ├── XxxTable.vue（数据表格）
-  │   └── XxxStatusTag.vue（状态标签，可复用）
-  └── XxxEditDialog.vue（新增/编辑弹窗，可复用）
-```
-
+### 组件拆分
 ### 状态管理
-
-| 数据 | 存储位置 | 理由 |
-|---|---|---|
-| 当前用户信息 | Pinia/Vuex Store | 跨页面共享，需持久化 |
-| 列表查询参数 | 本地 ref | 仅当前页面使用，无需共享 |
-| 字典/枚举数据 | Pinia/Vuex Store | 全局多处使用，避免重复请求 |
-
 ### API 调用层规划
-
-| 前端操作 | 调用接口 | API 文件位置 |
-|---|---|---|
-| 加载XXX列表 | GET /api/v1/xxx/list | api/xxx.js → getXxxList() |
-| 提交创建表单 | POST /api/v1/xxx | api/xxx.js → createXxx() |
-| 保存编辑 | PUT /api/v1/xxx/:id | api/xxx.js → updateXxx() |
-| 删除条目 | DELETE /api/v1/xxx/:id | api/xxx.js → deleteXxx() |
 
 ---
 
 ## 五、关键实现路径
 
-### 核心流程：[主流程名称]
-
-**后端实现**
-```
-1. Controller 接收请求，@Valid 校验参数
-2. Service.method() 开启事务
-   2.1 查询 XXX，判断状态
-   2.2 若状态不符，抛出 BusinessException(XXX_003)
-   2.3 写入数据库
-   2.4 清除 Redis 缓存 key: "xxx:cache:{id}"
-3. 返回结果
-```
-
-**前端实现**（若含前端）
-```
-1. 用户点击提交按钮 → 触发 handleSubmit()
-2. 前端表单校验（ElForm.validate()）
-3. 调用 api/xxx.js → createXxx(formData)
-4. 成功：ElMessage.success('创建成功')，刷新列表，关闭弹窗
-5. 失败：ElMessage.error(e.message)，保留表单状态
-```
+### 核心流程
+（后端 + 前端时序）
 
 ### 并发场景处理
-[说明是否有并发风险，如有，给出后端加锁或前端防重复提交方案]
-
 ### 技术风险点
-| 风险 | 概率 | 影响 | 应对方案 |
-|---|---|---|---|
-| 缓存击穿 | 中 | 高 | 加分布式锁，防止缓存同时失效 |
-| 前端竞态条件 | 低 | 中 | 请求loading状态防重复，接口取消旧请求 |
+
+---
+
+## 六、任务拆解（L/XL 强制；M 建议；XS/S 跳过）
+
+> 多人协作和重构场景下漏 / 错序高发，必须列清楚。schema 会校验本节存在性 + 表头列名。
+
+### 任务清单
+
+| ID | 任务 | 依赖 | 验收对应 | 预估 | 备注 |
+|---|---|---|---|---|---|
+| T1 | DB migration：新增 role / role_permission 表 | — | A1 | 0.5d | 老项目保留 user_id 外键 |
+| T2 | RoleRepository + Unit Test | T1 | A1 | 1d | |
+| T3 | RoleService 业务逻辑 + 缓存 | T2 | A1, A2 | 1.5d | Redis key 设计 |
+| T4 | UserController /users/{id}/roles 接口 | T3 | A2 | 0.5d | |
+| T5 | 前端权限组管理页面 | T3（接口契约定稿即可） | A3 | 2d | 可与 T4 并行 |
+| T6 | 集成测试 + e2e | T4, T5 | A1-A4 | 1d | |
+
+**关键路径**：T1 → T2 → T3 → T4 → T6（共 4.5 天）
+**并行机会**：T5 在 T3 接口契约定稿后即可启动，与 T4 并行
+**owner 建议**（可选）：后端 T1-T4，前端 T5，全栈 T6
+
+### 重构 / 迁移顺序（仅重构 / 改造类需求）
+
+> 涉及"重构、改造、迁移"等场景必填。
+
+```
+1. <步骤 1>，可独立合并：是 / 否
+2. <步骤 2>，可独立合并：是 / 否
+...
+```
+
+**回滚边界**：在第 N 步之前可一键回滚，第 N 步之后只能前滚
 
 ---
 
@@ -400,13 +264,120 @@ XxxList.vue（页面级 view）
 
 > ⚠️ 以下事项需要团队评审后确认
 
-- [ ] 数据库方案是否符合 DBA 规范（建议 `/dba-review` 触发 DBA 代理复核）
+- [ ] 数据库方案是否符合 DBA 规范
 - [ ] 接口版本号是否与现有规划一致
 - [ ] 前端页面清单是否覆盖了所有验收场景（若含前端）
+- [ ] 任务拆解的依赖与并行性合理（L/XL）
+- [ ] 重构 / 迁移顺序的回滚边界明确（涉及重构时）
 - [ ] [其他需要确认的决策点]
 
 确认无误后，执行：`/code REQ-XXXXXXXX`
 ```
+
+---
+
+## 任务拆解方法论
+
+> 仅 L / XL 强制走完整方法论；M 建议参考；XS / S 不适用。
+
+### 1. 好任务的 6 条标准（INVEST 改造版）
+
+| # | 标准 | 通过条件 |
+|---|---|---|
+| 1 | **独立可交付** | 该任务做完 → 自身可合并 / 可演示，不会让仓库处于半坏状态 |
+| 2 | **单一目的** | 一句话说清楚要交付什么，不要"改 X 顺便重构 Y" |
+| 3 | **可验证** | 有明确的"完成判据"——通常引用一条或多条 acceptance（A1/A2...） |
+| 4 | **可估算** | 预估在 0.25d - 2d 之间。> 2d 必须再拆，< 0.25d 可合并 |
+| 5 | **依赖明确** | 依赖列只能是 — 或 T 编号，不能写"等 xxx 决定" |
+| 6 | **不跨人改同一文件** | 多人项目下，避免 T2 和 T5 都改 user.service.ts，否则该合并到一个 T 由一人完成 |
+
+### 2. 估时方法（按这个顺序选）
+
+1. **类比估算（首选）**——"和上次 REQ-xxx 的 T2 类似"。比凭感觉准 3 倍以上
+2. **拆到不能再拆**——一个无法估算的任务，说明它还要再拆
+3. **T-shirt size 映射**：
+   - XS = 0.25d（半小时）
+   - S = 0.5d（半天）
+   - M = 1d（一天）
+   - L = 2d（两天）
+   - XL → 必须再拆
+4. **包含写测试时间**——估时要把单测、集成测试、本地联调都算上，不要只算"写代码"
+
+### 3. 三种拆分模式（按场景选）
+
+**模式 A · 按层（适用于全栈新功能）**
+
+```
+T1 DB migration
+T2 后端 Repository + Service
+T3 后端 Controller + 接口测试
+T4 前端 API client
+T5 前端页面 + 组件
+T6 集成 + e2e
+```
+
+特点：依赖链清晰，但并行性差（前后端串行多）。适合 1-2 人团队。
+
+**模式 B · 按接口纵切（适用于多人协作）**
+
+```
+T1 DB migration（共用前置）
+T2 接口 A：建用户角色 — 全栈一条线
+T3 接口 B：查询用户角色 — 全栈一条线
+T4 接口 C：删除角色 — 全栈一条线
+T5 集成 + e2e
+```
+
+特点：T2/T3/T4 高度并行可分给 3 人。适合 3+ 人团队，需先把所有接口契约写定。
+
+**模式 C · 按用户故事切（适用于交互重的需求）**
+
+```
+T1 用户故事 1：管理员能创建权限组
+T2 用户故事 2：管理员能给用户分配权限组
+T3 用户故事 3：用户能看到自己的权限
+T4 用户故事 4：审计日志显示权限变更
+```
+
+特点：每个 T 都是端到端可演示。适合迭代展示型项目，但容易出现 T 内部又是大工程。
+
+### 4. 5 条反模式（必避免）
+
+| 反模式 | 问题 | 修复 |
+|---|---|---|
+| **大任务**（"实现整个权限模块" 5 天） | 无法估准、无法并行、阻塞他人 | 按层 / 按接口拆到 ≤2 天 |
+| **共享文件冲突**（T2 和 T5 都改 user.service） | merge 冲突高发，谁先合并谁倒霉 | 把这两个 T 合并由一人做，或彻底分文件 |
+| **隐藏依赖**（T5 的"备注"里写"需要 T3 接口"但依赖列空着） | 看依赖图判不出真实并行性 | 依赖必须落到列里 |
+| **未对应验收**（T 没有 acceptance 引用） | 做完了不知道是否符合需求 | 每个 T 至少引用一条 A，覆盖全 acceptance |
+| **测试任务集中末尾**（T6 = "所有测试"） | 测试和编码绑死、回归慢 | 单测随每个 T 写，T6 只剩集成 / e2e |
+
+### 5. 重构 / 迁移专项
+
+重构最容易翻车的地方是"步骤错序，半坏状态合到 main"。对应规则：
+
+**迁移顺序的标准排序**（强项目必须，弱项目建议）：
+
+```
+1. 兼容期准备（新结构上线但不切流量）—— 可独立合并：是
+2. 双写期（新旧结构同时写，读老）   —— 可独立合并：是
+3. 影子读期（开关切到新结构读，监控对比）—— 可独立合并：是
+4. 切读（开关全开新结构读）          —— 可独立合并：是 / 否（看是否一键开关）
+5. 停写老结构 + 数据迁移完成校验      —— 可独立合并：否（不可逆点）
+6. 删除老结构 / 清理代码             —— 可独立合并：是（独立 REQ 更稳）
+```
+
+**回滚边界**：1-4 步之前任意时点都可一键回滚到老结构；进入第 5 步后只能前滚（或申请数据库回放）。这条必须在文档里**写清楚**，让评审人看到不可逆点在哪。
+
+### 6. 与 superpowers `write-plan` 类技能的关系
+
+| 维度 | 当前任务拆解（design.md / Step 5.5） | superpowers write-plan |
+|---|---|---|
+| 受众 | 团队（人 + AI） | 单次执行的 AI |
+| 粒度 | 任务级（T1 = "实现 RoleService"） | 步骤级（"在 foo.ts 第 45 行加 X"） |
+| 生命周期 | 入 git，跨人跨周 | 编码会话临时，session 内有效 |
+| 产出形态 | 静态 markdown 表 | 可勾选 todo-list（含 verify 步骤） |
+
+**两者可以叠用**：design.md 列团队级 T1-T6；AI 在执行某个 T 时再用 write-plan 风格展开为细粒度步骤。**不要**把 write-plan 风格直接写进 design.md——那是给 AI 当下用的草稿，不该污染团队规划文档。
 
 ---
 
