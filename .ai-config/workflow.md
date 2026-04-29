@@ -90,10 +90,10 @@
 1. 【Step 0】**Exploration 引用**：扫 `docs/_exploration/`（排除 `dropped/`），列出所有 EXPLORE-*.md 草稿让用户选择是否引用为 background；引用则该笔记 `status: draft → graduated`，且后续 Step 0B/Step 1 跳过笔记已答的维度
 2. 【Step 0A】项目上下文感知：读取 `docs/_context/project-map.md`（若存在）+ 扫描历史 `docs/requirements/done/`
 3. 【Step 0B】输入质量识别：T1（一句话）/ T2（零散）/ T3（半结构化）/ T4（完整 PRD），按质量决定澄清问题数量
-4. 【Step 1】结构化：按等级填写字段（XS：2 个；S：6 个；M：10 个；L：15 个；XL：L + 拆分计划）
+4. 【Step 1】结构化:按等级填写字段（XS:2 个；S:6 个；M:10 个；L:15 个；XL:L + 拆分计划）。**写盘前必须给用户预览，确认后才落盘**
 5. 【Step 2】工作量评估：业务 5 维 + 技术 4 维打分，判等级
 6. 【Step 3】伪需求扫描：重复建设 / 价值存疑 / 逻辑冲突 / 技术可行性
-7. 【Step 4】（若 ≥M）原型必需性判定
+7. 【Step 4】（若 ≥M）原型必需性判定。**判定结果（必需/推荐/可选/不需要 + 分项得分）必须打印给用户，并主动询问 "是否现在生成原型 [Y/N]"——选 Y 则自动衔接 /pg:prototype；选 N 则在最终下一步提示里再次提醒**
 8. 【Step 5】并行冲突软提示：若填写 `affects_modules`，扫 `docs/requirements/backlog/*.md` 其他 in-flight 需求并打印交集（仅提示，不阻断）
 
 **后置校验**：运行 `validate-doc.js requirement <need_id>`，失败退出码 1。

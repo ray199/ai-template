@@ -33,6 +33,23 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 
 3. 若用户跳过：照常走 Step 0A-Step 5
 
+**草稿预览（生成前必做）**：
+
+完成 Step 1 字段填写后、写盘前，先把结构化结果展示给用户预览：
+
+```
+📝 已结构化为如下需求文档（尚未落盘）：
+  need_id: REQ-YYYYMMDD-XXX
+  title: ...
+  workload: M
+  acceptance:
+    - ...
+
+确认无误请回复 [Y]，否则告诉我哪里要改（字段名 + 新值）。
+```
+
+用户确认后才落盘 `docs/requirements/backlog/REQ-xxx.md`。
+
 **并行冲突软提示（不阻断）**：
 
 生成 requirement 文档时，若填写了 `affects_modules: [...]`（可选字段），在返回给用户"下一步"之前，多做一步：
@@ -56,7 +73,24 @@ node .ai-config/scripts/validate-doc.js requirement <need_id>
 
 退出码非 0 则不得告知用户进入下一阶段，必须先修正产出物。
 
+**主动询问原型生成（Step 4 完成后必做）**：
+
+无论原型必要性判定结果，都要主动问用户：
+
+```
+🎨 原型必要性判定：[必需 ≥10 分 / 推荐 7-9 分 / 可选 3-6 分 / 不需要 ≤2 分]
+   分项得分：功能 X · 复杂度 X · 涉众 X · 验收 X = 总分
+
+是否现在生成原型？
+  [Y] 立即生成（自动跑 /pg:prototype REQ-xxx）
+  [N] 暂不生成（后续可单独跑 /pg:prototype REQ-xxx）
+```
+
+- 用户选 Y → 自动衔接 `/pg:prototype` 命令并完成原型生成
+- 用户选 N → 跳过，但在最终"下一步告知"里再次提醒可以跑 /pg:prototype
+
 **下一步路由（依据需求文档 `workload` 字段）**：
 - `XS` / `S` → `/pg:code <need_id>`
 - `M` / `L` / `XL` → `/pg:design <need_id>`
 - 伪需求扫描 🔴 → 修复后重跑 `/pg:intake`
+- 原型未生成且工作量 ≥M → 提醒用户可单独跑 `/pg:prototype <need_id>`
