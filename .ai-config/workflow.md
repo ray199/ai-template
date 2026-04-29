@@ -93,7 +93,13 @@
 4. 【Step 1】结构化:按等级填写字段（XS:2 个；S:6 个；M:10 个；L:15 个；XL:L + 拆分计划）。**写盘前必须给用户预览，确认后才落盘**
 5. 【Step 2】工作量评估：业务 5 维 + 技术 4 维打分，判等级
 6. 【Step 3】伪需求扫描：重复建设 / 价值存疑 / 逻辑冲突 / 技术可行性
-7. 【Step 4】（若 ≥M）输出物推荐 — **强制中断点 · 逐项询问**：列出本等级建议的附加产出物（原型 / 技术思路骨架 / 迭代计划），让用户逐项 [Y/N] 决定。**AI 必须停下等用户回复，不得自行判定后跳过**。选 Y 的项立刻执行（原型衔接 /pg:prototype；技术骨架/迭代计划写进需求文档对应字段）；选 N 的在最终下一步告知中提醒可单独补
+7. 【Step 4】输出物推荐 — **强制中断点 · 按等级逐项询问**：按 workload 动态展示本等级的附加产出物清单，让用户逐项 [Y/N/调整] 决定。**AI 必须停下等用户回复，不得自行判定后跳过**。
+   - **S 级**：仅 UI 原型 1 项（仅前端涉及时）
+   - **M 级**：UI 原型 + tech_sketch（必填）
+   - **L 级**：M 全部 + stakeholders / non_functional / risks（L 必填三件套）
+   - **XL 级**：L 全部 + iteration_plan + milestones（XL 必填二件套）
+   - 必填字段（tech_sketch 等）不允许选 N，AI 须改问"那要怎么填"
+   - UI 原型选 Y 立即衔接 /pg:prototype；选 N 在最终下一步提醒可单独补
 8. 【Step 5】并行冲突软提示：若填写 `affects_modules`，扫 `docs/requirements/backlog/*.md` 其他 in-flight 需求并打印交集（仅提示，不阻断）
 
 **后置校验**：运行 `validate-doc.js requirement <need_id>`，失败退出码 1。
@@ -404,7 +410,4 @@ project-map.md（如有）→ validate-doc.js project-map  CI 全量扫描时自
 1. **schema 改动**（§3）→ 同步改 `.ai-config/scripts/validate-doc.js` + 加测试用例
 2. **命令流程改动**（§2）→ 同步改 8 个 `.claude/commands/pg/*.md` + `.trae/rules/project_rules.md`
 3. **工作量等级改动**（§1）→ 同步改 `README.md` 等级表 + `docs/USAGE.md` 等级表 + intake-requirement SKILL workload-evaluation.md
-4. **新增产出物类型**（§3）→ 加 schema + 加 pathFor + 加 scanAll 索引 + 同步触发该产出物的命令
-5. **改完跑** `node .ai-config/scripts/validate-doc.js all`，确保现有 docs/ 仍合规
-
-**不要在适配层（命令文件 / Trae 规则）里加业务逻辑**——那会破坏单一事实源原则，下次改本文件�
+4. **新增产出物类型**（§3）→ 加 schema + 加 pathFor + 加 scanAll 索引 + 

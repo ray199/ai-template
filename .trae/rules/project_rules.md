@@ -48,7 +48,13 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 参考：`.ai-config/skills/intake-requirement/SKILL.md`、`workload-evaluation.md`、`pseudo_checklist.md`
 - **Step 0 优先：扫 `docs/_exploration/`**，若有未归档草稿先列出来让用户选是否引用为 background 输入；引用则状态改为 `graduated`
 - **草稿预览**：Step 1 字段填好后、写盘前必须先把结构化结果展示给用户，等用户确认或调整后才落盘
-- **Step 4 强制中断点 · 逐项询问**：列出本等级建议的附加产出物（原型 / 技术思路骨架 / 迭代计划），让用户逐项 [Y/N]。AI 必须**停下等回复**，不得自行判定跳过。选 Y 立刻执行（原型衔接 /pg:prototype；其他写进需求文档对应字段）；选 N 在最终下一步提醒可单独补
+- **Step 4 强制中断点 · 按等级逐项询问**：按 workload 动态展示附加产出物清单（不同等级清单不同）：
+  - S：UI 原型 1 项
+  - M：UI 原型 + tech_sketch（必填）
+  - L：M 全部 + stakeholders / non_functional / risks（必填三件套）
+  - XL：L 全部 + iteration_plan + milestones（必填二件套）
+  - 必填字段不允许 N（schema 强制），UI 原型可选 N
+  - AI 必须**停下等用户逐项回复 [Y/N/调整]**，不得自行跳过。选 Y 立即写入需求文档；UI 原型选 Y 衔接 /pg:prototype
 - 产出：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`（front-matter 按 workflow.md §3.1）
 - **并行冲突软提示**：若填写了 `affects_modules`，扫描 backlog 其他在制品需求的同字段，有交集就打印警告（不阻断）：
   ```
@@ -109,8 +115,4 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 分级产出：
   - **XS/S**：curl 测试片段 + 5 维度 review 清单，结论写 PR 描述，不生成独立 md
   - **M**：`docs/test/<REQ>-test.md` + `docs/review/<REQ>-review.md`
-  - **L/XL**：同 M，额外并发 / 性能测试
-- 后置校验（M/L/XL 强制）：`node .ai-config/scripts/validate-doc.js check <REQ-id>`
-- 有 🔴 blocker → 修复后重跑，不得进入 /pg:deliver
-
-### /pg:deliver
+  - **L/XL**
