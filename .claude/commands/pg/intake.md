@@ -16,7 +16,17 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 **Step 0 优先：扫描 docs/_exploration/（必做）**：
 
 若 `docs/_exploration/` 目录存在，列出 EXPLORE-*.md 让用户选择是否引用为 background。
-⚠️ **必须停下等用户回复后再继续**。引用则笔记 `status: draft → graduated`，跳过笔记已答的维度。
+⚠️ **必须停下等用户回复后再继续**。引用某份笔记后必须改写其 front-matter：
+
+```yaml
+status: draft → graduated
+graduated_to: REQ-YYYYMMDD-XXX    # 当前 intake 生成的 REQ-id（关键：让 /pg:design 知道归属）
+graduated_at: <YYYY-MM-DD>         # 升级日期
+```
+
+并跳过笔记已答的维度。
+
+⚠️ **多 REQ 防漏读 / 多读**：`/pg:design` 时只读 `graduated_to == 当前 REQ-id` 的探索笔记。老笔记若无此字段，AI 必须主动问用户"这份笔记是否是本 REQ 的来源？"再决定是否引用。
 
 **草稿预览（强制中断点）**：
 

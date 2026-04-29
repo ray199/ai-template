@@ -24,7 +24,7 @@ function parseFrontMatter(content) {
     const kv = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
     if (!kv) continue;
     const key = kv[1];
-    const rawValue = kv[2].trim();
+    const rawValue = stripInlineComment(kv[2].trim()).trim();
     if (rawValue === '') {
       out[key] = [];
       currentKey = key;
@@ -42,6 +42,23 @@ function parseFrontMatter(content) {
 function stripQuotes(s) {
   if (/^".*"$/.test(s) || /^'.*'$/.test(s)) return s.slice(1, -1);
   return s;
+}
+
+// YAML 风格行内注释：` #...`（必须前导空白），quoted 字符串内的 # 不剥
+function stripInlineComment(s) {
+  if (!s) return s;
+  if (/^["']/.test(s)) {
+    const quote = s[0];
+    const end = s.indexOf(quote, 1);
+    if (end !== -1) {
+      const head = s.slice(0, end + 1);
+      const tail = s.slice(end + 1);
+      const m = tail.match(/^([^#]*?)(\s+#.*)?$/);
+      return head + (m ? m[1] : tail);
+    }
+  }
+  const m = s.match(/^([^#]*?)(\s+#.*)?$/);
+  return m ? m[1].trimEnd() : s;
 }
 
 function coerce(s) {
@@ -142,6 +159,48 @@ const SCHEMAS = {
       self_check_passed: v => v === true || '自检未通过，不允许流转到 /pg:check',
     },
   },
+  'code-progress': {
+    required: ['kind', 'need_id', 'stage', 'status', 'current_task', 'total_tasks', 'done_tasks', 'updated_at'],
+    rules: {
+      kind: v => v === 'code-progress' || 'kind 必须为 code-progress',
+      need_id: v => REQ_ID_RE.test(v) || 'need_id 非法',
+      stage: v => v === 'code' || 'stage 必须为 code',
+      status: v => ['in-progress', 'done', 'blocked'].includes(v) || 'status 必须是 in-progress|done|blocked',
+      current_task: v => /^(T\d+|—|-)$/.test(String(v)) || 'current_task 必须形如 T<数字> 或 —（全部完成时填 —）',
+      total_tasks: v => (typeof v === 'number' && v >= 1) || 'total_tasks 必须是 ≥1 的整数',
+      done_tasks: (v, fm) => {
+        if (typeof v !== 'number' || v < 0) return 'done_tasks 必须是非负整数';
+        if (typeof fm.total_tasks === 'number' && v > fm.total_tasks) return 'done_tasks 不能大于 total_tasks';
+        return true;
+      },
+      updated_at: v => /^\d{4}-\d{2}-\d{2}/.test(String(v)) || 'updated_at 必须是 ISO 时间戳',
+    },
+    bodyChecks: (body, fm) => {
+      const errs = [];
+      if (!/^##\s+(一、)?任务进度/m.test(body)) {
+        errs.push('必须包含 "## 一、任务进度表" 章节');
+      } else {
+        const hasHeader = /\|\s*ID\s*\|/.test(body)
+          && /状态/.test(body)
+          && /commit/i.test(body);
+        if (!hasHeader) {
+          errs.push('"## 任务进度表" 必须包含表头：ID | 任务 | 状态 | 输出文件 | 单测 | commit hash | 完成时间');
+        }
+      }
+      if (fm.status === 'done') {
+        if (/🟡\s*doing/.test(body)) {
+          errs.push('status=done 时任务表中不能有 🟡 doing 状态的任务');
+        }
+        if (fm.done_tasks !== fm.total_tasks) {
+          errs.push(`status=done 但 done_tasks(${fm.done_tasks}) ≠ total_tasks(${fm.total_tasks})`);
+        }
+      }
+      if (fm.status === 'in-progress' && !/^T\d+$/.test(String(fm.current_task))) {
+        errs.push('status=in-progress 时 current_task 必须是 T<数字> 格式');
+      }
+      return errs;
+    },
+  },
   test: {
     required: ['need_id', 'stage', 'test_pass_rate', 'blockers', 'conclusion'],
     rules: {
@@ -175,6 +234,7 @@ function pathFor(type, reqId) {
     requirement: `docs/requirements/backlog/${reqId}.md`,
     design: `docs/design/${reqId}-design.md`,
     'code-report': `docs/design/${reqId}-code-report.md`,
+    'code-progress': `docs/code/${reqId}-progress.md`,
     test: `docs/test/${reqId}-test.md`,
     review: `docs/review/${reqId}-review.md`,
     delivery: `docs/delivery/${reqId}-delivery.md`,
@@ -252,6 +312,7 @@ function scanAll(repoRoot) {
   const dirs = [
     { dir: 'docs/requirements/backlog', type: 'requirement' },
     { dir: 'docs/design', type: null, detect: true },
+    { dir: 'docs/code', type: 'code-progress' },
     { dir: 'docs/test', type: 'test' },
     { dir: 'docs/review', type: 'review' },
     { dir: 'docs/delivery', type: 'delivery' },

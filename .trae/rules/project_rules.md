@@ -42,7 +42,10 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 参考：`.ai-config/skills/init/SKILL.md`
 - 自动检测新 / 老项目、技术栈（java / python / dotnet / node+vue / react / go / typescript）
 - 老项目必须生成 `docs/_context/project-map.md`，`invariants` 段非空
-- 后置校验：目录完整 + `validate-doc.js project-map`（老项目）
+- **老项目可选 · 视觉基线提取**：若检测到前端工程（package.json + src/），扫描提取 UI 库 / 主色辅色 / 字体 / 间距 / 命名约定，写入 project-map 的 `## 视觉基线` 段。后续 `/pg:prototype` Step 0 优先读此段，避免重复扫描和跨需求视觉漂移
+- **生成或追加 CLAUDE.md**（必做）：检测项目根目录大写 `CLAUDE.md`：无则按 `.ai-config/skills/init/templates/claude-md-template.md` 生成；有则检查是否引用规范，未引用询问用户是否追加引用块。**文件名严格用大写** —— Claude Code 官方约定
+- **Skill Registry 生成**（必做）：扫 3 个位置的 skill（`.ai-config/skills/` 本规范约定 + `.claude/skills/` Claude Code 项目级 + 用户级 `~/.claude/skills/` 或 `%APPDATA%/Claude/skills/`），按类型（脚手架/领域/工具/用户级）分类写到 `docs/_context/skill-registry.md`。后续 `/pg:design` `/pg:code` 读此清单挑可用 skill。不走 schema 校验
+- 后置校验：目录完整 + `CLAUDE.md` 存在 + `validate-doc.js project-map`（老项目）+ `skill-registry.md` 存在
 
 ### /pg:intake
 - 参考：`.ai-config/skills/intake-requirement/SKILL.md`、`workload-evaluation.md`、`pseudo_checklist.md`
@@ -61,6 +64,22 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 ### /pg:design
 - 前置：backlog 文档存在，`workload ∈ {M, L, XL}`
 - 参考：`.ai-config/skills/technical-design/SKILL.md`
+- **Step 0 · 前置物全集扫描**（必做，按 REQ-id 严格匹配）：
+  - 必读：`docs/requirements/backlog/REQ-xxx.md`
+  - 若存在必读：`-prd.md`（PRD 可读版）/ `docs/prototype/REQ-xxx.{html,wireframe.md,figma}` / `docs/_exploration/EXPLORE-*.md`（**front-matter `graduated_to == REQ-xxx`**）
+  - 老项目必读：`docs/_context/project-map.md`（模块 / 表 / 接口 / 不可变约束 / 项目原则 / 视觉基线）
+  - 若存在必读：`docs/_context/skill-registry.md`（项目可用 skill 清单），按类型挑选可用 skill 加载
+- **多 REQ 隔离规则（防漏 / 多读 / 错读）**：
+  - 探索笔记**只读 graduated_to == 当前 REQ-id 的**；老笔记无此字段时主动问用户后回写字段
+  - 禁止引用其他 REQ 的 design.md / code-report.md（除非用户显式说"参考 REQ-yyy"）
+  - done/ 历史 REQ 产出物只在用户显式提及时读
+  - 必读缺失 → 阻断；若存在必读缺失 → 软告警让用户确认
+- 前置物→设计输出映射（让 AI 知道怎么用）：
+  - acceptance → 任务表"验收对应"列（每条 A 至少 1 个 T 覆盖）
+  - prototype 页面清单 → 前端 UI 设计；表单字段 → 接口入参出参
+  - PRD 用户故事 → 关键实现路径主流程
+  - exploration 候选方案 → 技术组件决策；已知坑 → 风险点
+  - project-map 模块 → 受影响模块表（不能创造模块名）；视觉基线 → UI 设计必须沿用
 - **老项目强制 `## 现状基线` 章节**（schema 会校验存在性）：
   ```markdown
   ## 现状基线
@@ -85,61 +104,18 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
   - 必须有"验收对应"列，引用 requirement.md 中的 acceptance 编号（A1/A2...）
   - 至少 1 行任务
 - **重构 / 迁移类需求**：任务表后必须加"迁移顺序"和"回滚边界"段
-- 后置校验：`node .ai-config/scripts/validate-doc.js design <REQ-id>`
+- **输出后自检 + 修复循环**：写盘后立即跑 `node .ai-config/scripts/validate-doc.js design <REQ-id>`：
+  - 退出码 0 → 完成
+  - 退出码非 0 → AI 必须按报错**自动补章节后重写**，重试最多 3 次；3 次失败才告知人工介入
+  - **不允许把 schema 失败丢给用户处理，更不允许在失败时直接进入下一步**
+- 必查清单（输出 design.md 前自检）：含一二三四五七节标题；老项目必含 `## 现状基线`；L/XL 必含 `## 任务拆解`（表头 + ≥1 行 T 任务）；重构类追加迁移顺序 + 回滚边界
 
 ### /pg:code
+- 触发：`/pg:code <REQ-id>` 或 `/pg:code <REQ-id> --resume`（断点续作）
 - 前置：backlog 存在；M/L/XL 需 design 存在
 - 参考：`.ai-config/skills/coding-impl/SKILL.md`
-- 代码规范：
-  - 通用：`.ai-config/rules/02_code_style.mdc`
-  - 安全：`.ai-config/rules/03_security.mdc`
-  - 语言专项（自动按技术栈选）：`.ai-config/rules/profiles/{java_spring, python, dotnet_csharp, node_vue, react, go, typescript}.mdc`
-  - 中间件（按需）：`.ai-config/rules/middleware/{redis, rocketmq, auth, logging, api-client, ai-llm}.md`
-  - 审查清单：`.ai-config/skills/code-review/{java, vue, dotnet, python}-code-review-checklist.md`
-- 老项目必须沿用原包结构，禁止改动 `invariants` 声明的部分
-- 后置校验（M/L/XL）：`node .ai-config/scripts/validate-doc.js code-report <REQ-id>`
-- XS/S 跳过 code-report，commit 走 `.ai-config/scripts/git-hooks/commit-msg`
-
-### /pg:check
-- 前置：backlog 存在；M/L/XL 需 code-report 存在
-- 参考：`.ai-config/skills/testing/SKILL.md`、`code-review/SKILL.md`、`code-review/checklists.md`
-- 分级产出：
-  - **XS/S**：curl 测试片段 + 5 维度 review 清单，结论写 PR 描述，不生成独立 md
-  - **M**：`docs/test/<REQ>-test.md` + `docs/review/<REQ>-review.md`
-  - **L/XL**：同 M，额外并发 / 性能测试
-- 后置校验（M/L/XL 强制）：`node .ai-config/scripts/validate-doc.js check <REQ-id>`
-- 有 🔴 blocker → 修复后重跑，不得进入 /pg:deliver
-
-### /pg:deliver
-- 前置：test + review 的 `conclusion: pass` 且 `blockers: 0`
-- 参考：`.ai-config/skills/delivery/SKILL.md`
-- 归档：`docs/requirements/backlog/<REQ>.md` → `docs/requirements/done/<REQ>/`
-- 后置校验（强制）：`node .ai-config/scripts/validate-doc.js delivery <REQ-id>`
-- **收尾两问（不阻断）**：
-  1. 是否有新的不变量 / 技术债 / 架构决策要沉淀到 `project-map.md` 的 `## 追加记录`（带 REQ 号 + 日期）
-  2. 本次 review 是否有可沉淀到 `.ai-config/rules/` 的反模式，有则写一条到 `docs/_changelog/rules-candidates.md`
-- 用户答"无"就跳过
-
-### /pg:prototype
-- 前置：backlog 存在
-- 参考：`.ai-config/skills/prototype-generation/SKILL.md`、`references/style-selection.md`、`html-prototype-generator.md`；制造业用 `redoe-prototype-style/SKILL.md`
-- **Step 0 · 视觉基线扫描**（强制中断点）：扫 `docs/prototype/*.html` + `src/`（package.json/SCSS/tailwind/现有组件）+ project-map 的不可变约束 / 项目原则，提取现有视觉基线
-- 分流：命中基线 → 默认沿用为方案 A（5 选 1 降为备选）；仅命中 UI 库 → 用 UI 库默认主题；完全无基线 → 走 5 选 1
-- 必须**停下等用户确认风格选择**后才生成。沿用基线模式导入项目 design token，避免视觉漂移
-- 输出：`docs/prototype/<REQ>.html` 或 `-wireframe.md`
-
----
-
-## 通用硬规则（所有阶段共享）
-
-1. **产出物文件名**：严格按 workflow.md §3 约定，文件名里的 REQ-id 必须匹配 `^REQ-\d{8}-\d{3}$`
-2. **后置校验退出码非 0**：不得告知用户进入下一阶段，必须先修产出物再重跑
-3. **XS 级不走 /pg:intake**：直接 git commit `XS: <描述>` 交 commit-msg hook 把关
-4. **老项目识别**：`docs/_context/project-map.md` 存在即判为老项目，后续阶段触发对应强制约束
-5. **规则红线**：安全（`03_security.mdc`）和通用代码风格（`02_code_style.mdc`）始终适用，禁止以"用户没要求"为由绕开
-
----
-
-## 与 Claude Code / Cursor 的关系
-
-本文件与 `.claude/commands/pg/` 里的 8 份命令文件是**同一契约的不同平台适配**。事实源永远是 `.ai-config/workflow.md` + `validate-doc.js`，任何工作流变更只改这两者，本文件被动同步。
+- **断点检测（Step 0.5 必做）**：检查 `docs/code/<REQ-id>-progress.md`：
+  - 不存在 → 全新执行；按 design 任务表初始化 progress.md（`templates/code-progress.md`），所有 T 状态 ⏳ pending
+  - 存在 status=in-progress / blocked → 进入断点恢复模式；不带 `--resume` 须主动询问用户"上次中断在 T_n（断点段：...），是否续作？" **不要无脑重头开**
+  - 存在 status=done → 默认拒绝重做（保护已交付代码）
+- **每 T 维护协

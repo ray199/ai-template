@@ -129,6 +129,8 @@ kind: exploration
 created_at: <YYYY-MM-DD>
 status: draft | graduated | dropped
 slug: <short-kebab-case>
+graduated_to: <REQ-id>      # 仅 status=graduated 时填，由 /pg:intake 引用本笔记时自动写入
+graduated_at: <YYYY-MM-DD>  # 仅 status=graduated 时填
 ---
 
 # 想法：<一句话标题>

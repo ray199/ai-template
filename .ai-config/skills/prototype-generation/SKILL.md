@@ -66,18 +66,35 @@
    └─ ≥ 3 → 进入 HTML 原型路径
 
 【Step 0 · 视觉基线扫描】（必做，HTML 原型才执行）
-   按优先级扫描，提取项目现有视觉风格：
    
-   1. docs/prototype/*.html（其他 REQ 已生成的原型）
-      → 提取 CSS 变量、字体声明、UI 库类名
+   优先级 1（首选）：读 docs/_context/project-map.md 的 ## 视觉基线 段
+      → /pg:init 老项目分支已自动扫描填充；命中即用，跳过下面的即时扫描
+      → 把段内容展示给用户："沿用 project-map 已记录的视觉基线 [Y/调整/N 切换]"
    
-   2. src/ 下现有前端工程（若存在）
-      → package.json：识别 UI 库（element-plus / ant-design-vue / vant / antd / mui）
-      → tailwind.config.js / variables.scss / src/styles/：design token
-      → src/views/ src/components/：组件命名和结构约定
+   优先级 2（即时扫描）：仅当 ## 视觉基线 段不存在 / 为空时执行
+      1. docs/prototype/*.html（其他 REQ 已生成的原型）
+         → 提取 CSS 变量、字体声明、UI 库类名
+      2. src/ 下现有前端工程（若存在）
+         → package.json：识别 UI 库（element-plus / ant-design-vue / vant / antd / mui）
+         → tailwind.config.js / variables.scss / src/styles/：design token
+         → src/views/ src/components/：组件命名和结构约定
+      3. docs/_context/project-map.md 的 ## 不可变约束 / ## 项目原则
+         → 若提到 UI 框架 / 设计语言 / 包名，必须遵守
    
-   3. docs/_context/project-map.md 的 ## 不可变约束 / ## 项目原则
-      → 若提到 UI 框架 / 设计语言 / 包名，必须遵守
+   扫描后建议：把结果回写到 docs/_context/project-map.md 的 ## 视觉基线 段，
+   下次 /pg:prototype 直接读优先级 1，节省扫描 + 跨需求一致
+   ↓
+【Step 0.5 · 基线参照检查】（老项目专属；新项目跳过）
+   解析当前 REQ 涉及的页面（design.md 的页面清单 / requirement.md 的 acceptance）
+   
+   for each page:
+     检查 docs/prototype/baseline/<page>.html
+     ├─ 已存在 → 用作"改动前"参照
+     └─ 不存在 → 询问用户是否反推（默认 N）
+                 选 Y → 按 templates/baseline-snapshot.md 从 src/views/<Page>.vue 反推 HTML
+                       落盘 + 更新 docs/prototype/baseline/README.md
+   
+   目的：让业务方看到"改动前 vs 改动后"对比，AI 生成新原型有锚点不会突兀
    
    扫描结果分流：
    ├─ 命中现有视觉基线 → 默认沿用为方案 A，5 选 1 风格库降为备选
@@ -92,7 +109,11 @@
    ├─ 沿用基线：导入项目的 design token / SCSS 变量 / UI 库类名
    └─ 新风格：注入选定方案的 CSS 变量到 :root
    ↓
-【输出】docs/prototype/REQ-XXXXXXXX.{html|figma|md}
+【输出】
+   - 主原型：docs/prototype/REQ-XXXXXXXX.{html|figma|md}
+     · 有基线参照 → 双栏对比 HTML（左"改动前"，右"改动后"）+ 顶部改动摘要
+     · 无基线参照 → 仅目标态原型
+   - 基线快照（按需）：docs/prototype/baseline/<page>.html
    → 详细输出格式见 templates/prototype-output.md
 ```
 

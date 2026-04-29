@@ -71,12 +71,17 @@
 2. 判定项目类型：`new`（无业务代码）/ `existing`（有业务代码）
 3. 新项目：生成 `docs/`、`.ai-config/` 目录骨架
 4. 老项目：额外生成 `docs/_context/project-map.md`（表清单 / 接口清单 / 模块清单 / 不可变约束）
+5. 老项目可选：扫 src/ 提取视觉基线写入 project-map 的 `## 视觉基线` 段
+6. **生成或追加 CLAUDE.md**（必做）：检测项目根目录大写 `CLAUDE.md`：无则按 `.ai-config/skills/init/templates/claude-md-template.md` 生成；有则检查是否引用 workflow.md，未引用询问用户是否追加规范引用块。**严格用大写文件名**——Claude Code 官方约定
+7. **Skill Registry 生成**（必做）：扫 3 个位置的 skill（`.ai-config/skills/`、`.claude/skills/`、用户级 `~/.claude/skills/` 或 `%APPDATA%/Claude/skills/`），按类型（脚手架/领域/工具）分类生成 `docs/_context/skill-registry.md`，让 `/pg:design` `/pg:code` 知道项目里有什么 skill 可用。registry 不走 schema 校验。具体见 init SKILL Step 5.6
 
 **后置校验**：
 - `.ai-config/workflow.md` 存在
+- 项目根目录 `CLAUDE.md`（大写）存在
 - 老项目必须有 `docs/_context/project-map.md` 非空
+- skill-registry.md 存在（即使内容为空——表示已扫描，没找到额外 skill）
 
-**产出物**：目录结构 + `project-map.md`（老项目）
+**产出物**：目录结构 + `CLAUDE.md`（按需）+ `project-map.md`（老项目）+ `skill-registry.md`
 
 ---
 
@@ -119,7 +124,20 @@
 - 若 `docs/design/REQ-xxx-design.md` 已存在则确认覆盖
 
 **执行步骤**：
-1. 读取需求文档 + project-map（若老项目）
+1. **Step 0 · 前置物全集扫描**（必做）：按下表顺序读全。缺必读项必须先告诉用户补全或显式跳过，不得边设计边猜：
+   | 文件 | 必读条件 | 在设计中的作用 |
+   |---|---|---|
+   | `docs/requirements/backlog/REQ-xxx.md` | 总是必读 | What + Why + acceptance + scope + tech_sketch |
+   | `docs/requirements/backlog/REQ-xxx-prd.md`（PRD 可读版） | 若存在必读 | 业务方表述的用户故事 + 主流程 |
+   | `docs/prototype/REQ-xxx.{html,wireframe.md,figma}` | 若存在必读 | 决定接口入参出参 + UI 规划 |
+   | `docs/_exploration/EXPLORE-*.md`（front-matter `graduated_to == REQ-xxx`） | 若存在必读 | 候选方案对比 + 已知坑 + 待答问题 |
+   | `docs/_context/project-map.md` | 老项目必读 | 模块 / 表 / 接口 / **不可变约束** / 项目原则 / 视觉基线 |
+   
+   **多 REQ 隔离规则（防漏 / 多读）**：
+   - 探索笔记**只读 graduated_to == REQ-xxx 的**；老笔记无此字段时主动问用户后回写
+   - 禁止引用其他 REQ 的 design.md / code-report.md（除非用户显式说"参考 REQ-yyy"）
+   - done/ 历史 REQ 产出物只在用户显式提及时读
+   - 必读缺失 → 阻断；若存在必读缺失 → 软告警让用户确认
 2. 架构影响分析（新项目：模块定义；老项目：严格遵守 project-map 的 `invariants`）
 3. **现状基线（仅老项目，强制）**：在 design 文档正文写 `## 现状基线` 章节，列出：涉及模块、现有行为（改动前的输入输出语义）、已知坑、本次保留 vs 重写
 4. 数据库设计：DDL、迁移脚本、回滚方案
@@ -129,7 +147,12 @@
 8. **任务拆解（L / XL 强制；M 建议）**：在 design 文档正文写 `## 任务拆解` 章节，包含表格 `ID | 任务 | 依赖 | 验收对应 | 预估 | 备注`。每行 ID 必须 `T<数字>` 形式，"验收对应"列引用 requirement.md 中的 acceptance 编号（A1/A2...），至少 1 行任务。表格后注明关键路径和并行机会
 9. **重构 / 迁移类需求额外要求**：任务表后追加"迁移顺序"段（每步标注是否可独立合并）和"回滚边界"（哪一步之前可回滚，哪一步是不可逆点）
 
-**后置校验**：运行 `validate-doc.js design REQ-xxx`。校验项：
+**后置校验 + 自检修复循环**：写盘后立即跑 `validate-doc.js design REQ-xxx`：
+- 退出码 0 → 完成，告知下一步 /pg:code
+- 退出码非 0 → AI 必须按报错提示**自动补章节后重写** design.md，重试最多 3 次；3 次仍失败才告知用户人工介入
+- **AI 不允许把 schema 失败丢给用户**，更不允许在失败时直接进入下一步
+
+校验项：
 - 老项目：`## 现状基线` 章节存在
 - L / XL：`## 任务拆解` 章节存在 + 表头列名（ID / 任务 / 依赖 / 验收 / 预估）+ 至少一行 T<数字> 任务
 
@@ -139,9 +162,9 @@
 
 ---
 
-### 2.4 `/pg:code REQ-xxx [--frontend|--backend|--db]`
+### 2.4 `/pg:code REQ-xxx [--frontend|--backend|--db|--resume]`
 
-**目的**：生成源代码 + 数据库脚本 + 测试骨架。
+**目的**：生成源代码 + 数据库脚本 + 测试骨架，**支持断点续作**。
 
 **前置校验**：
 - `docs/requirements/backlog/REQ-xxx.md` 存在
@@ -149,17 +172,36 @@
 
 **执行步骤**：
 1. 【Step 0】版本上下文扫描：检测项目技术栈 + 新老项目分支
-2. 读取输入文档（XS/S 读需求，M/L/XL 读设计）
-3. 生成后端代码（Entity / Mapper / Service / Controller / VO / 迁移脚本 / 测试骨架）
-4. 生成前端代码（若含前端）：页面 / 组件 / Hook / API 调用层
+2. 【Step 0.5】**断点检测**：检查 `docs/code/REQ-xxx-progress.md`：
+   - 不存在 → 全新执行；按 design 任务表初始化 progress.md（所有 T 状态 ⏳ pending）
+   - 存在 status=in-progress / blocked → 进入断点恢复模式；不带 `--resume` 须主动询问"上次中断在 T_n，是否续作？"
+   - 存在 status=done → 默认拒绝重做（保护已交付代码）
+3. 读取输入文档（XS/S 读需求，M/L/XL 读设计 + progress）
+4. **逐 T 执行**（每个 T 完成必维护 progress.md，详见下方协议）：
+   - 后端代码：Entity / Mapper / Service / Controller / VO / 迁移脚本 / 测试骨架
+   - 前端代码（若含前端）：页面 / 组件 / Hook / API 调用层
 5. 自检：命名、日志、异常、事务、权限、@Valid
+6. 全部 T 完成后输出 code-report.md，把 progress.md 状态置 done
+
+**断点维护协议**（L / XL 强制；M 建议；XS/S 不要求）：
+
+| 时机 | 必做动作 |
+|---|---|
+| 开始 T_n | 表格 T_n 行 `⏳ pending → 🟡 doing`；`fm.current_task=T_n`；重写"当前断点"段；刷新 `updated_at` |
+| 每次 Write/Edit | 仅更新"当前断点"段的"已写到"行（文件路径 + 行号），其他不动 |
+| T_n 完成 | 表格 `🟡 doing → ✅ done`，填输出文件 / 单测 / 完成时间；`git commit` 代码 + progress.md；commit hash 写回表格 + `git commit --amend --no-edit`；`fm.done_tasks +1` |
+| 全部完成 | `fm.status=done`，`fm.current_task=—`，输出 code-report |
+
+**`--resume` 入口**：跳过所有 ✅ done，从 🟡 doing 的 T 的"当前断点"行号续写；重新加载 design / requirement / project-map 重建上下文。
 
 **后置校验**：
 - 运行 `validate-doc.js code-report REQ-xxx`
-- 若 workload ∈ {XS, S}：允许不生成 code-report，但 commit message 必须覆盖变更摘要
-- 若 workload ∈ {M, L, XL}：`docs/design/REQ-xxx-code-report.md` 必须存在
+- L / XL 级追加：`validate-doc.js code-progress REQ-xxx`（必须 status=done）
+- 若 workload ∈ {XS, S}：允许不生成 code-report 和 progress；commit message 必须覆盖变更摘要
+- 若 workload ∈ {M}：code-report 必须；progress 建议
+- 若 workload ∈ {L, XL}：code-report + progress 都必须
 
-**产出物**：源代码 + 迁移脚本 + （M/L/XL）code-report.md
+**产出物**：源代码 + 迁移脚本 + （M/L/XL）code-report.md +（L/XL 强制）`docs/code/REQ-xxx-progress.md`
 
 **下一步**：`/pg:check REQ-xxx`
 
@@ -230,15 +272,24 @@
 **前置校验**：`docs/requirements/backlog/REQ-xxx.md` 存在。
 
 **执行步骤**（HTML 原型必做）：
-1. **Step 0 · 视觉基线扫描**（强制中断点）：扫 `docs/prototype/*.html` + `src/`（package.json / SCSS / tailwind / 现有组件）+ `docs/_context/project-map.md` 的不可变约束 / 项目原则，提取项目现有视觉基线
-2. 按扫描结果分流：
-   - 命中基线 → 默认沿用，5 选 1 风格库降为备选
-   - 仅命中 UI 库 → 用 UI 库默认主题为基线
-   - 完全无基线 → 走 5 选 1 风格库
-3. 必须把扫描结果展示给用户，**停下等用户确认风格选择**后才能生成
-4. 生成时：沿用基线模式导入项目 design token；新风格模式注入 CSS 变量
+1. **Step 0 · 视觉基线扫描**（强制中断点，按优先级读取）：
+   - 优先级 1：读 `docs/_context/project-map.md` 的 `## 视觉基线` 段——若 `/pg:init` 已扫描记录，直接采用，跳过即时扫描
+   - 优先级 2：项目无该段时即时扫 `docs/prototype/*.html` + `src/` + project-map 的不可变约束 / 项目原则
+   - 扫描后建议把结果回写到 `## 视觉基线` 段，下次直接读
+2. **Step 0.5 · 基线参照检查**（老项目专属强制中断点；新项目跳过）：
+   - 解析当前 REQ 涉及的页面（从 design.md 的"页面清单"或 acceptance 推断）
+   - 检查 `docs/prototype/baseline/<page>.html` 是否已存在
+   - 不存在 → 主动询问用户是否反推（默认 N）；选 Y 则按 `prototype-generation/templates/baseline-snapshot.md` 规则从 `src/views/<Page>.vue` 反推 HTML 快照，落盘 `docs/prototype/baseline/`，并更新 `baseline/README.md`
+   - 已存在 → 直接采用为"改动前"参照
+3. 按结果分流（视觉基线）：命中 → 模式 A 沿用；仅命中 UI 库 → 模式 B 默认主题；完全无基线 → 模式 C 5 选 1
+4. 必须把视觉基线 / 基线参照状态展示给用户，**停下等用户确认风格选择和是否反推基线**后才能生成
+5. 生成新原型时：
+   - 有基线参照 → 输出**双栏对比 HTML**（左"改动前 / 基线"，右"改动后 / 目标态"）+ 顶部"本次改动摘要"
+   - 无基线参照 → 仅生成目标态原型（原行为）
 
-**理由**：默认沿用基线可避免同项目多原型视觉漂移、老项目原型对不上现有页面的尴尬。视觉一致性比"AI 生成的好看"更重要——开发拿到原型还要对齐到项目实际，不一致就等于白做。
+**理由**：
+- 视觉基线沿用 → 避免同项目多原型视觉漂移、老项目原型对不上现有页面
+- 基线参照对比 → 业务方能直观看到"改动前 vs 改动后"，AI 生成新原型有锚点不会突兀，新需求评估更准确
 
 **产出物**：`docs/prototype/REQ-xxx.{html|figma|md}`
 
@@ -275,127 +326,4 @@ affects_modules: [user, auth]      # 可选；填了会参与 /pg:intake 并行�
 
 **特点**：
 - **不走 schema 校验**——叙事性文档，强加 schema 会僵化
-- **信息源**：从 `REQ-xxx.md` 字段自动转写（background → 业务背景；acceptance → 用户故事；scope.out → 不做的部分；等）
-- **同源更新**：要修改时**先改 REQ-xxx.md 再重新生成**，防止双份漂移
-
-**正文结构**（叙事性，无 front-matter 强制要求）：
-- 一、为什么要做（业务背景）
-- 二、给谁用（核心用户 / 受众）
-- 三、能做什么（用户故事 As-a / I-want / so-that）
-- 四、用户怎么操作（主流程，文字 + 原型链接）
-- 五、什么算做完了（验收标准 · 人话版）
-- 六、不做什么 / 限制
-- 七、风险与依赖
-- 八、排期与里程碑（仅 L/XL）
-- 九、附件（开发用 REQ-xxx.md / 原型 / 设计文档链接）
-
-模板见 `.ai-config/skills/intake-requirement/templates/prd-readable.md`。
-
-### 3.2 设计文档（design/REQ-xxx-design.md）
-
-```yaml
----
-need_id: REQ-20260424-001
-stage: design
-reviewers: [architect]
-status: draft                       # draft|approved
-invariants_respected: true          # 老项目必须为 true
----
-```
-
-**老项目正文强制章节**：`## 现状基线`（schema 校验）。
-
-**L / XL 正文强制章节**：`## 任务拆解`（schema 校验）。表格列：`ID | 任务 | 依赖 | 验收对应 | 预估 | 备注`，ID 必须 `T<数字>` 形式，验收对应引用 requirement.md 的 acceptance 编号（A1/A2...）。重构 / 迁移类需求额外要求"迁移顺序" + "回滚边界"段。
-
-### 3.3 编码完成报告（design/REQ-xxx-code-report.md）
-
-```yaml
----
-need_id: REQ-20260424-001
-stage: code
-files_added: [src/.../UserDO.java, ...]
-files_modified: []
-db_migrations: [V20260424_01__add_user_role.sql]
-self_check_passed: true
----
-```
-
-### 3.4 测试报告（test/REQ-xxx-test.md）
-
-```yaml
----
-need_id: REQ-20260424-001
-stage: check
-test_pass_rate: 100
-coverage: 92
-blockers: 0                         # 数字，0 才能 /pg:deliver
-conclusion: pass                    # pass|fail
----
-```
-
-### 3.5 审查报告（review/REQ-xxx-review.md）
-
-```yaml
----
-need_id: REQ-20260424-001
-stage: check
-blockers: 0
-warnings: 2
-conclusion: pass                    # pass|fail
----
-```
-
-### 3.6 交付报告（delivery/REQ-xxx-delivery.md）
-
-```yaml
----
-need_id: REQ-20260424-001
-stage: delivered
-released_at: 2026-04-24
-rollback_verified: true
----
-```
-
-### 3.7 项目上下文（_context/project-map.md，老项目）
-
-```yaml
----
-kind: project-map                   # 必填，固定值
-generated_at: 2026-04-24            # 必填，ISO 日期
-updated_at: 2026-04-24              # 可选，追加记录时更新
----
-```
-
-**正文强制章节**：
-- `## 技术栈` `## 模块清单` `## 表清单` `## 对外接口清单`
-- `## 不可变约束`（schema 强制；新项目可留占位不写条目）
-- `## 追加记录`（由 `/pg:deliver` 按需 append；格式：`### YYYY-MM-DD REQ-xxx` 子标题下若干 `- [invariant|debt|decision] 描述`）
-
-**可选章节**：
-- `## 项目原则`（团队级理念约束，可选；写法不限，但建议每条以"禁止 X"或"必须 Y"开头方便 AI 解析。和 `## 不可变约束` 的边界：原则偏"理念上不能改"，约束偏"现状不能改"——分不清楚就都放约束段，不要纠结）
-
-`/pg:design` 和 `/pg:code` 在老项目场景下必读本文件全文，禁止违反任何 `## 不可变约束` 或 `## 项目原则` 条款。
-
----
-
-## 4. 命令依赖图（给自动化用）
-
-```
-/pg:init ─────────────┐
-                      ▼
-              （可选）/pg:explore
-                      │
-                      ▼
-              /pg:intake
-              （workload 自动判定）
-                      │
-        ┌─────────────┼──────────────────────────┐
-        ▼             ▼                          ▼
-       XS            S                       M / L / XL
-   git commit    /pg:code                  /pg:design
-   "XS: ..."        ↓                          ↓
-        ↓        /pg:check                /pg:code
-        ↓        （PR 描述）                  ↓
-        ↓            ↓                    /pg:check
-        └────────────┴──> /pg:deliver <───────┘
-                          （归
+- **信息源**：从 `REQ-xxx.md` 字段自动转写（background
