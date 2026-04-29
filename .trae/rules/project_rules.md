@@ -48,13 +48,11 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 参考：`.ai-config/skills/intake-requirement/SKILL.md`、`workload-evaluation.md`、`pseudo_checklist.md`
 - **Step 0 优先：扫 `docs/_exploration/`**，若有未归档草稿先列出来让用户选是否引用为 background 输入；引用则状态改为 `graduated`
 - **草稿预览**：Step 1 字段填好后、写盘前必须先把结构化结果展示给用户，等用户确认或调整后才落盘
-- **Step 4 强制中断点 · 按等级逐项询问**：按 workload 动态展示附加产出物清单（不同等级清单不同）：
-  - S：UI 原型 1 项
-  - M：UI 原型 + tech_sketch（必填）
-  - L：M 全部 + stakeholders / non_functional / risks（必填三件套）
-  - XL：L 全部 + iteration_plan + milestones（必填二件套）
-  - 必填字段不允许 N（schema 强制），UI 原型可选 N
-  - AI 必须**停下等用户逐项回复 [Y/N/调整]**，不得自行跳过。选 Y 立即写入需求文档；UI 原型选 Y 衔接 /pg:prototype
+- **Step 4 强制中断点 · 按等级逐项询问**：按 workload 动态展示清单：
+  - 所有等级可选：**PRD 可读版**（叙事性人话版给业务方/老板看，从 requirement.md 自动转写，不走 schema 校验，路径 `docs/requirements/backlog/REQ-xxx-prd.md`，模板见 `intake-requirement/templates/prd-readable.md`）
+  - 所有等级可选：**UI 原型**（XL 必须）→ 选 Y 衔接 /pg:prototype
+  - **必填字段草稿审核**（M+: tech_sketch；L+: + stakeholders/non_functional/risks；XL+: + iteration_plan/milestones）→ 用户回 [Y/调整]，不允许 N
+  - AI 必须**停下等用户逐项回复**
 - 产出：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`（front-matter 按 workflow.md §3.1）
 - **并行冲突软提示**：若填写了 `affects_modules`，扫描 backlog 其他在制品需求的同字段，有交集就打印警告（不阻断）：
   ```
@@ -114,5 +112,4 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 参考：`.ai-config/skills/testing/SKILL.md`、`code-review/SKILL.md`、`code-review/checklists.md`
 - 分级产出：
   - **XS/S**：curl 测试片段 + 5 维度 review 清单，结论写 PR 描述，不生成独立 md
-  - **M**：`docs/test/<REQ>-test.md` + `docs/review/<REQ>-review.md`
-  - **L/XL**
+  - 

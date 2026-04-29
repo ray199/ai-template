@@ -93,13 +93,10 @@
 4. 【Step 1】结构化:按等级填写字段（XS:2 个；S:6 个；M:10 个；L:15 个；XL:L + 拆分计划）。**写盘前必须给用户预览，确认后才落盘**
 5. 【Step 2】工作量评估：业务 5 维 + 技术 4 维打分，判等级
 6. 【Step 3】伪需求扫描：重复建设 / 价值存疑 / 逻辑冲突 / 技术可行性
-7. 【Step 4】输出物推荐 — **强制中断点 · 按等级逐项询问**：按 workload 动态展示本等级的附加产出物清单，让用户逐项 [Y/N/调整] 决定。**AI 必须停下等用户回复，不得自行判定后跳过**。
-   - **S 级**：仅 UI 原型 1 项（仅前端涉及时）
-   - **M 级**：UI 原型 + tech_sketch（必填）
-   - **L 级**：M 全部 + stakeholders / non_functional / risks（L 必填三件套）
-   - **XL 级**：L 全部 + iteration_plan + milestones（XL 必填二件套）
-   - 必填字段（tech_sketch 等）不允许选 N，AI 须改问"那要怎么填"
-   - UI 原型选 Y 立即衔接 /pg:prototype；选 N 在最终下一步提醒可单独补
+7. 【Step 4】产出物清单 — **强制中断点 · 按等级逐项询问**：按 workload 动态展示清单，分【已完成】（requirement.md 已落盘）+【待决定】两块。**AI 必须停下等用户逐项回复，不得自行判定后跳过**。
+   - **PRD 可读版**（所有等级可选）：从 requirement.md 自动转写为给业务方 / 老板看的人话版本，落盘 `docs/requirements/backlog/REQ-xxx-prd.md`。模板见 `intake-requirement/templates/prd-readable.md`。**不走 schema 校验**（叙事性文档）
+   - **UI 原型**（所有等级可选；XL 必须）：选 Y 衔接 /pg:prototype
+   - **必填字段**（M+：tech_sketch；L+：+ stakeholders / non_functional / risks；XL+：+ iteration_plan / milestones）：AI 已生成草稿，用户审核 [Y/调整]——不允许 N（schema 强制）
 8. 【Step 5】并行冲突软提示：若填写 `affects_modules`，扫 `docs/requirements/backlog/*.md` 其他 in-flight 需求并打印交集（仅提示，不阻断）
 
 **后置校验**：运行 `validate-doc.js requirement <need_id>`，失败退出码 1。
@@ -257,6 +254,28 @@ affects_modules: [user, auth]      # 可选；填了会参与 /pg:intake 并行�
 ---
 ```
 
+### 3.1.1 PRD 可读版（backlog/REQ-xxx-prd.md，可选）
+
+给业务方 / 老板 / 非技术干系人看的人话版本，由 `/pg:intake` Step 4 询问用户后可选生成。
+
+**特点**：
+- **不走 schema 校验**——叙事性文档，强加 schema 会僵化
+- **信息源**：从 `REQ-xxx.md` 字段自动转写（background → 业务背景；acceptance → 用户故事；scope.out → 不做的部分；等）
+- **同源更新**：要修改时**先改 REQ-xxx.md 再重新生成**，防止双份漂移
+
+**正文结构**（叙事性，无 front-matter 强制要求）：
+- 一、为什么要做（业务背景）
+- 二、给谁用（核心用户 / 受众）
+- 三、能做什么（用户故事 As-a / I-want / so-that）
+- 四、用户怎么操作（主流程，文字 + 原型链接）
+- 五、什么算做完了（验收标准 · 人话版）
+- 六、不做什么 / 限制
+- 七、风险与依赖
+- 八、排期与里程碑（仅 L/XL）
+- 九、附件（开发用 REQ-xxx.md / 原型 / 设计文档链接）
+
+模板见 `.ai-config/skills/intake-requirement/templates/prd-readable.md`。
+
 ### 3.2 设计文档（design/REQ-xxx-design.md）
 
 ```yaml
@@ -388,26 +407,4 @@ project-map.md（如有）→ validate-doc.js project-map  CI 全量扫描时自
 |---|---|---|---|
 | Claude Code | `.claude/commands/pg/` | 8 份斜杠命令文件，严格 `/pg:xxx` | ✅ 已接入 |
 | Trae | `.trae/rules/project_rules.md` | 单文件触发映射，双识别（`/pg:xxx` 或简写 `/xxx`） | ✅ 已接入 |
-| Cursor | `.cursor/rules/`（按需） | 同 Claude Code 模式 | 按需建立 |
-| Codex CLI | `AGENTS.md`（按需） | 同 Claude Code 模式 | 按需建立 |
-
-**适配层不允许做的事**：
-- 不允许定义新的产出物 schema（schema 在 validate-doc.js）
-- 不允许改变命令的执行顺序或前置 / 后置校验逻辑（在本文件 §2）
-- 不允许新增 / 重命名命令（命令清单在本文件 §0 + §2）
-
-**适配层应该做的事**：
-- 把本文件的命令契约翻译成对应平台的触发语法
-- 在执行命令前提示用户读哪些 SKILL / references 子文件
-- 调用 `validate-doc.js` 做后置校验（不重新实现校验逻辑）
-
----
-
-## 6. 修改本文件的注意事项
-
-本文件是**唯一事实源**，修改时务必同步以下下游：
-
-1. **schema 改动**（§3）→ 同步改 `.ai-config/scripts/validate-doc.js` + 加测试用例
-2. **命令流程改动**（§2）→ 同步改 8 个 `.claude/commands/pg/*.md` + `.trae/rules/project_rules.md`
-3. **工作量等级改动**（§1）→ 同步改 `README.md` 等级表 + `docs/USAGE.md` 等级表 + intake-requirement SKILL workload-evaluation.md
-4. **新增产出物类型**（§3）→ 加 schema + 加 pathFor + 加 scanAll 索引 + 
+| Cursor | `.cur

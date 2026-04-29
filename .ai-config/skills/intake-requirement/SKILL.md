@@ -101,6 +101,7 @@
 | `templates/workload-report.md` | Step 2 输出样例（业务+技术评估表 + 综合判定） | Step 2 输出时读 |
 | `templates/from_prd.md` | T4 完整 PRD 输入的转换模板 | T4 场景读 |
 | `templates/from_verbal.md` | T1/T2 口头/零散输入的转换模板 | T1/T2 场景读 |
+| `templates/prd-readable.md` | Step 4 可选项：PRD 可读版（人话版给业务方/老板）模板 + 与 requirement.md 的字段映射 | 用户在 Step 4 选 Y 生成时读 |
 
 ---
 
