@@ -13,11 +13,11 @@
 ```
 Java 项目（pom.xml）：
   检测 JDK 版本、Spring Boot 版本、MyBatis/JPA、Spring Security
-  → 加载 .ai-config/rules/java_spring.mdc（或项目等效规范）
+  → 加载 .ai-config/rules/profiles/java_spring.mdc（或项目等效规范）
 
 Vue/Node 项目（package.json）：
   检测 Vue 版本、构建工具（Vite/CLI）、状态管理、UI 框架
-  → 加载 .ai-config/rules/node_vue.mdc（或项目等效规范）
+  → 加载 .ai-config/rules/profiles/node_vue.mdc（或项目等效规范）
 
 其他语言：
   检测关键配置文件，加载对应规范

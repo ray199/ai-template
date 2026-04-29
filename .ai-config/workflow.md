@@ -341,6 +341,71 @@ updated_at: 2026-04-24              # 可选，追加记录时更新
 
 ```
 /pg:init ─────────────┐
-                   ▼
-/pg:intake ──► workload ∈ {XS,S} ──► /pg:code ──► /pg:check ──► /pg:deliver
-            workload ∈ 
+                      ▼
+              （可选）/pg:explore
+                      │
+                      ▼
+              /pg:intake
+              （workload 自动判定）
+                      │
+        ┌─────────────┼──────────────────────────┐
+        ▼             ▼                          ▼
+       XS            S                       M / L / XL
+   git commit    /pg:code                  /pg:design
+   "XS: ..."        ↓                          ↓
+        ↓        /pg:check                /pg:code
+        ↓        （PR 描述）                  ↓
+        ↓            ↓                    /pg:check
+        └────────────┴──> /pg:deliver <───────┘
+                          （归档 done/）
+```
+
+**前置 / 后置校验自动化语义**（给 hook / CI 用）：
+
+```
+/pg:intake → validate-doc.js requirement <REQ-id>     退出码 0 才允许进 /pg:design 或 /pg:code
+/pg:design → validate-doc.js design <REQ-id>          退出码 0 才允许进 /pg:code
+/pg:code   → validate-doc.js code-report <REQ-id>     退出码 0 才允许进 /pg:check（self_check_passed: true）
+/pg:check  → validate-doc.js check <REQ-id>           退出码 0（含 blockers: 0）才允许进 /pg:deliver
+/pg:deliver→ validate-doc.js delivery <REQ-id>        退出码 0 才视为完成
+project-map.md（如有）→ validate-doc.js project-map  CI 全量扫描时自动校验
+```
+
+---
+
+## 5. 多平台适配约定
+
+事实源是本文件 + `.ai-config/scripts/validate-doc.js`。各平台只做**触发界面适配**，不复制业务逻辑。
+
+| 平台 | 适配位置 | 触发方式 | 状态 |
+|---|---|---|---|
+| Claude Code | `.claude/commands/pg/` | 8 份斜杠命令文件，严格 `/pg:xxx` | ✅ 已接入 |
+| Trae | `.trae/rules/project_rules.md` | 单文件触发映射，双识别（`/pg:xxx` 或简写 `/xxx`） | ✅ 已接入 |
+| Cursor | `.cursor/rules/`（按需） | 同 Claude Code 模式 | 按需建立 |
+| Codex CLI | `AGENTS.md`（按需） | 同 Claude Code 模式 | 按需建立 |
+
+**适配层不允许做的事**：
+- 不允许定义新的产出物 schema（schema 在 validate-doc.js）
+- 不允许改变命令的执行顺序或前置 / 后置校验逻辑（在本文件 §2）
+- 不允许新增 / 重命名命令（命令清单在本文件 §0 + §2）
+
+**适配层应该做的事**：
+- 把本文件的命令契约翻译成对应平台的触发语法
+- 在执行命令前提示用户读哪些 SKILL / references 子文件
+- 调用 `validate-doc.js` 做后置校验（不重新实现校验逻辑）
+
+---
+
+## 6. 修改本文件的注意事项
+
+本文件是**唯一事实源**，修改时务必同步以下下游：
+
+1. **schema 改动**（§3）→ 同步改 `.ai-config/scripts/validate-doc.js` + 加测试用例
+2. **命令流程改动**（§2）→ 同步改 8 个 `.claude/commands/pg/*.md` + `.trae/rules/project_rules.md`
+3. **工作量等级改动**（§1）→ 同步改 `README.md` 等级表 + `docs/USAGE.md` 等级表 + intake-requirement SKILL workload-evaluation.md
+4. **新增产出物类型**（§3）→ 加 schema + 加 pathFor + 加 scanAll 索引 + 同步触发该产出物的命令
+5. **改完跑** `node .ai-config/scripts/validate-doc.js all`，确保现有 docs/ 仍合规
+
+**不要在适配层（命令文件 / Trae 规则）里加业务逻辑**——那会破坏单一事实源原则，下次改本文件时永远会有平台层漂移。
+
+**减法优先**：每条规则、每个 schema 字段、每个 hook 都要能说清"它在守什么风险"。说不清就删。
