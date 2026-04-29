@@ -15,6 +15,12 @@
 ```
 原始输入（任意形式：一句话 / 零散 / 完整 PRD / 截图）
    ↓
+[Step 0] Exploration 引用（高优先级，必做）
+   - 扫描 docs/_exploration/（排除 dropped/）下所有 EXPLORE-*.md
+   - 按 created_at 倒序列出，让用户选是否引用为 background
+   - 引用：笔记内容入 background 字段；后续 Step 跳过笔记已答的维度；笔记 status: draft → graduated
+   - 跳过或无 EXPLORE 文件 → 进入 Step 0A
+   ↓
 [Step 0A] 项目上下文感知 ⚡ 自动
    - 扫描项目目录（识别新/旧项目、技术栈、历史需求、已有模块）
    - 详见 project-context.md

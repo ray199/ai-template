@@ -13,6 +13,26 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 - @.ai-config/skills/intake-requirement/workload-evaluation.md
 - @.ai-config/skills/intake-requirement/pseudo_checklist.md
 
+**Step 0 优先：扫描 docs/_exploration/（在执行 Step 0A 之前必做）**：
+
+若 `docs/_exploration/` 目录存在，列出其中所有 `EXPLORE-*.md` 文件（排除 `dropped/` 子目录）：
+
+1. 按 `created_at` 倒序展示给用户：
+   ```
+   📓 检测到以下未归档的探索笔记，是否引用？
+     [1] EXPLORE-20260427-bi-platform.md（2026-04-27，status: draft）
+     [2] EXPLORE-20260420-permission.md（2026-04-20，status: graduated）
+     输入编号引用对应笔记作为 background 输入；输入 N 跳过；输入 A 引用全部
+   ```
+
+2. 若用户引用某份：
+   - 把笔记内容作为 background 输入，自动填入 `background` 字段
+   - 把"问题框定 / 维度拆解 / 候选方案"等关键结论作为字段补全的依据
+   - 跳过相同维度的澄清问题（笔记已答过的不再问）
+   - 状态：`status: draft` → 改成 `status: graduated`
+
+3. 若用户跳过：照常走 Step 0A-Step 5
+
 **并行冲突软提示（不阻断）**：
 
 生成 requirement 文档时，若填写了 `affects_modules: [...]`（可选字段），在返回给用户"下一步"之前，多做一步：

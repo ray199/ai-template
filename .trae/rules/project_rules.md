@@ -46,6 +46,7 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 
 ### /pg:intake
 - 参考：`.ai-config/skills/intake-requirement/SKILL.md`、`workload-evaluation.md`、`pseudo_checklist.md`
+- **Step 0 优先：扫 `docs/_exploration/`**，若有未归档草稿先列出来让用户选是否引用为 background 输入；引用则状态改为 `graduated`
 - 产出：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`（front-matter 按 workflow.md §3.1）
 - **并行冲突软提示**：若填写了 `affects_modules`，扫描 backlog 其他在制品需求的同字段，有交集就打印警告（不阻断）：
   ```
@@ -117,18 +118,4 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 后置校验（强制）：`node .ai-config/scripts/validate-doc.js delivery <REQ-id>`
 - **收尾两问（不阻断）**：
   1. 是否有新的不变量 / 技术债 / 架构决策要沉淀到 `project-map.md` 的 `## 追加记录`（带 REQ 号 + 日期）
-  2. 本次 review 是否有可沉淀到 `.ai-config/rules/` 的反模式，有则写一条到 `docs/_changelog/rules-candidates.md`
-- 用户答"无"就跳过。
-
-### /pg:prototype
-- 前置：backlog 存在
-- 参考：`.ai-config/skills/prototype-generation/SKILL.md`、`html-prototype-generator.md`；制造业用 `redoe-prototype-style/SKILL.md`
-- 输出：`docs/prototype/<REQ>.html` 或 `-wireframe.md`
-
----
-
-## 通用硬规则（所有阶段共享）
-
-1. **产出物文件名**：严格按 workflow.md §3 约定，文件名里的 REQ-id 必须匹配 `^REQ-\d{8}-\d{3}$`
-2. **后置校验退出码非 0**：不得告知用户进入下一阶段，必须先修产出物再重跑
-3. 
+  2. 本次 review 是否有可
