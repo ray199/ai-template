@@ -225,7 +225,22 @@
 
 ### 2.7 `/pg:prototype REQ-xxx`（可选）
 
-**目的**：按需手动生成原型（HTML / Figma / 线框图）。`/pg:intake` 已自动判定；需要重新生成时才单独跑。
+**目的**：按需手动生成原型（HTML / Figma / 线框图）。`/pg:intake` Step 4 已询问；本命令用于单独生成或重新生成。
+
+**前置校验**：`docs/requirements/backlog/REQ-xxx.md` 存在。
+
+**执行步骤**（HTML 原型必做）：
+1. **Step 0 · 视觉基线扫描**（强制中断点）：扫 `docs/prototype/*.html` + `src/`（package.json / SCSS / tailwind / 现有组件）+ `docs/_context/project-map.md` 的不可变约束 / 项目原则，提取项目现有视觉基线
+2. 按扫描结果分流：
+   - 命中基线 → 默认沿用，5 选 1 风格库降为备选
+   - 仅命中 UI 库 → 用 UI 库默认主题为基线
+   - 完全无基线 → 走 5 选 1 风格库
+3. 必须把扫描结果展示给用户，**停下等用户确认风格选择**后才能生成
+4. 生成时：沿用基线模式导入项目 design token；新风格模式注入 CSS 变量
+
+**理由**：默认沿用基线可避免同项目多原型视觉漂移、老项目原型对不上现有页面的尴尬。视觉一致性比"AI 生成的好看"更重要——开发拿到原型还要对齐到项目实际，不一致就等于白做。
+
+**产出物**：`docs/prototype/REQ-xxx.{html|figma|md}`
 
 ---
 
@@ -383,27 +398,4 @@ updated_at: 2026-04-24              # 可选，追加记录时更新
         ↓        （PR 描述）                  ↓
         ↓            ↓                    /pg:check
         └────────────┴──> /pg:deliver <───────┘
-                          （归档 done/）
-```
-
-**前置 / 后置校验自动化语义**（给 hook / CI 用）：
-
-```
-/pg:intake → validate-doc.js requirement <REQ-id>     退出码 0 才允许进 /pg:design 或 /pg:code
-/pg:design → validate-doc.js design <REQ-id>          退出码 0 才允许进 /pg:code
-/pg:code   → validate-doc.js code-report <REQ-id>     退出码 0 才允许进 /pg:check（self_check_passed: true）
-/pg:check  → validate-doc.js check <REQ-id>           退出码 0（含 blockers: 0）才允许进 /pg:deliver
-/pg:deliver→ validate-doc.js delivery <REQ-id>        退出码 0 才视为完成
-project-map.md（如有）→ validate-doc.js project-map  CI 全量扫描时自动校验
-```
-
----
-
-## 5. 多平台适配约定
-
-事实源是本文件 + `.ai-config/scripts/validate-doc.js`。各平台只做**触发界面适配**，不复制业务逻辑。
-
-| 平台 | 适配位置 | 触发方式 | 状态 |
-|---|---|---|---|
-| Claude Code | `.claude/commands/pg/` | 8 份斜杠命令文件，严格 `/pg:xxx` | ✅ 已接入 |
-| Trae | `.trae/rules/project_rules.m
+                          （归

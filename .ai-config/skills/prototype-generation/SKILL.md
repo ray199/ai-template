@@ -63,19 +63,37 @@
    ↓
    ├─ ≤ 2 → 跳过原型，继续后续
    │
-   └─ ≥ 3 → 选择原型形式
-            ├─ 3-4: 低保真 → 直接生成
-            ├─ 5-7: HTML 或 Figma
-            └─ ≥ 8: HTML + Figma
-            
-            HTML 路径：
-            → 调用 ui-ux-pro-max 进行【设计风格选择】
-            → 详见 references/style-selection.md
-            → 风格 Token 注入 HTML 模板
+   └─ ≥ 3 → 进入 HTML 原型路径
+
+【Step 0 · 视觉基线扫描】（必做，HTML 原型才执行）
+   按优先级扫描，提取项目现有视觉风格：
+   
+   1. docs/prototype/*.html（其他 REQ 已生成的原型）
+      → 提取 CSS 变量、字体声明、UI 库类名
+   
+   2. src/ 下现有前端工程（若存在）
+      → package.json：识别 UI 库（element-plus / ant-design-vue / vant / antd / mui）
+      → tailwind.config.js / variables.scss / src/styles/：design token
+      → src/views/ src/components/：组件命名和结构约定
+   
+   3. docs/_context/project-map.md 的 ## 不可变约束 / ## 项目原则
+      → 若提到 UI 框架 / 设计语言 / 包名，必须遵守
+   
+   扫描结果分流：
+   ├─ 命中现有视觉基线 → 默认沿用为方案 A，5 选 1 风格库降为备选
+   ├─ 部分命中（仅 UI 库一致） → 用 UI 库默认主题为方案 A
+   └─ 完全无基线（全新项目无原型） → 走原有 5 选 1 流程
+   ↓
+【设计风格选择】调用 references/style-selection.md
+   ├─ 有基线：呈现 沿用 [A] + 5 选 1 备选
+   └─ 无基线：直接 5 选 1
+   ↓
+【生成原型】html-prototype-generator.md
+   ├─ 沿用基线：导入项目的 design token / SCSS 变量 / UI 库类名
+   └─ 新风格：注入选定方案的 CSS 变量到 :root
    ↓
 【输出】docs/prototype/REQ-XXXXXXXX.{html|figma|md}
    → 详细输出格式见 templates/prototype-output.md
-   → 在需求文档中引入链接和说明
 ```
 
 ---
