@@ -326,4 +326,115 @@ affects_modules: [user, auth]      # 可选；填了会参与 /pg:intake 并行�
 
 **特点**：
 - **不走 schema 校验**——叙事性文档，强加 schema 会僵化
-- **信息源**：从 `REQ-xxx.md` 字段自动转写（background
+- **信息源**：从 `REQ-xxx.md` 字段自动转写（background → 业务背景；acceptance → 用户故事；scope.out → 不做的部分；等）
+- **同源更新**：要修改时**先改 REQ-xxx.md 再重新生成**，防止双份漂移
+
+**正文结构**（叙事性，无 front-matter 强制要求）：
+- 一、为什么要做（业务背景）
+- 二、给谁用（核心用户 / 受众）
+- 三、能做什么（用户故事 As-a / I-want / so-that）
+- 四、用户怎么操作（主流程，文字 + 原型链接）
+- 五、什么算做完了（验收标准 · 人话版）
+- 六、不做什么 / 限制
+- 七、风险与依赖
+- 八、排期与里程碑（仅 L/XL）
+- 九、附件（开发用 REQ-xxx.md / 原型 / 设计文档链接）
+
+模板见 `.ai-config/skills/intake-requirement/templates/prd-readable.md`。
+
+### 3.1.2 Skill Registry（_context/skill-registry.md，由 /pg:init 生成）
+
+`/pg:init` 自动扫 `.ai-config/skills/*/SKILL.md` + 用户级 `~/.claude/skills/*` 后生成的"项目可用 skill 清单"，让后续 `/pg:design` `/pg:code` 知道项目里有什么 skill 可用。
+
+**特点**：
+- **不走 schema 校验**——叙事性清单
+- 自动生成；团队加新 skill 后跑 `/pg:init` 即更新；也可手动改
+- 用户级 skill 段建议加进 `.gitignore`（团队成员机器路径不一致）
+
+**正文结构**（叙事性）：
+- `## 脚手架 / 框架（强相关 · 写代码时必读）`
+- `## 领域 / 业务（按场景使用）`
+- `## 工具 / 通用（AI 按描述自动判断）`
+- `## 用户级 skill（团队成员可能没有）`
+
+每条 skill 包含路径 / description / 适用阶段 / 来源（项目级 / 用户级）。
+
+详细模板见 `.ai-config/skills/init/SKILL.md` Step 5.5。
+
+### 3.2 设计文档（design/REQ-xxx-design.md）
+
+```yaml
+---
+need_id: REQ-20260424-001
+stage: design
+reviewers: [architect]
+status: draft                       # draft|approved
+invariants_respected: true          # 老项目必须为 true
+---
+```
+
+**老项目正文强制章节**：`## 现状基线`（schema 校验）。
+
+**L / XL 正文强制章节**：`## 任务拆解`（schema 校验）。表格列：`ID | 任务 | 依赖 | 验收对应 | 预估 | 备注`，ID 必须 `T<数字>` 形式，验收对应引用 requirement.md 的 acceptance 编号（A1/A2...）。重构 / 迁移类需求额外要求"迁移顺序" + "回滚边界"段。
+
+### 3.3 编码完成报告（design/REQ-xxx-code-report.md）
+
+```yaml
+---
+need_id: REQ-20260424-001
+stage: code
+files_added: [src/.../UserDO.java, ...]
+files_modified: []
+db_migrations: [V20260424_01__add_user_role.sql]
+self_check_passed: true
+---
+```
+
+### 3.4 测试报告（test/REQ-xxx-test.md）
+
+```yaml
+---
+need_id: REQ-20260424-001
+stage: check
+test_pass_rate: 100
+coverage: 92
+blockers: 0                         # 数字，0 才能 /pg:deliver
+conclusion: pass                    # pass|fail
+---
+```
+
+### 3.5 审查报告（review/REQ-xxx-review.md）
+
+```yaml
+---
+need_id: REQ-20260424-001
+stage: check
+blockers: 0
+warnings: 2
+conclusion: pass                    # pass|fail
+---
+```
+
+### 3.6 交付报告（delivery/REQ-xxx-delivery.md）
+
+```yaml
+---
+need_id: REQ-20260424-001
+stage: delivered
+released_at: 2026-04-24
+rollback_verified: true
+---
+```
+
+### 3.7 项目上下文（_context/project-map.md，老项目）
+
+```yaml
+---
+kind: project-map                   # 必填，固定值
+generated_at: 2026-04-24            # 必填，ISO 日期
+updated_at: 2026-04-24              # 可选，追加记录时更新
+---
+```
+
+**正文强制章节**：
+- `## 技术栈` `##
