@@ -24,6 +24,7 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
      [2] EXPLORE-20260420-permission.md（2026-04-20，status: graduated）
      输入编号引用对应笔记作为 background 输入；输入 N 跳过；输入 A 引用全部
    ```
+   ⚠️ **必须停下等用户回复后再继续**，不得自行猜测引用与否。
 
 2. 若用户引用某份：
    - 把笔记内容作为 background 输入，自动填入 `background` 字段
@@ -33,7 +34,7 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 
 3. 若用户跳过：照常走 Step 0A-Step 5
 
-**草稿预览（生成前必做）**：
+**草稿预览（生成前必做的强制中断点）**：
 
 完成 Step 1 字段填写后、写盘前，先把结构化结果展示给用户预览：
 
@@ -48,11 +49,11 @@ argument-hint: [需求描述、飞书消息、会议纪要或完整PRD]
 确认无误请回复 [Y]，否则告诉我哪里要改（字段名 + 新值）。
 ```
 
-用户确认后才落盘 `docs/requirements/backlog/REQ-xxx.md`。
+⚠️ **必须停下等用户回 Y 或调整指令后才能落盘**，不得自行写入 `docs/requirements/backlog/REQ-xxx.md`。
 
 **并行冲突软提示（不阻断）**：
 
-生成 requirement 文档时，若填写了 `affects_modules: [...]`（可选字段），在返回给用户"下一步"之前，多做一步：
+生成 requirement 文档落盘后，若填写了 `affects_modules: [...]`（可选字段），多做一步：
 
 1. 扫描 `docs/requirements/backlog/*.md` 其他仍在流转中的需求
 2. 对比各自的 `affects_modules`；若有交集，打印：
@@ -73,24 +74,35 @@ node .ai-config/scripts/validate-doc.js requirement <need_id>
 
 退出码非 0 则不得告知用户进入下一阶段，必须先修正产出物。
 
-**主动询问原型生成（Step 4 完成后必做）**：
+**Step 4 · 推荐输出物（强制中断点 · 逐项询问）**：
 
-无论原型必要性判定结果，都要主动问用户：
+工作量评估完成后，列出本等级推荐的**附加产出物**（requirement.md 已生成；这里只问额外的）：
 
 ```
-🎨 原型必要性判定：[必需 ≥10 分 / 推荐 7-9 分 / 可选 3-6 分 / 不需要 ≤2 分]
-   分项得分：功能 X · 复杂度 X · 涉众 X · 验收 X = 总分
+📦 工作量 [X] 级建议生成以下附加输出物：
 
-是否现在生成原型？
-  [Y] 立即生成（自动跑 /pg:prototype REQ-xxx）
-  [N] 暂不生成（后续可单独跑 /pg:prototype REQ-xxx）
+  □ [1] UI 原型（推荐/必需，分项得分 X 分）
+  □ [2] 技术思路骨架（M/L/XL 必填字段，已尝试从笔记提取）
+  □ [3] 迭代拆分计划 + 里程碑（仅 XL 必填）
+
+请逐项决定（在 [ ] 内填 Y/N）：
+  [1] Y/N？
+  [2] Y/N？
+  [3] Y/N？
+
+或者输入 A 全部生成、N 全部跳过、S 选择性输入（如 1Y 2N 3Y）。
 ```
 
-- 用户选 Y → 自动衔接 `/pg:prototype` 命令并完成原型生成
-- 用户选 N → 跳过，但在最终"下一步告知"里再次提醒可以跑 /pg:prototype
+⚠️ **必须停下等用户回复**。AI 不得自行判定后跳过本步——这是用户的决策点，不是 AI 的判定点。
+
+**用户回复后立刻执行**：
+- `[1] Y` → 自动衔接 `/pg:prototype REQ-xxx`，完成原型生成
+- `[2] Y` → 把 `tech_sketch` 字段从笔记提取的草稿转写为正式段，写入需求文档
+- `[3] Y` → 在需求文档追加 `iteration_plan` + `milestones` 段
+- 任一 N → 跳过，但在最终"下一步告知"里再次提醒可单独跑对应命令
 
 **下一步路由（依据需求文档 `workload` 字段）**：
 - `XS` / `S` → `/pg:code <need_id>`
 - `M` / `L` / `XL` → `/pg:design <need_id>`
 - 伪需求扫描 🔴 → 修复后重跑 `/pg:intake`
-- 原型未生成且工作量 ≥M → 提醒用户可单独跑 `/pg:prototype <need_id>`
+- Step 4 中选 N 的项目 → 提醒 `/pg:prototype <need_id>` 或单独补 `tech_sketch` / `iteration_plan` 字段

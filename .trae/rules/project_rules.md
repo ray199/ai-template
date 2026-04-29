@@ -48,7 +48,7 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 参考：`.ai-config/skills/intake-requirement/SKILL.md`、`workload-evaluation.md`、`pseudo_checklist.md`
 - **Step 0 优先：扫 `docs/_exploration/`**，若有未归档草稿先列出来让用户选是否引用为 background 输入；引用则状态改为 `graduated`
 - **草稿预览**：Step 1 字段填好后、写盘前必须先把结构化结果展示给用户，等用户确认或调整后才落盘
-- **主动询问原型**：Step 4 完成后必须打印原型必要性判定结果（必需/推荐/可选/不需要 + 分项得分），并主动问"是否现在生成原型 [Y/N]"——选 Y 自动衔接 /pg:prototype；选 N 在最终下一步提示里再次提醒
+- **Step 4 强制中断点 · 逐项询问**：列出本等级建议的附加产出物（原型 / 技术思路骨架 / 迭代计划），让用户逐项 [Y/N]。AI 必须**停下等回复**，不得自行判定跳过。选 Y 立刻执行（原型衔接 /pg:prototype；其他写进需求文档对应字段）；选 N 在最终下一步提醒可单独补
 - 产出：`docs/requirements/backlog/REQ-YYYYMMDD-XXX.md`（front-matter 按 workflow.md §3.1）
 - **并行冲突软提示**：若填写了 `affects_modules`，扫描 backlog 其他在制品需求的同字段，有交集就打印警告（不阻断）：
   ```
@@ -114,5 +114,3 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 有 🔴 blocker → 修复后重跑，不得进入 /pg:deliver
 
 ### /pg:deliver
-- 前置：test + review 的 `conclusion: pass` 且 `blockers: 0`
-- 参考：`.ai-conf
