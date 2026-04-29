@@ -10,8 +10,6 @@ argument-hint: [REQ-XXXXXXXX | --frontend | --backend | --db]
 
 **执行规范参考**：@.ai-config/skills/coding-impl/SKILL.md
 
-**项目宪法（必读）**：若 `docs/_context/constitution.md` 存在，必须先读，编码中不得违反"## 项目原则"任一条款。
-
 **前置校验（缺一终止）**：
 - `docs/requirements/backlog/$ARGUMENTS.md` 存在
 - 若 `workload` ∈ {M, L, XL}：`docs/design/$ARGUMENTS-design.md` 必须存在

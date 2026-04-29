@@ -338,9 +338,6 @@ AI 执行：
    - [ ] 根包名沿用 com.example.legacy
    - [ ] 用户密码必须保持 bcrypt（不接受其他算法）
 
-5. （可选）从 invariants 抽出"长期理念"独立成 constitution.md
-   cp .ai-config/constitution-template.md docs/_context/constitution.md
-   人工编辑
 
 6. 之后所有 /pg:design 和 /pg:code 都会自动遵守这些约束
 ```
@@ -435,7 +432,7 @@ design.md 的 `## 任务拆解` 之后必须追加：
 - M / L / XL：至少 1 条 acceptance 必须是 BDD 格式（schema 强制）
 
 **Q10：AI 生成的代码不符合我们项目的某条独特约定，怎么办？**
-两种办法：(a) 在 design.md 里显式声明该约定；(b) 把约定写进 `docs/_context/project-map.md` 的 `## 不可变约束` 或 `docs/_context/constitution.md` 的 `## 项目原则`，之后 AI 必读。
+两种办法：(a) 在 design.md 里显式声明该约定；(b) 把约定写进 `docs/_context/project-map.md` 的 `## 不可变约束` 或可选的 `## 项目原则` 段，之后 AI 必读。
 
 ---
 
@@ -459,7 +456,6 @@ design.md 的 `## 任务拆解` 之后必须追加：
 ```
 .ai-config/                           ← 规范本身
 ├── workflow.md                       ← 事实源，改契约只改它
-├── constitution-template.md          ← 项目宪法模板
 ├── rules/                            ← 通用规则（02 风格 / 03 安全 / 04 git / 05 工作流 / 06 需求）
 │   ├── profiles/                     ← 7 种语言专项
 │   └── middleware/                   ← 6 种中间件
@@ -471,7 +467,6 @@ design.md 的 `## 任务拆解` 之后必须追加：
 docs/                                 ← 项目产出
 ├── _context/
 │   ├── project-map.md                ← 老项目必有：技术栈、模块、表、接口、不可变约束
-│   ├── constitution.md               ← 可选：项目长期原则
 │   └── （无别的）
 ├── _exploration/                     ← /pg:explore 草稿
 ├── _changelog/
@@ -494,12 +489,11 @@ docs/                                 ← 项目产出
 - `pre-commit`：本次涉及的 REQ-*.md 跑 schema 校验
 - `commit-msg`：conventional commit 或 `XS:` 前缀
 - CI workflow：PR 触发 `validate-doc.js all`
-- 阶段后置：requirement / design / code-report / check / delivery / project-map / constitution 全部 schema
+- 阶段后置：requirement / design / code-report / check / delivery / project-map 全部 schema
 
 **软门**（AI 软提示，上下文相关、不阻断）：
 - `/pg:intake` 并行需求冲突提示（基于 `affects_modules`）
 - `/pg:design` 老项目"现状基线"章节强制；L/XL 强制任务拆解
-- `/pg:code` constitution"项目原则"必读
 - `/pg:deliver` 收尾两问
 
 ---

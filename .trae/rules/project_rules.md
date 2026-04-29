@@ -60,7 +60,6 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 ### /pg:design
 - 前置：backlog 文档存在，`workload ∈ {M, L, XL}`
 - 参考：`.ai-config/skills/technical-design/SKILL.md`
-- **项目宪法（必读）**：若 `docs/_context/constitution.md` 存在，必须先读，设计中不得违反"## 项目原则"任一条款
 - **老项目强制 `## 现状基线` 章节**（schema 会校验存在性）：
   ```markdown
   ## 现状基线
@@ -91,7 +90,6 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 ### /pg:code
 - 前置：backlog 存在；M/L/XL 需 design 存在
 - 参考：`.ai-config/skills/coding-impl/SKILL.md`
-- **项目宪法（必读）**：若 `docs/_context/constitution.md` 存在，必须先读，编码中不得违反"## 项目原则"任一条款
 - 代码规范：
   - 通用：`.ai-config/rules/02_code_style.mdc`
   - 安全：`.ai-config/rules/03_security.mdc`
@@ -118,4 +116,9 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 归档：`docs/requirements/backlog/<REQ>.md` → `docs/requirements/done/<REQ>/`
 - 后置校验（强制）：`node .ai-config/scripts/validate-doc.js delivery <REQ-id>`
 - **收尾两问（不阻断）**：
-  1. 是否有新的不变量 / 技术债
+  1. 是否有新的不变量 / 技术债 / 架构决策要沉淀到 `project-map.md` 的 `## 追加记录`（带 REQ 号 + 日期）
+  2. 本次 review 是否有可沉淀到 `.ai-config/rules/` 的反模式，有则写一条到 `docs/_changelog/rules-candidates.md`
+- 用户答"无"就跳过。
+
+### /pg:prototype
+- 前置：bac

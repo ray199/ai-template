@@ -15,8 +15,6 @@ argument-hint: [REQ-XXXXXXXX]
 - 该需求 `workload` ∈ {M, L, XL}（XS/S 级不需要设计）
 - 老项目必须先阅读 `docs/_context/project-map.md` 并在设计中声明遵守 `invariants`
 
-**项目宪法（必读）**：若 `docs/_context/constitution.md` 存在，必须先读，设计中不得违反"## 项目原则"任一条款。
-
 **老项目现状基线（强制章节）**：
 
 若 `docs/_context/project-map.md` 存在 → 设计文档正文必须包含：

@@ -83,23 +83,6 @@ const SCHEMAS = {
       affects_modules: v => !v || (Array.isArray(v) && v.length > 0) || 'affects_modules 若填写须为非空数组',
     },
   },
-  constitution: {
-    required: ['kind'],
-    rules: {
-      kind: v => v === 'constitution' || 'kind 必须为 constitution',
-    },
-    bodyChecks: (body) => {
-      const errs = [];
-      if (!/^##\s+项目原则|^##\s+principles/im.test(body)) {
-        errs.push('constitution 必须包含 "## 项目原则" 章节');
-      }
-      const rules = body.match(/^-\s+/gm);
-      if (!rules || rules.length === 0) {
-        errs.push('"## 项目原则" 至少需要 1 条规则（- 列表项）');
-      }
-      return errs;
-    },
-  },
   'project-map': {
     required: ['kind', 'generated_at'],
     rules: {
@@ -196,7 +179,6 @@ function pathFor(type, reqId) {
     review: `docs/review/${reqId}-review.md`,
     delivery: `docs/delivery/${reqId}-delivery.md`,
     'project-map': `docs/_context/project-map.md`,
-    constitution: `docs/_context/constitution.md`,
   };
   return p[type];
 }
@@ -299,10 +281,6 @@ function scanAll(repoRoot) {
     const r = validateOne('project-map', null, repoRoot);
     results.push({ file: 'docs/_context/project-map.md', ...r });
   }
-  if (fs.existsSync(path.join(repoRoot, 'docs/_context/constitution.md'))) {
-    const r = validateOne('constitution', null, repoRoot);
-    results.push({ file: 'docs/_context/constitution.md', ...r });
-  }
   return results;
 }
 
@@ -335,7 +313,7 @@ function main() {
     process.exit(failed === 0 ? 0 : 1);
   }
 
-  if (!['project-map', 'constitution'].includes(type) && !reqId) {
+  if (type !== 'project-map' && !reqId) {
     console.error('缺少 REQ-id 参数');
     process.exit(2);
   }
