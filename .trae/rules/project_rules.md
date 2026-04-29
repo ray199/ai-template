@@ -49,7 +49,7 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - **Step 0 优先：扫 `docs/_exploration/`**，若有未归档草稿先列出来让用户选是否引用为 background 输入；引用则状态改为 `graduated`
 - **草稿预览**：Step 1 字段填好后、写盘前必须先把结构化结果展示给用户，等用户确认或调整后才落盘
 - **Step 4 强制中断点 · 按等级逐项询问**：按 workload 动态展示清单：
-  - 所有等级可选：**PRD 可读版**（叙事性人话版给业务方/老板看，从 requirement.md 自动转写，不走 schema 校验，路径 `docs/requirements/backlog/REQ-xxx-prd.md`，模板见 `intake-requirement/templates/prd-readable.md`）
+  - **M/L/XL 可选**（S 级不展示）：**PRD 可读版**（叙事性人话版给业务方/老板看，从 requirement.md 自动转写，不走 schema 校验，路径 `docs/requirements/backlog/REQ-xxx-prd.md`，模板见 `intake-requirement/templates/prd-readable.md`）
   - 所有等级可选：**UI 原型**（XL 必须）→ 选 Y 衔接 /pg:prototype
   - **必填字段草稿审核**（M+: tech_sketch；L+: + stakeholders/non_functional/risks；XL+: + iteration_plan/milestones）→ 用户回 [Y/调整]，不允许 N
   - AI 必须**停下等用户逐项回复**
@@ -111,5 +111,4 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 前置：backlog 存在；M/L/XL 需 code-report 存在
 - 参考：`.ai-config/skills/testing/SKILL.md`、`code-review/SKILL.md`、`code-review/checklists.md`
 - 分级产出：
-  - **XS/S**：curl 测试片段 + 5 维度 review 清单，结论写 PR 描述，不生成独立 md
-  - 
+  - **XS/S**：curl 测试片段 + 5 维度 review 清单，结论写 PR 描述，不�

@@ -94,7 +94,7 @@
 5. 【Step 2】工作量评估：业务 5 维 + 技术 4 维打分，判等级
 6. 【Step 3】伪需求扫描：重复建设 / 价值存疑 / 逻辑冲突 / 技术可行性
 7. 【Step 4】产出物清单 — **强制中断点 · 按等级逐项询问**：按 workload 动态展示清单，分【已完成】（requirement.md 已落盘）+【待决定】两块。**AI 必须停下等用户逐项回复，不得自行判定后跳过**。
-   - **PRD 可读版**（所有等级可选）：从 requirement.md 自动转写为给业务方 / 老板看的人话版本，落盘 `docs/requirements/backlog/REQ-xxx-prd.md`。模板见 `intake-requirement/templates/prd-readable.md`。**不走 schema 校验**（叙事性文档）
+   - **PRD 可读版**（仅 M / L / XL 可选；S 级不展示）：从 requirement.md 自动转写为给业务方 / 老板看的人话版本，落盘 `docs/requirements/backlog/REQ-xxx-prd.md`。模板见 `intake-requirement/templates/prd-readable.md`。**不走 schema 校验**（叙事性文档）。S 级不展示理由：单文件小改动给业务方写正式 PRD 是小题大做
    - **UI 原型**（所有等级可选；XL 必须）：选 Y 衔接 /pg:prototype
    - **必填字段**（M+：tech_sketch；L+：+ stakeholders / non_functional / risks；XL+：+ iteration_plan / milestones）：AI 已生成草稿，用户审核 [Y/调整]——不允许 N（schema 强制）
 8. 【Step 5】并行冲突软提示：若填写 `affects_modules`，扫 `docs/requirements/backlog/*.md` 其他 in-flight 需求并打印交集（仅提示，不阻断）
@@ -406,5 +406,4 @@ project-map.md（如有）→ validate-doc.js project-map  CI 全量扫描时自
 | 平台 | 适配位置 | 触发方式 | 状态 |
 |---|---|---|---|
 | Claude Code | `.claude/commands/pg/` | 8 份斜杠命令文件，严格 `/pg:xxx` | ✅ 已接入 |
-| Trae | `.trae/rules/project_rules.md` | 单文件触发映射，双识别（`/pg:xxx` 或简写 `/xxx`） | ✅ 已接入 |
-| Cursor | `.cur
+| Trae | `.trae/rules/project_rules.m

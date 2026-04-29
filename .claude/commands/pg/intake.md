@@ -55,16 +55,11 @@ node .ai-config/scripts/validate-doc.js requirement <need_id>
   ✅ 结构化需求文档：docs/requirements/backlog/REQ-xxx.md（开发 / AI 用，schema-controlled）
 
 【待决定 · 附加产出物】
-  □ [1] PRD 可读版（给业务方 / 老板看的人话版本，由 requirement.md 自动转写）
-        → Y 生成 docs/requirements/backlog/REQ-xxx-prd.md
-        → N 跳过（默认）
-  □ [2] UI 原型（仅当涉及前端页面变更时建议；判定得分 X 分）
+  □ [1] UI 原型（仅当涉及前端页面变更时建议；判定得分 X 分）
         → Y 自动跑 /pg:prototype REQ-xxx
         → N 跳过
 
-请逐项回复 [Y/N]：
-  [1] ?
-  [2] ?
+请回 [Y/N]：
 ```
 
 ### M 级清单
