@@ -121,4 +121,14 @@ Trae 不支持斜杠命令占位符（`$ARGUMENTS`），所以用户的自然语
 - 用户答"无"就跳过。
 
 ### /pg:prototype
-- 前置：bac
+- 前置：backlog 存在
+- 参考：`.ai-config/skills/prototype-generation/SKILL.md`、`html-prototype-generator.md`；制造业用 `redoe-prototype-style/SKILL.md`
+- 输出：`docs/prototype/<REQ>.html` 或 `-wireframe.md`
+
+---
+
+## 通用硬规则（所有阶段共享）
+
+1. **产出物文件名**：严格按 workflow.md §3 约定，文件名里的 REQ-id 必须匹配 `^REQ-\d{8}-\d{3}$`
+2. **后置校验退出码非 0**：不得告知用户进入下一阶段，必须先修产出物再重跑
+3. 
